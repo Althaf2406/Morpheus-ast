@@ -40,5 +40,13 @@ pnpm-debug.log*
 # DO NOT add .kiro or any path beneath it here.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Certificate and private key files — NEVER commit
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
 # Planning documents (not part of submitted codebase)
 *.pdf
