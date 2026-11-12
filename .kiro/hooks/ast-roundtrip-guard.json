@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "ast-roundtrip-and-isolation-guard",
+      "description": "Verifies zero cross-app imports and executes fast-check Property-Based Tests (Syntax Preservation & Round-Trip Invariant) on every save inside morpheus-ast-core.",
+      "trigger": "PostFileSave",
+      "matcher": "^packages/morpheus-ast-core/src/.*\\.ts$",
+      "action": {
+        "type": "command",
+        "command": "pnpm run lint:boundaries && pnpm --filter morpheus-ast-core run test:pbt"
+      },
+      "timeout": 60,
+      "enabled": true
+    }
+  ]
+}

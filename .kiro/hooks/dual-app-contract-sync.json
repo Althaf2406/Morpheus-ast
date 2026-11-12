@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "dual-app-contract-sync-agent",
+      "description": "Triggers Kiro Agent to inspect and synchronize both InfraShield 3D and NECRO-COMPILER adapters whenever contracts.ts is updated.",
+      "trigger": "PostFileSave",
+      "matcher": "^packages/morpheus-ast-core/src/contracts\\.ts$",
+      "action": {
+        "type": "agent",
+        "prompt": "The core skeleton contract in packages/morpheus-ast-core/src/contracts.ts was just modified. Inspect both apps/infrashield-chaos/src/adapter.ts and apps/necro-compiler-game/src/adapter.ts to ensure both applications conform to the updated interface without breaking domain isolation.\n\nSpecifically:\n1. Check that every function signature exported from contracts.ts (ParseSourceFiles, BuildTopologyGraph, ComputeBlastRadius, InjectFault, ApplySurgicalMutation, RollbackMutation, GenerateBedrockPatch, GenerateBugfixSpec, RunSecurityScan) is correctly referenced in both adapters.\n2. Verify MorpheusASTEngine interface is fully implemented in both adapters.\n3. Check that no adapter imports anything from morpheus-ast-core except contracts.ts.\n4. If any adapter is out of sync, update ONLY the adapter.ts files — never modify contracts.ts or any core file.\n5. Report what was changed or confirm 'ADAPTERS IN SYNC' if no changes were needed."
+      },
+      "timeout": 90,
+      "enabled": true
+    }
+  ]
+}

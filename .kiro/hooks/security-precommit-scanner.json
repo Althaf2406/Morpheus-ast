@@ -1,0 +1,27 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "security-precommit-scanner",
+      "description": "Scans all staged and modified files for leaked API keys, credentials, tokens, and secrets before the agent session ends. Blocks completion if any leak is detected.",
+      "trigger": "Stop",
+      "action": {
+        "type": "command",
+        "command": "node -e \"\nconst { execSync } = require('child_process');\nconst fs = require('fs');\nconst path = require('path');\n\n// Get all staged + modified files tracked by git\nlet files = [];\ntry {\n  const staged = execSync('git diff --cached --name-only', { encoding: 'utf-8' }).trim();\n  const modified = execSync('git diff --name-only', { encoding: 'utf-8' }).trim();\n  const allFiles = [...new Set([...staged.split('\\n'), ...modified.split('\\n')])];\n  files = allFiles.filter(f => f.length > 0 && fs.existsSync(f));\n} catch (e) {\n  console.log('security-precommit-scanner: could not list git files, scanning all src files');\n  const srcFiles = execSync('git ls-files', { encoding: 'utf-8' }).trim().split('\\n');\n  files = srcFiles.filter(f => f.endsWith('.ts') || f.endsWith('.json') || f.endsWith('.env') || f.endsWith('.yml'));\n}\n\n// Secret patterns — covers AWS, OpenAI, ElevenLabs, GitHub, generic tokens\nconst patterns = [\n  { name: 'AWS Access Key',       re: /AKIA[0-9A-Z]{16}/ },\n  { name: 'AWS Secret Key',       re: /aws_secret_access_key\\s*=\\s*[A-Za-z0-9/+]{40}/ },\n  { name: 'AWS Session Token',    re: /aws_session_token\\s*=\\s*[A-Za-z0-9/+=]{100,}/ },\n  { name: 'OpenAI API Key',       re: /sk-[A-Za-z0-9]{32,}/ },\n  { name: 'ElevenLabs API Key',   re: /xi_api_key[^\\n]{0,20}[A-Za-z0-9]{32}/ },\n  { name: 'GitHub Token',         re: /ghp_[A-Za-z0-9]{36}/ },\n  { name: 'GitHub OAuth',         re: /gho_[A-Za-z0-9]{36}/ },\n  { name: 'Bedrock Credentials',  re: /bedrock[_-]?api[_-]?key[^\\n]{0,20}[A-Za-z0-9]{20}/ },\n  { name: 'Generic Secret',       re: /['\\\"]?(?:secret|password|passwd|api_key|apikey|token|auth_token)['\\\"]?\\s*[:=]\\s*['\\\"][A-Za-z0-9!@#$%^&*]{12,}['\\\"]/ },\n  { name: 'Private Key Header',   re: /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/ },\n  { name: 'Bearer Token',         re: /Authorization:\\s*Bearer [A-Za-z0-9._\\-]{20,}/ },\n];\n\nconst findings = [];\n\nfor (const file of files) {\n  let content;\n  try { content = fs.readFileSync(file, 'utf-8'); } catch { continue; }\n  \n  for (const pattern of patterns) {\n    if (pattern.re.test(content)) {\n      const lines = content.split('\\n');\n      lines.forEach((line, i) => {\n        if (pattern.re.test(line)) {\n          findings.push({ file, line: i + 1, pattern: pattern.name, snippet: line.trim().slice(0, 80) });\n        }\n      });\n    }\n  }\n}\n\nif (findings.length > 0) {\n  console.error('\\n🚨 SECURITY SCAN FAILED — Potential secrets detected:\\n');\n  findings.forEach(f => {\n    console.error('  FILE: ' + f.file + ':' + f.line);\n    console.error('  PATTERN: ' + f.pattern);\n    console.error('  SNIPPET: ' + f.snippet.replace(/./g, '*') + '  [REDACTED]');\n    console.error('');\n  });\n  console.error('ACTION REQUIRED: Remove credentials before committing.');\n  console.error('  - Use environment variables or .env files (already in .gitignore)');\n  console.error('  - Run: git reset HEAD <file> to unstage');\n  process.exit(1);\n} else {\n  console.log('✅ security-precommit-scanner: no secrets detected in ' + files.length + ' files.');\n}\n\""
+      },
+      "timeout": 30,
+      "enabled": true
+    },
+    {
+      "name": "security-precommit-scanner-agent",
+      "description": "Triggers Kiro Agent to perform a semantic review of any file containing suspicious patterns that the regex scan flagged as borderline (high entropy strings, base64 blobs, or hardcoded URLs with credentials).",
+      "trigger": "Stop",
+      "action": {
+        "type": "agent",
+        "prompt": "A session is ending. Perform a final security review of all files that were modified during this session.\n\n1. Check every TypeScript and JSON file under packages/ and apps/ for:\n   - Hardcoded API keys, tokens, or passwords (even if obfuscated)\n   - High-entropy string literals longer than 32 characters that are not SHA/UUID values\n   - Credential-like patterns in comments or string templates\n   - Any import of a .env file or process.env access that exposes a secret in source\n\n2. If any finding is detected:\n   - Report the exact file path and line number\n   - Classify the finding as: API_KEY, TOKEN, PASSWORD, HIGH_ENTROPY, or CREDENTIAL_URL\n   - Recommend whether to remove, replace with env var, or add to .gitignore\n   - DO NOT output the actual secret value in your response\n\n3. If no issues are found, respond with a single line: 'SECURITY SCAN CLEAN'\n\nThis scan is mandatory before any commit per .kiro/steering/00-skeleton-isolation.md §5."
+      },
+      "timeout": 60,
+      "enabled": true
+    }
+  ]
+}
