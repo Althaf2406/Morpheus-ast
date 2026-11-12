@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.turbo/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment files — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Windows installer binaries
+*.exe
+
+# ─────────────────────────────────────────────────────────────────────────────
+# KIROWEEN 2026 COMPLIANCE — MANDATORY
+# /.kiro and ALL its sub-folders (settings, steering, hooks,
+# specs) MUST be committed to the repository root.
+# DO NOT add .kiro or any path beneath it here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Planning documents (not part of submitted codebase)
+*.pdf

@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--prefix", "/tmp/context7", "@context7/mcp-server@latest"],
+      "description": "Real-time, version-pinned documentation for Tree-sitter WASM API, TypeScript Compiler API, fast-check, and Amazon Bedrock SDK. Prevents Kiro agent from hallucinating library method signatures during AST engine development.",
+      "env": {}
+    },
+    "aws-knowledge": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--prefix", "/tmp/aws-mcp", "@aws/knowledge-mcp-server@latest"],
+      "description": "AWS service documentation for Amazon Bedrock SDK integration into the blast-radius and mutator pipelines.",
+      "env": {
+        "AWS_REGION": "us-east-1"
+      }
+    },
+    "localstack": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--prefix", "/tmp/localstack-mcp", "@localstack/mcp-server@latest"],
+      "description": "Emulates serverless AWS services (Lambda, API Gateway, DynamoDB) locally for chaos fault validation without live AWS credentials.",
+      "env": {
+        "LOCALSTACK_ENDPOINT": "http://localhost:4566"
+      }
+    }
+  },
+  "kiro": {
+    "powers": {
+      "awsSecurityAnalyzer": {
+        "enabled": true,
+        "description": "Validates chaos fault impact against cloud security configurations in App 1 (infrashield-chaos). Feeds real vulnerability data into contracts.ts data shapes."
+      },
+      "localstackAWS": {
+        "enabled": true,
+        "description": "Emulates Lambda, API Gateway, DynamoDB for local blast-radius testing without live AWS spend."
+      },
+      "sonarQubeSnykAikido": {
+        "enabled": true,
+        "description": "Scans for real security vulnerabilities and code smells in the AST output. Results are mapped into the typed risk report structures in contracts.ts."
+      }
+    }
+  }
+}

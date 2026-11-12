@@ -1,0 +1,26 @@
+{
+  "name": "morpheus-ast-core",
+  "version": "0.1.0",
+  "description": "Headless, domain-agnostic AST compiler, blast-radius analyzer, and surgical code mutator",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test:pbt": "node --experimental-vm-modules node_modules/.bin/jest --testPathPattern=tests/pbt",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "fast-check": "3.19.0",
+    "web-tree-sitter": "0.22.6",
+    "typescript": "5.4.5",
+    "@aws-sdk/client-bedrock-runtime": "3.577.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "jest": "29.7.0",
+    "ts-jest": "29.1.4",
+    "rimraf": "5.0.7"
+  }
+}
