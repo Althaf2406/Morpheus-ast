@@ -12,15 +12,18 @@ const config: Config = {
         esModuleInterop: true,
         moduleResolution: "node",
         target: "ES2022",
+        types: ["node", "jest"],
+        // Tests are allowed unused locals — they use helper arbitraries
+        // and stub variables for readability, not for tree-shaking.
+        noUnusedLocals: false,
+        noUnusedParameters: false,
       },
     }],
   },
-  // Map *.js imports (used in src/) to their *.ts sources for testing
+  // Map *.js extension imports (used in src/ ESM-style) to their *.ts sources
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
-  extensionsToTreatAsEsm: [],
-  testPathPattern: "tests/",
 };
 
 export default config;

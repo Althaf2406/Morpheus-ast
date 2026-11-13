@@ -282,7 +282,7 @@ export class TopologyCompiler {
 
   private detectUnusedVariables(
     fnNode: ts.Node,
-    sourceFile: ts.SourceFile
+    _sourceFile: ts.SourceFile
   ): string[] {
     const declared = new Map<string, number>(); // name → declaration count
     const used = new Set<string>();

@@ -45,7 +45,6 @@ export class BugfixSpecGenerator {
     const complexity = targetFn?.cyclomaticComplexity ?? 0;
     const blastPct = (faultResult.blastRadiusScore * 100).toFixed(1);
     const affectedCount = faultResult.affectedNodes.length;
-    const cascadeDepth = faultResult.cascadePath.length;
 
     const currentBehavior = this.describeCurrentBehavior(faultResult, fnName, blastPct, affectedCount);
     const expectedBehavior = this.describeExpectedBehavior(faultResult, fnName);

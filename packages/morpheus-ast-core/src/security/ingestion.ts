@@ -18,7 +18,6 @@ import type {
   FindingSeverity,
   FindingCategory,
   ParsedFile,
-  FunctionNode,
   TopologyGraph,
   SourceRange,
 } from "../contracts.js";

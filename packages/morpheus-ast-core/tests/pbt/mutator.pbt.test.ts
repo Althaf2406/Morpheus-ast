@@ -43,7 +43,7 @@ import type { SpliceRange } from "../../src/contracts.js";
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function isValidTypeScript(source: string): boolean {
+function _isValidTypeScript(source: string): boolean {
   const sf = ts.createSourceFile("test.ts", source, ts.ScriptTarget.ES2022, true);
   // Count syntax errors
   let errorCount = 0;
@@ -114,7 +114,7 @@ describe("surgical mutator PBT", () => {
       fc.property(
         validTsSourceArb(),
         (source) => {
-          const splices = nonOverlappingSplicesArb(source, 2);
+          const _splices = nonOverlappingSplicesArb(source, 2);
           // Use a synchronous version via the arbitrary directly
           const spliceList: SpliceRange[] = [];
           const segSize = Math.floor(source.length / 3);

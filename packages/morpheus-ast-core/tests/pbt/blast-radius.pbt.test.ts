@@ -59,8 +59,9 @@ const sourceRangeArb = (): fc.Arbitrary<SourceRange> =>
  * Generates a valid function ID.
  * Deliberately includes "__proto__", "constructor", "prototype" in the pool
  * to exercise prototype-pollution safety (P5).
+ * Prefixed with _ because protoPollutionGraphArb uses inline constants instead.
  */
-const fnIdArb = (): fc.Arbitrary<string> =>
+const _fnIdArb = (): fc.Arbitrary<string> =>
   fc.oneof(
     fc.string({ minLength: 1, maxLength: 20 }).map((s) => `fn:${s}`),
     fc.constant("fn:__proto__"),

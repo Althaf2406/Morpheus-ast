@@ -90,8 +90,8 @@ describe("WASM memory audit", () => {
     const simulateParse = (): void => {
       auditor.recordAlloc();
       try {
-        // Simulate using the tree (parse work)
-        const _result = "parsed";
+        // Simulate using the tree (parse work) — void expression, no local needed
+        void "parsed";
       } finally {
         // This finally block mirrors the mandatory tree.delete() in production
         auditor.recordDelete();

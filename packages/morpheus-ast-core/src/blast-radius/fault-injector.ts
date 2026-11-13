@@ -18,7 +18,6 @@ import type {
   FaultType,
   TopologyGraph,
   FunctionNode,
-  CallEdge,
   CascadeStep,
   TaintPath,
 } from "../contracts.js";
