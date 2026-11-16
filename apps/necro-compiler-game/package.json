@@ -1,0 +1,28 @@
+{
+  "name": "necro-compiler-game",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:pbt": "vitest run --reporter=verbose src/layout/__tests__"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "^0.168.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.168.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "fast-check": "3.19.0",
+    "typescript": "5.4.5",
+    "vite": "^5.4.2",
+    "vitest": "^2.0.5"
+  }
+}
