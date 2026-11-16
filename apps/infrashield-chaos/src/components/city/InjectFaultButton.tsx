@@ -7,7 +7,7 @@ interface Props {
 const BASE_STYLE: React.CSSProperties = {
   position:   "absolute",
   top:        16,
-  right:      16,
+  left:       16,
   padding:    "10px 18px",
   fontFamily: "monospace",
   fontSize:   "0.9rem",
