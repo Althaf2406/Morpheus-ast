@@ -12,6 +12,18 @@
         "chatSessionId": "sess_334b04ba-8e7b-49f9-9038-626ba7ed9a53",
         "timestamp": 1794833548184
       }
+    ],
+    "**TASK-IS-08**: Build fault animation system (pulse, edge deletion, collapse, cascade highlight).": [
+      {
+        "executionId": "af544e6d-3461-47e9-bace-425d9b23922e",
+        "chatSessionId": "sess_2984e8bf-77e6-4c38-893c-59321fcc1c98",
+        "timestamp": 1794833867382
+      },
+      {
+        "executionId": "af544e6d-3461-47e9-bace-425d9b23922e",
+        "chatSessionId": "sess_2984e8bf-77e6-4c38-893c-59321fcc1c98",
+        "timestamp": 1794834251117
+      }
     ]
   }
 }

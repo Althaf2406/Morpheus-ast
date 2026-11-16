@@ -11,12 +11,12 @@ interface Props {
   readonly nodes: readonly CityNode[];
   readonly positions: Map<string, THREE.Vector3>;
   readonly scene: THREE.Scene;
-  readonly clock: THREE.Clock;
+  /** Called once on mount with the per-frame tick; called with null on unmount. */
+  readonly onTickUpdate: (tick: ((elapsedTime: number) => void) | null) => void;
   readonly reducedMotion: boolean;
 }
 
-export function CityNodes({ nodes, positions, scene, clock, reducedMotion }: Props) {
-  // Keep refs to allow cleanup without stale closure captures
+export function CityNodes({ nodes, positions, scene, onTickUpdate, reducedMotion }: Props) {
   const meshesRef = useRef<THREE.InstancedMesh[]>([]);
 
   useEffect(() => {
@@ -49,9 +49,9 @@ export function CityNodes({ nodes, positions, scene, clock, reducedMotion }: Pro
         mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
         group.indices.forEach((nodeIdx, instIdx) => {
-          const node = nodes[nodeIdx];
+          const node   = nodes[nodeIdx];
           const height = Math.max(node.complexity * 0.5, 0.5);
-          const pos = positions.get(node.id) ?? new THREE.Vector3();
+          const pos    = positions.get(node.id) ?? new THREE.Vector3();
           const matrix = new THREE.Matrix4();
           matrix.compose(
             new THREE.Vector3(pos.x, height * 0.5, pos.z),
@@ -65,46 +65,44 @@ export function CityNodes({ nodes, positions, scene, clock, reducedMotion }: Pro
         mesh.instanceMatrix.needsUpdate = true;
         if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
-        // Store node indices on userData for animation
-        mesh.userData = { nodeIndices: group.indices, isFaulted: group.color === COLOR_FAULTED };
+        // Store node indices on userData for per-frame tick
+        mesh.userData = {
+          nodeIndices: group.indices,
+          isFaulted:   group.color === COLOR_FAULTED,
+        };
         scene.add(mesh);
         return mesh;
       });
 
     meshesRef.current = meshes;
 
-    // --- rAF pulse animation for faulted nodes (skipped when reducedMotion) ---
-    let rafId: number;
+    // --- Per-frame tick: pulse faulted nodes via the scene's single rAF loop ---
+    const dummy = new THREE.Object3D();
 
-    if (!reducedMotion) {
-      const dummy = new THREE.Object3D();
-
-      const animate = () => {
-        rafId = requestAnimationFrame(animate);
-        const t = clock.getElapsedTime();
-
-        meshes.forEach((mesh) => {
-          if (!mesh.userData["isFaulted"]) return;
-          const nodeIndices = mesh.userData["nodeIndices"] as number[];
-          nodeIndices.forEach((nodeIdx, instIdx) => {
-            const node = nodes[nodeIdx];
-            const baseHeight = Math.max(node.complexity * 0.5, 0.5);
-            const pulse = 1 + 0.08 * Math.sin(t * 4);
-            const pos = positions.get(node.id) ?? new THREE.Vector3();
-            dummy.position.set(pos.x, baseHeight * 0.5 * pulse, pos.z);
-            dummy.scale.set(1, baseHeight * pulse, 1);
-            dummy.updateMatrix();
-            mesh.setMatrixAt(instIdx, dummy.matrix);
+    const tick = reducedMotion
+      ? null
+      : (elapsedTime: number): void => {
+          meshes.forEach((mesh) => {
+            if (!mesh.userData["isFaulted"]) return;
+            const nodeIndices = mesh.userData["nodeIndices"] as number[];
+            nodeIndices.forEach((nodeIdx, instIdx) => {
+              const node       = nodes[nodeIdx];
+              const baseHeight = Math.max(node.complexity * 0.5, 0.5);
+              const pulse      = 1 + 0.08 * Math.sin(elapsedTime * 4);
+              const pos        = positions.get(node.id) ?? new THREE.Vector3();
+              dummy.position.set(pos.x, baseHeight * 0.5 * pulse, pos.z);
+              dummy.scale.set(1, baseHeight * pulse, 1);
+              dummy.updateMatrix();
+              mesh.setMatrixAt(instIdx, dummy.matrix);
+            });
+            mesh.instanceMatrix.needsUpdate = true;
           });
-          mesh.instanceMatrix.needsUpdate = true;
-        });
-      };
+        };
 
-      rafId = requestAnimationFrame(animate);
-    }
+    onTickUpdate(tick);
 
     return () => {
-      if (!reducedMotion) cancelAnimationFrame(rafId);
+      onTickUpdate(null);
       meshes.forEach((mesh) => {
         scene.remove(mesh);
         (mesh.material as THREE.MeshStandardMaterial).dispose();
@@ -112,7 +110,8 @@ export function CityNodes({ nodes, positions, scene, clock, reducedMotion }: Pro
       geo.dispose();
       meshesRef.current = [];
     };
-  }, [nodes, positions, scene, clock, reducedMotion]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, positions, scene, reducedMotion]);
 
   return null;
 }

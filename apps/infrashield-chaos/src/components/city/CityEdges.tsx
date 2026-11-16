@@ -21,28 +21,38 @@ function edgeColor(edge: CityEdge): THREE.Color {
 }
 
 /** Builds a building-top position from base position + node complexity. */
-function buildingTop(nodeId: string, nodes: readonly CityNode[], positions: Map<string, THREE.Vector3>): THREE.Vector3 {
+function buildingTop(
+  nodeId: string,
+  nodes: readonly CityNode[],
+  positions: Map<string, THREE.Vector3>
+): THREE.Vector3 {
   const base = positions.get(nodeId);
   if (base == null) return new THREE.Vector3();
-  const node = nodes.find((n) => n.id === nodeId);
+  const node   = nodes.find((n) => n.id === nodeId);
   const height = node != null ? Math.max(node.complexity * 0.5, 0.5) : 0.5;
   return new THREE.Vector3(base.x, height, base.z);
 }
 
 export function CityEdges({ edges, nodes, positions, scene }: Props) {
   useEffect(() => {
-    if (edges.length === 0) return;
+    // --- Static edges: exclude those connected to faulted nodes (handled by useFaultAnimation) ---
+    const faultedIds = new Set(nodes.filter((n) => n.isFaulted).map((n) => n.id));
+    const staticEdges = edges.filter(
+      (e) => !faultedIds.has(e.sourceId) && !faultedIds.has(e.targetId)
+    );
+
+    if (staticEdges.length === 0) return;
 
     // 2 vertices per edge, 3 floats per vertex
-    const posArr = new Float32Array(edges.length * 2 * 3);
-    const colArr = new Float32Array(edges.length * 2 * 3);
+    const posArr = new Float32Array(staticEdges.length * 2 * 3);
+    const colArr = new Float32Array(staticEdges.length * 2 * 3);
 
-    edges.forEach((edge, i) => {
+    staticEdges.forEach((edge, i) => {
       const src = buildingTop(edge.sourceId, nodes, positions);
       const tgt = buildingTop(edge.targetId, nodes, positions);
       const col = edgeColor(edge);
 
-      const base = i * 6;
+      const base       = i * 6;
       posArr[base + 0] = src.x; posArr[base + 1] = src.y; posArr[base + 2] = src.z;
       posArr[base + 3] = tgt.x; posArr[base + 4] = tgt.y; posArr[base + 5] = tgt.z;
 
