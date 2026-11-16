@@ -8,6 +8,7 @@ import {
   mockHealthySREDashboard,
   mockFaultedSREDashboard,
 } from "./mock/sreDashboard.ts";
+import { mockAdapter } from "./mock/mockAdapter.ts";
 import type { CyberCityLayout } from "./adapter.ts";
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         dashboard={isFaultActive ? mockFaultedSREDashboard : mockHealthySREDashboard}
         findings={mockSecurityFindings}
         isVisible={isFaultActive}
+        adapter={mockAdapter}
       />
     </div>
   );

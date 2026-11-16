@@ -4,6 +4,8 @@ import { TopologyMetricsCard }   from "./TopologyMetricsCard.tsx";
 import { SecurityFindingsCard }  from "./SecurityFindingsCard.tsx";
 import type { Finding }          from "./SecurityFindingsCard.tsx";
 import { AIPatchCard }           from "./AIPatchCard.tsx";
+import { BugfixSpecButton }      from "./BugfixSpecButton.tsx";
+import type { BugfixSpecProvider } from "./BugfixSpecButton.tsx";
 
 // --- Types ---
 
@@ -11,6 +13,7 @@ interface Props {
   readonly dashboard:  SREDashboardData;
   readonly findings:   readonly Finding[];
   readonly isVisible:  boolean;
+  readonly adapter:    BugfixSpecProvider;
 }
 
 // --- Styles ---
@@ -49,7 +52,7 @@ const DIVIDER: React.CSSProperties = {
 
 // --- Component ---
 
-export function SREDashboardPanel({ dashboard, findings, isVisible }: Props) {
+export function SREDashboardPanel({ dashboard, findings, isVisible, adapter }: Props) {
   if (!isVisible) return null;
 
   return (
@@ -78,6 +81,8 @@ export function SREDashboardPanel({ dashboard, findings, isVisible }: Props) {
       <div style={DIVIDER} />
 
       <AIPatchCard lastPatch={dashboard.lastPatch} />
+
+      <BugfixSpecButton adapter={adapter} isEnabled={isVisible} />
     </div>
   );
 }
