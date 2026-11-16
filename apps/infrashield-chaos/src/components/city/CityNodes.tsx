@@ -2,10 +2,8 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { CityNode } from "../../adapter.ts";
 
-// --- Color constants (healthy / affected / faulted) ---
-const COLOR_HEALTHY  = new THREE.Color("#00e5ff");
-const COLOR_AFFECTED = new THREE.Color("#ffaa00");
-const COLOR_FAULTED  = new THREE.Color("#ff2222");
+// --- Color constants ---
+const COLOR_HEALTHY = new THREE.Color("#00e5ff");
 
 interface Props {
   readonly nodes: readonly CityNode[];
@@ -13,26 +11,25 @@ interface Props {
   readonly scene: THREE.Scene;
   /** Called once on mount with the per-frame tick; called with null on unmount. */
   readonly onTickUpdate: (tick: ((elapsedTime: number) => void) | null) => void;
-  readonly reducedMotion: boolean;
 }
 
-export function CityNodes({ nodes, positions, scene, onTickUpdate, reducedMotion }: Props) {
+export function CityNodes({ nodes, positions, scene, onTickUpdate }: Props) {
   const meshesRef = useRef<THREE.InstancedMesh[]>([]);
 
   useEffect(() => {
     const geo = new THREE.BoxGeometry(1, 1, 1);
 
-    // Build three instanced meshes — one per color group
+    // Build one instanced mesh for healthy nodes only.
+    // Faulted and affected nodes are managed exclusively by the fault animation.
     const groups: Array<{ color: THREE.Color; indices: number[] }> = [
-      { color: COLOR_HEALTHY,  indices: [] },
-      { color: COLOR_AFFECTED, indices: [] },
-      { color: COLOR_FAULTED,  indices: [] },
+      { color: COLOR_HEALTHY, indices: [] },
     ];
 
     nodes.forEach((node, i) => {
-      if (node.isFaulted)        groups[2].indices.push(i);
-      else if (node.isAffected)  groups[1].indices.push(i);
-      else                       groups[0].indices.push(i);
+      // Faulted and affected nodes are drawn exclusively by the fault animation
+      // system (buildFaultAnimation). Drawing them here too would double-layer them.
+      if (node.isFaulted || node.isAffected) return;
+      groups[0].indices.push(i);
     });
 
     const meshes: THREE.InstancedMesh[] = groups
@@ -65,41 +62,16 @@ export function CityNodes({ nodes, positions, scene, onTickUpdate, reducedMotion
         mesh.instanceMatrix.needsUpdate = true;
         if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
-        // Store node indices on userData for per-frame tick
-        mesh.userData = {
-          nodeIndices: group.indices,
-          isFaulted:   group.color === COLOR_FAULTED,
-        };
+        mesh.userData = { nodeIndices: group.indices };
         scene.add(mesh);
         return mesh;
       });
 
     meshesRef.current = meshes;
 
-    // --- Per-frame tick: pulse faulted nodes via the scene's single rAF loop ---
-    const dummy = new THREE.Object3D();
-
-    const tick = reducedMotion
-      ? null
-      : (elapsedTime: number): void => {
-          meshes.forEach((mesh) => {
-            if (!mesh.userData["isFaulted"]) return;
-            const nodeIndices = mesh.userData["nodeIndices"] as number[];
-            nodeIndices.forEach((nodeIdx, instIdx) => {
-              const node       = nodes[nodeIdx];
-              const baseHeight = Math.max(node.complexity * 0.5, 0.5);
-              const pulse      = 1 + 0.08 * Math.sin(elapsedTime * 4);
-              const pos        = positions.get(node.id) ?? new THREE.Vector3();
-              dummy.position.set(pos.x, baseHeight * 0.5 * pulse, pos.z);
-              dummy.scale.set(1, baseHeight * pulse, 1);
-              dummy.updateMatrix();
-              mesh.setMatrixAt(instIdx, dummy.matrix);
-            });
-            mesh.instanceMatrix.needsUpdate = true;
-          });
-        };
-
-    onTickUpdate(tick);
+    // CityNodes has no per-frame animation — healthy buildings are static.
+    // Faulted/affected animation is owned entirely by useFaultAnimation.
+    onTickUpdate(null);
 
     return () => {
       onTickUpdate(null);
@@ -111,7 +83,7 @@ export function CityNodes({ nodes, positions, scene, onTickUpdate, reducedMotion
       meshesRef.current = [];
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, positions, scene, reducedMotion]);
+  }, [nodes, positions, scene]);
 
   return null;
 }

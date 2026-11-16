@@ -134,11 +134,20 @@ export function buildFaultAnimation(params: BuildParams): FaultAnimationHandle {
       if (reducedMotion) {
         cm.mesh.scale.set(1.05, 0.05, 1.05);
         cm.mesh.rotation.z = 0.25;
+        cm.mesh.position.y = 0.025;
         return;
       }
-      const progress = Math.min(age / COLLAPSE_DURATION, 1);
-      const pulse    = 1 + 0.1 * Math.sin(elapsedTime * 5);
-      const scaleY   = cm.baseHeight * (1 - progress * 0.95) * (progress < 1 ? pulse : 1);
+      if (age >= COLLAPSE_DURATION) {
+        // Settled rubble: stay flat, dim glow, no pulse.
+        cm.mesh.scale.set(1.1, 0.05, 1.1);
+        cm.mesh.rotation.z = 0.25;
+        cm.mesh.position.y = 0.025;
+        const mat = cm.mesh.material as THREE.MeshStandardMaterial;
+        mat.emissiveIntensity = 0.08;
+        return;
+      }
+      const progress = age / COLLAPSE_DURATION;
+      const scaleY   = cm.baseHeight * (1 - progress * 0.95);
       cm.mesh.scale.set(1 + progress * 0.1, Math.max(scaleY, 0.05), 1 + progress * 0.1);
       cm.mesh.rotation.z = progress * 0.25;
       cm.mesh.position.y = Math.max(scaleY * 0.5, 0.025);

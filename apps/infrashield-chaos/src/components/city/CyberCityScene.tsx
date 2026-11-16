@@ -142,7 +142,6 @@ export function CyberCityScene({ layout }: Props) {
             positions={positions}
             scene={scene}
             onTickUpdate={handleNodeTick}
-            reducedMotion={reducedMotion}
           />
           <CityEdges
             edges={layout.edges}
