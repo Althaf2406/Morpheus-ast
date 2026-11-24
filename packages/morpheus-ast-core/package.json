@@ -4,6 +4,10 @@
   "description": "Headless, domain-agnostic AST compiler, blast-radius analyzer, and surgical code mutator",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./tree-sitter": { "types": "./dist/parser/tree-sitter.d.ts", "default": "./dist/parser/tree-sitter.js" }
+  },
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "typecheck": "tsc --noEmit",

@@ -3,6 +3,13 @@
  *
  * Tree-sitter (WASM) parsing with guaranteed tree release.
  *
+ * Status: audited, optional module. Import it from "morpheus-ast-core/tree-sitter". It is not part of
+ * createEngine() or the default browser path; the engine uses the TypeScript Compiler API there.
+ * Audit evidence: tests/pbt/tree-sitter-wasm.test.ts (alloc/delete pairing, UTF-16 offsets, and a
+ * measured WASM heap: 0 MB growth over 1000 parses with delete(), 83 MB over 300 without it).
+ * To use it in a browser, host a grammar file (e.g. tree-sitter-typescript.wasm, about 2 MB) and pass
+ * its URL to TreeSitterParser.create().
+ *
  * Contract (.kiro/steering/ast-surgical-splice.md section 4):
  *   - Every Tree returned by parser.parse() is released with tree.delete() in a
  *     finally block before the call returns or throws.

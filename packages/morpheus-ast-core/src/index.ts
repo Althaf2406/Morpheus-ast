@@ -4,6 +4,11 @@
  * createEngine() returns the MorpheusASTEngine described in contracts.ts. The apps
  * receive the engine through their adapter and use only the types from contracts.ts.
  *
+ * Parser selection: createEngine() parses with the TypeScript Compiler API, which runs in a
+ * browser with no extra assets. The audited Tree-sitter WASM parser is a separate entry point,
+ * "morpheus-ast-core/tree-sitter", so bundles that do not use it never load web-tree-sitter or
+ * need to host a grammar .wasm file.
+ *
  * Governance (.kiro/steering/00-skeleton-isolation.md):
  *   - Zero `any` types, no domain vocabulary, no UI dependencies.
  */
