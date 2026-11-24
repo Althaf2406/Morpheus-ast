@@ -1,12 +1,12 @@
 /**
  * contracts.ts — MORPHEUS-AST Public API
  *
- * This is the ONLY file that apps/infrashield-chaos and apps/necro-compiler-game
+ * This is the ONLY file that the two applications under apps/
  * are permitted to import from packages/morpheus-ast-core.
  *
  * Rules enforced by .kiro/steering/00-skeleton-isolation.md:
  *   - No `any` types anywhere.
- *   - No domain-specific vocabulary (no "lambda", "dungeon", "spell", "monster").
+ *   - No domain-specific vocabulary (the engine is application-agnostic).
  *   - No UI framework imports.
  *   - Unidirectional: apps → contracts.ts, never core → apps.
  */
@@ -39,12 +39,27 @@ export interface ParsedFile {
   readonly errors: readonly string[];
 }
 
+/** A source file supplied as text, so no file system is needed (e.g. in a browser). */
+export interface VirtualFile {
+  readonly filePath: string;
+  readonly sourceText: string;
+}
+
 /** Input to the parser engine. */
 export interface ParseRequest {
-  /** Absolute file paths to parse. */
+  /** Absolute file paths to parse from disk. May be empty. */
   readonly filePaths: readonly string[];
+  /** In-memory files to parse in addition to `filePaths`. */
+  readonly virtualFiles?: readonly VirtualFile[];
   /** If true, include full source text in ParsedFile. Default false. */
   readonly includeSourceText?: boolean;
+}
+
+/** A ready-made repository both apps can load with no upload and no login. */
+export interface SampleRepository {
+  readonly label: string;
+  readonly description: string;
+  readonly files: readonly VirtualFile[];
 }
 
 /** Output of the parser engine. */
@@ -389,8 +404,29 @@ export type RunSecurityScan = (
 //    via the adapter. They never instantiate core classes directly.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Result of applying splices to text held in memory (no file I/O). */
+export interface TextMutationResult {
+  readonly mutatedSource: string;
+  readonly rollbackRecord: RollbackRecord;
+}
+
+/** Applies a splice batch to a string. Same validation and rollback guarantees as the file path. */
+export type ApplyMutationToText = (
+  source: string,
+  splices: readonly SpliceRange[]
+) => TextMutationResult;
+
+/** Restores text mutated by ApplyMutationToText. */
+export type RollbackMutationText = (mutatedSource: string, record: RollbackRecord) => string;
+
+/** Returns the pre-loaded sample repository (needs no file system, login or upload). */
+export type GetSampleRepository = () => SampleRepository;
+
 /** The complete public API surface of morpheus-ast-core, as consumed by both apps. */
 export interface MorpheusASTEngine {
+  readonly getSampleRepository: GetSampleRepository;
+  readonly applyMutationToText: ApplyMutationToText;
+  readonly rollbackMutationText: RollbackMutationText;
   readonly parseSourceFiles: ParseSourceFiles;
   readonly buildTopologyGraph: BuildTopologyGraph;
   readonly computeBlastRadius: ComputeBlastRadius;

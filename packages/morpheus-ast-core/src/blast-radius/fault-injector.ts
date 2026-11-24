@@ -1,7 +1,7 @@
 /**
  * blast-radius/fault-injector.ts
  *
- * Chaos Fault Injection Engine — simulates latency, network failure,
+ * Fault Injection Engine — simulates latency, network failure,
  * extreme payload, and uncaught exception faults against a TopologyGraph.
  *
  * Governance (.kiro/steering/00-skeleton-isolation.md):
@@ -34,10 +34,10 @@ export class FaultInjectionError extends Error {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ChaosFaultInjector
+// FaultInjector
 // ─────────────────────────────────────────────────────────────────────────────
 
-export class ChaosFaultInjector {
+export class FaultInjector {
   /**
    * Injects a fault into the topology graph and returns the computed
    * blast-radius result. Pure analysis — no source file mutation.
@@ -329,7 +329,7 @@ export function computeBlastRadius(
   graph: TopologyGraph
 ): import("../contracts.js").BlastRadiusResult {
   const startMs = Date.now();
-  const injector = new ChaosFaultInjector();
+  const injector = new FaultInjector();
 
   // Reuse fault injector adjacency logic via a lightweight shim
   const adj = buildAdjacencyStatic(graph);

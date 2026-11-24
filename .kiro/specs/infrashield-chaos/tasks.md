@@ -8,7 +8,7 @@ Tasks are organized into parallel waves. Wave 1 must complete before Wave 2 begi
 ## Wave 1 — Core Integration (Person A, Days 8–10)
 
 - [x] **TASK-IS-01**: Extend `contracts.ts` with `FaultInjectionResult`, `BedrockPatchSuggestion`, `BugfixSpec`, and `SecurityScanResult` interfaces.
-- [x] **TASK-IS-02**: Implement `ChaosFaultInjector` in `src/blast-radius/fault-injector.ts` supporting all four `FaultType` values.
+- [x] **TASK-IS-02**: Implement `FaultInjector` in `src/blast-radius/fault-injector.ts` supporting all four `FaultType` values.
 - [x] **TASK-IS-03**: Implement `BedrockAdvisor` in `src/bedrock-advisor/index.ts` integrating Amazon Bedrock Claude 3 for patch synthesis.
 - [x] **TASK-IS-04**: Implement `BugfixSpecGenerator` in `src/mutator/bugfix-generator.ts` producing conformant `bugfix.md` output.
 - [x] **TASK-IS-05**: Implement `SecurityIngestionAdapter` in `src/security/ingestion.ts` mapping SonarQube/Snyk/AWS findings to `SecurityScanResult[]`.

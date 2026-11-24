@@ -7,6 +7,7 @@
  *   R2. packages/morpheus-ast-core/package.json must not depend on UI frameworks.
  *   R3. apps/* may import from morpheus-ast-core only via src/contracts.
  *   R4. packages/morpheus-ast-core must not contain the TypeScript `any` type.
+ *   R5. packages/morpheus-ast-core (src and tests) must not use application vocabulary.
  *
  * Plain Node, no dependencies. Exit code 1 on any violation.
  */
@@ -21,6 +22,9 @@ const appsDir = join(root, "apps");
 
 const UI_PACKAGES = ["react", "react-dom", "three", "@react-three/fiber", "@react-three/drei", "vue", "svelte"];
 const SKIP_DIRS = new Set(["node_modules", "dist", ".git"]);
+// Vocabulary that belongs to the applications, never to the headless core (comments included).
+const DOMAIN_WORDS =
+  /\b(dungeons?|spells?|monsters?|lambdas?|serverless|sre|chaos|necro|poltergeists?|demons?|zombies?|ghosts?|curses?|boss)\b/i;
 
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
@@ -66,6 +70,10 @@ for (const file of walk(join(coreDir, "src")).concat(walk(join(coreDir, "tests")
     const hitsApps = /(^|[\\/])apps([\\/]|$)/.test(spec) || (resolved !== null && resolved.startsWith(appsDir));
     if (hitsApps) violations.push(`R1 ${rel(file)}:${line} core imports from apps/ ("${spec}")`);
   }
+  src.split(/\r?\n/).forEach((line, i) => {
+    const hit = DOMAIN_WORDS.exec(line);
+    if (hit) violations.push(`R5 ${rel(file)}:${i + 1} domain vocabulary in core ("${hit[0]}")`);
+  });
   if (!rel(file).includes("/sample-repo/")) {
     stripNonCode(src).split(/\r?\n/).forEach((line, i) => {
       if (/(:\s*any\b|<any>|\bas\s+any\b|\bany\[\]|Array<any>)/.test(line)) {

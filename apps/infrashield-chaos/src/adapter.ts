@@ -107,6 +107,23 @@ export class InfraShieldAdapter {
     return this.buildCityLayout(null, null);
   }
 
+  /** Loads the pre-loaded sample repository: no upload, login or file system needed. */
+  async loadSampleRepository(): Promise<CyberCityLayout> {
+    const sample = this.engine.getSampleRepository();
+    const parseResult = await this.engine.parseSourceFiles({
+      filePaths: [],
+      virtualFiles: sample.files,
+      includeSourceText: true,
+    });
+
+    this.currentGraph = await this.engine.buildTopologyGraph(parseResult.files);
+    this.currentFindings = [
+      ...(await this.engine.runSecurityScan(parseResult.files)),
+    ];
+
+    return this.buildCityLayout(null, null);
+  }
+
   // ─── Fault injection ─────────────────────────────────────────────────────
 
   async injectFault(request: FaultInjectionRequest): Promise<CyberCityLayout> {

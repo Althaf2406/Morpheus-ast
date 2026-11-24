@@ -34,6 +34,12 @@ export class TopologyCompiler {
     const allEdges: CallEdge[] = [];
     let edgeCounter = 0;
 
+    const parsedSources: {
+      file: ParsedFile;
+      sourceFile: ts.SourceFile;
+      functions: FunctionNode[];
+    }[] = [];
+
     for (const file of parsedFiles) {
       if (file.sourceText === "" || file.hasErrors) continue;
 
@@ -46,18 +52,28 @@ export class TopologyCompiler {
 
       const functions = this.extractFunctions(sourceFile, file.filePath);
       allFunctions.push(...functions);
+      parsedSources.push({ file, sourceFile, functions });
+    }
 
-      const edges = this.extractCallEdges(sourceFile, functions, edgeCounter);
+    // Index every function by name so calls can be resolved across files.
+    const globalByName = new Map<string, string[]>();
+    for (const fn of allFunctions) {
+      const ids = globalByName.get(fn.name);
+      if (ids === undefined) globalByName.set(fn.name, [fn.id]);
+      else ids.push(fn.id);
+    }
+
+    for (const { file, sourceFile, functions } of parsedSources) {
+      const edges = this.extractCallEdges(sourceFile, functions, edgeCounter, globalByName);
       edgeCounter += edges.length;
       allEdges.push(...edges);
 
-      const moduleNode: ModuleNode = {
+      allModules.push({
         id: `module:${file.filePath}`,
         filePath: file.filePath,
         functionIds: functions.map((f) => f.id),
         isCircularDepMember: false, // updated below
-      };
-      allModules.push(moduleNode);
+      });
     }
 
     // Detect circular dependencies via DFS cycle detection
@@ -142,10 +158,26 @@ export class TopologyCompiler {
   // Call edge extraction
   // ─────────────────────────────────────────────────────────────────────────
 
+  /**
+   * Resolves a called name to a function id. A function in the same file wins;
+   * otherwise a name is resolved globally only when exactly one function has it,
+   * so ambiguous names never create a wrong edge.
+   */
+  private resolveCallee(
+    name: string,
+    sameFile: ReadonlyMap<string, string>,
+    globalByName: ReadonlyMap<string, readonly string[]>
+  ): string | undefined {
+    const local = sameFile.get(name);
+    if (local !== undefined) return local;
+    const candidates = globalByName.get(name);
+    return candidates !== undefined && candidates.length === 1 ? candidates[0] : undefined;
+  }
   private extractCallEdges(
     sourceFile: ts.SourceFile,
     functions: readonly FunctionNode[],
-    startCounter: number
+    startCounter: number,
+    globalByName: ReadonlyMap<string, readonly string[]>
   ): CallEdge[] {
     const edges: CallEdge[] = [];
     let counter = startCounter;
@@ -164,7 +196,8 @@ export class TopologyCompiler {
       const visit = (node: ts.Node): void => {
         if (ts.isCallExpression(node)) {
           const calleeName = this.getCalleeName(node);
-          const calleeId = calleeName != null ? nameToId.get(calleeName) : undefined;
+          const calleeId =
+            calleeName != null ? this.resolveCallee(calleeName, nameToId, globalByName) : undefined;
           if (calleeId != null && calleeId !== callerFn.id) {
             const callSite = this.getSourceRange(node, sourceFile, callerFn.filePath);
             edges.push({

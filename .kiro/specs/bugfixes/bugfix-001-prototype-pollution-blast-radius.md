@@ -3,7 +3,7 @@
 **Spec ID**: `bugfix-001`
 **Date**: 2026-11-27
 **File**: `packages/morpheus-ast-core/src/blast-radius/fault-injector.ts`
-**Function**: `ChaosFaultInjector.buildAdjacency()` / `computeBetweennessCentrality()`
+**Function**: `FaultInjector.buildAdjacency()` / `computeBetweennessCentrality()`
 **Fault Type**: `EXTREME_PAYLOAD`
 **Blast Radius Score**: 100% (affects all graph traversal paths)
 **Status**: Preventive hardening. The current implementation (`Map`-based adjacency) is not affected; no failing PBT run produced this spec. Property P5 (seed 45) is the regression guard.
@@ -109,7 +109,7 @@ This fix does **not** touch the `SurgicalMutator` or any source-file mutation pa
 No `RollbackRecord` is affected. The fix is isolated to in-memory graph traversal.
 
 ### API Surface Preservation
-- `ChaosFaultInjector.inject()` signature: **unchanged**
+- `FaultInjector.inject()` signature: **unchanged**
 - `FaultInjectionResult` shape: **unchanged**
 - `contracts.ts` types: **unchanged**
 - Both app adapters: **no changes required**

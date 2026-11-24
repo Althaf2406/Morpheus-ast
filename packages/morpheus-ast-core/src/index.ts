@@ -1,0 +1,63 @@
+/**
+ * index.ts: package entry point.
+ *
+ * createEngine() returns the MorpheusASTEngine described in contracts.ts. The apps
+ * receive the engine through their adapter and use only the types from contracts.ts.
+ *
+ * Governance (.kiro/steering/00-skeleton-isolation.md):
+ *   - Zero `any` types, no domain vocabulary, no UI dependencies.
+ */
+
+import type {
+  MorpheusASTEngine,
+  ParsedFile,
+  SecurityScanResult,
+} from "./contracts.js";
+import { SourceParser } from "./parser/index.js";
+import { TopologyCompiler } from "./topology/index.js";
+import { FaultInjector, computeBlastRadius } from "./blast-radius/fault-injector.js";
+import { SurgicalMutator } from "./mutator/index.js";
+import { BugfixSpecGenerator } from "./mutator/bugfix-generator.js";
+import { SecurityIngestionAdapter } from "./security/ingestion.js";
+import { getSampleRepository } from "./sample-repo/index.js";
+
+export type * from "./contracts.js";
+
+export function createEngine(): MorpheusASTEngine {
+  const parser = new SourceParser();
+  const topology = new TopologyCompiler();
+  const injector = new FaultInjector();
+  const mutator = new SurgicalMutator();
+  const bugfixes = new BugfixSpecGenerator();
+  const security = new SecurityIngestionAdapter();
+
+  return {
+    getSampleRepository,
+
+    parseSourceFiles: (request) => parser.parse(request),
+    buildTopologyGraph: (files) => topology.build(files),
+
+    computeBlastRadius: async (functionId, graph) => computeBlastRadius(functionId, graph),
+    injectFault: async (request, graph) => injector.inject(request, graph),
+
+    applySurgicalMutation: (request) => mutator.apply(request),
+    rollbackMutation: (record) => mutator.rollback(record),
+    applyMutationToText: (source, splices) => {
+      const { mutated, rollbackRecord } = mutator.applyToString(source, splices);
+      return { mutatedSource: mutated, rollbackRecord };
+    },
+    rollbackMutationText: (mutatedSource, record) => mutator.rollbackString(mutatedSource, record),
+
+    generateBedrockPatch: async (request) => {
+      // Loaded on demand so bundles that never call Bedrock do not pull in the AWS SDK.
+      const { BedrockAdvisor } = await import("./bedrock-advisor/index.js");
+      return new BedrockAdvisor().generatePatch(request);
+    },
+    generateBugfixSpec: (fault, graph, patch) => bugfixes.generate(fault, graph, patch),
+
+    runSecurityScan: async (files: readonly ParsedFile[]): Promise<readonly SecurityScanResult[]> => {
+      const graph = await topology.build(files);
+      return security.runInternalAnalysis(files, graph);
+    },
+  };
+}

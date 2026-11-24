@@ -4,7 +4,7 @@
  * Amazon Bedrock integration for surgical AST patch synthesis.
  *
  * Governance (.kiro/steering/00-skeleton-isolation.md):
- *   - Zero domain-specific vocabulary (no "lambda", "dungeon", "spell", etc.)
+ *   - Zero domain-specific vocabulary
  *   - Zero `any` types
  *   - Zero UI framework imports
  *   - Consumes only contracts.ts types

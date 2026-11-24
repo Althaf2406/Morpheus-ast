@@ -101,6 +101,8 @@ export class NecroCompilerAdapter {
   private lastMutation: MutationResult | null = null;
   private lastRollback = false;
   private lastAISuggestion: BedrockPatchSuggestion | null = null;
+  /** Sources of an in-memory repository (e.g. the pre-loaded sample), keyed by file path. Empty for disk repos. */
+  private readonly virtualSources = new Map<string, string>();
 
   constructor(engine: MorpheusASTEngine) {
     this.engine = engine;
@@ -109,23 +111,48 @@ export class NecroCompilerAdapter {
   // ─── Repository loading ──────────────────────────────────────────────────
 
   async loadRepository(filePaths: readonly string[]): Promise<DungeonLayout> {
-    const request: ParseRequest = { filePaths, includeSourceText: true };
-    const parseResult = await this.engine.parseSourceFiles(request);
-
-    this.currentGraph = await this.engine.buildTopologyGraph(parseResult.files);
-    this.currentFindings = [
-      ...(await this.engine.runSecurityScan(parseResult.files)),
-    ];
-
+    this.virtualSources.clear();
+    await this.analyze({ filePaths, includeSourceText: true });
     return this.buildDungeonLayout();
   }
 
-  // ─── Spell casting (surgical mutation) ───────────────────────────────────
+  /**
+   * Loads the pre-loaded sample repository: no upload, login or file system needed.
+   * Spells cast on it are applied in memory (see castSpell).
+   */
+  async loadSampleRepository(): Promise<DungeonLayout> {
+    const sample = this.engine.getSampleRepository();
+    this.virtualSources.clear();
+    for (const file of sample.files) {
+      this.virtualSources.set(file.filePath, file.sourceText);
+    }
+    await this.reanalyzeVirtual();
+    return this.buildDungeonLayout();
+  }
 
+  /** Current text of an in-memory file (for diffs in the Live Engine Inspector), or undefined. */
+  getSourceText(filePath: string): string | undefined {
+    return this.virtualSources.get(filePath);
+  }
+
+  // ─── Spell casting (surgical mutation) ───────────────────────────
+
+  /**
+   * Casts a spell. When every splice targets a file held in memory (the pre-loaded
+   * sample), the mutation is applied in memory and the dungeon is re-analysed so
+   * buildDungeonLayout() reflects it. Otherwise the splices are applied to files on disk.
+   */
   async castSpell(request: MutationRequest): Promise<MutationResult> {
-    this.lastMutation = await this.engine.applySurgicalMutation(request);
+    const inMemory = request.splices.filter((s) => this.virtualSources.has(s.filePath)).length;
+    if (inMemory > 0 && inMemory < request.splices.length) {
+      throw new NecroAdapterError("castSpell: one spell cannot mix in-memory and on-disk files.");
+    }
+
+    this.lastMutation =
+      inMemory > 0
+        ? await this.castSpellInMemory(request)
+        : await this.engine.applySurgicalMutation(request);
     this.lastRollback = false;
-    // After mutation, rebuild the dungeon to reflect the cleaner code
     return this.lastMutation;
   }
 
@@ -133,13 +160,20 @@ export class NecroCompilerAdapter {
     if (this.lastMutation == null) {
       throw new NecroAdapterError("rollbackLastSpell: no spell to undo.");
     }
-    await this.engine.rollbackMutation(this.lastMutation.rollbackRecord);
+    await this.rollbackRecord(this.lastMutation.rollbackRecord);
     this.lastRollback = true;
     this.lastMutation = null;
   }
 
+  /** Restores a file from its record: in memory for sample files, on disk otherwise. */
   async rollbackRecord(record: RollbackRecord): Promise<void> {
-    await this.engine.rollbackMutation(record);
+    const current = this.virtualSources.get(record.filePath);
+    if (current === undefined) {
+      await this.engine.rollbackMutation(record);
+      return;
+    }
+    this.virtualSources.set(record.filePath, this.engine.rollbackMutationText(current, record));
+    await this.reanalyzeVirtual();
   }
 
   // ─── AI spell advisor ────────────────────────────────────────────────────
@@ -313,6 +347,40 @@ export class NecroCompilerAdapter {
     return null;
   }
 
+  /** Applies a single-file splice batch to an in-memory source and refreshes the analysis. */
+  private async castSpellInMemory(request: MutationRequest): Promise<MutationResult> {
+    const filePath = request.splices[0]!.filePath;
+    if (request.splices.some((s) => s.filePath !== filePath)) {
+      throw new NecroAdapterError("castSpell: one spell must target a single file.");
+    }
+
+    const startMs = Date.now();
+    const source = this.virtualSources.get(filePath)!;
+    // Throws on conflicts or invalid ranges before any state changes.
+    const text = this.engine.applyMutationToText(source, request.splices);
+    this.virtualSources.set(filePath, text.mutatedSource);
+    await this.reanalyzeVirtual();
+
+    return {
+      mutationId: text.rollbackRecord.mutationId,
+      filePath,
+      splicesApplied: request.splices.length,
+      mutatedSource: text.mutatedSource,
+      rollbackRecord: text.rollbackRecord,
+      durationMs: Date.now() - startMs,
+    };
+  }
+
+  private async reanalyzeVirtual(): Promise<void> {
+    const virtualFiles = [...this.virtualSources].map(([filePath, sourceText]) => ({ filePath, sourceText }));
+    await this.analyze({ filePaths: [], virtualFiles, includeSourceText: true });
+  }
+
+  private async analyze(request: ParseRequest): Promise<void> {
+    const parseResult = await this.engine.parseSourceFiles(request);
+    this.currentGraph = await this.engine.buildTopologyGraph(parseResult.files);
+    this.currentFindings = [...(await this.engine.runSecurityScan(parseResult.files))];
+  }
   private requireGraph(): void {
     if (this.currentGraph == null) {
       throw new NecroAdapterError("No repository loaded. Call loadRepository() first.");

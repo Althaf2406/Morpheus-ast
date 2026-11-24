@@ -30,7 +30,7 @@
  */
 
 import * as fc from "fast-check";
-import { ChaosFaultInjector, FaultInjectionError } from "../../src/blast-radius/fault-injector.js";
+import { FaultInjector, FaultInjectionError } from "../../src/blast-radius/fault-injector.js";
 import type {
   TopologyGraph,
   FunctionNode,
@@ -163,7 +163,7 @@ const faultTypeArb = (): fc.Arbitrary<FaultType> =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("blast-radius PBT", () => {
-  const injector = new ChaosFaultInjector();
+  const injector = new FaultInjector();
 
   // ── P1 & P2: Bounds ────────────────────────────────────────────────────────
   it("P1+P2: blastRadiusScore and centralityScore ∈ [0,1] for any graph", () => {

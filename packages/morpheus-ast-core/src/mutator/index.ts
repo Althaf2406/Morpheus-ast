@@ -10,7 +10,6 @@
  *   - Every mutation stores a RollbackRecord for byte-perfect reversal.
  */
 
-import { readFile, writeFile } from "fs/promises";
 import type {
   MutationRequest,
   MutationResult,
@@ -42,6 +41,14 @@ type Segment = RollbackRecord["originalSegments"][number];
 // Pure helpers shared by the file-backed and in-memory paths
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** True when `index` sits between the two halves of a surrogate pair. */
+function splitsSurrogatePair(source: string, index: number): boolean {
+  if (index <= 0 || index >= source.length) return false;
+  const before = source.charCodeAt(index - 1);
+  const after = source.charCodeAt(index);
+  return before >= 0xd800 && before <= 0xdbff && after >= 0xdc00 && after <= 0xdfff;
+}
+
 /** Validates a batch and returns it sorted by startIndex, descending. */
 function prepareBatch(source: string, splices: readonly SpliceRange[]): SpliceRange[] {
   const sorted = [...splices].sort((a, b) => b.startIndex - a.startIndex);
@@ -56,6 +63,14 @@ function prepareBatch(source: string, splices: readonly SpliceRange[]): SpliceRa
       throw new MutationError(
         `Splice has startIndex (${s.startIndex}) > endIndex (${s.endIndex}).`
       );
+    }
+    for (const boundary of [s.startIndex, s.endIndex]) {
+      if (splitsSurrogatePair(source, boundary)) {
+        throw new MutationError(
+          `Splice boundary ${boundary} falls inside a UTF-16 surrogate pair. ` +
+            `Writing the result as UTF-8 would corrupt the file.`
+        );
+      }
     }
   }
 
@@ -144,6 +159,8 @@ export class SurgicalMutator {
     }
 
     const filePath = request.splices[0]!.filePath;
+    // Lazy import keeps the in-memory path usable in a browser bundle.
+    const { readFile, writeFile } = await import("fs/promises");
     const original = await readFile(filePath, "utf-8");
 
     const sorted = prepareBatch(original, request.splices);
@@ -169,6 +186,7 @@ export class SurgicalMutator {
 
   /** Restores the file to its pre-mutation content using the rollback record. */
   async rollback(record: RollbackRecord): Promise<void> {
+    const { readFile, writeFile } = await import("fs/promises");
     const current = await readFile(record.filePath, "utf-8");
     await writeFile(record.filePath, restoreSegments(current, record.originalSegments), "utf-8");
   }
