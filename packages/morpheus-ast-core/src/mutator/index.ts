@@ -42,7 +42,7 @@ type Segment = RollbackRecord["originalSegments"][number];
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** True when `index` sits between the two halves of a surrogate pair. */
-function splitsSurrogatePair(source: string, index: number): boolean {
+export function splitsSurrogatePair(source: string, index: number): boolean {
   if (index <= 0 || index >= source.length) return false;
   const before = source.charCodeAt(index - 1);
   const after = source.charCodeAt(index);

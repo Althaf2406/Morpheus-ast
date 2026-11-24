@@ -138,16 +138,10 @@ import is by construction and has no test.
 uncaught-exception paths, unused variables, circular calls and functions with complexity of at least 15.
 *Verified by:* `sample-repo.test.ts` (uncaught-exception and unused-variable findings, and at least five findings).
 
-**REQ-CE-028.** WHEN `SecurityIngestionAdapter` receives SonarQube, Snyk, AWS Security Hub or Aikido
-findings, THE SYSTEM SHALL map each to a `SecurityScanResult`.
-*Not yet verified:* no test, and the adapter is not exposed through the engine.
-
-**REQ-CE-029.** WHEN `generateBedrockPatch` receives a fault result, THE SYSTEM SHALL return a suggestion
-with splices, rationale and confidence. IF the model response is not valid JSON, THEN THE SYSTEM SHALL
-return a suggestion with no splices and confidence 0. IF the call fails, THEN THE SYSTEM SHALL throw
-`BedrockAdvisorError`.
-*Not yet verified:* needs credentials or a stubbed client.
-
+**REQ-CE-028.** WHEN `ingestExternalFindings` receives SonarQube, Snyk, AWS Security Hub or Aikido findings, THE SYSTEM SHALL return one `SecurityScanResult` per entry, in the order SonarQube, Snyk, AWS, Aikido, each with a severity of CRITICAL, HIGH, MEDIUM, LOW or INFO and a unique finding id. WHEN a finding gives a line inside a function of the same file (after normalising path separators and a SonarQube `projectKey:` prefix), THE SYSTEM SHALL attach it to the innermost such function. WHEN it gives no line, or the line is outside every function, THE SYSTEM SHALL set `functionId` to null. CVSS scores outside 0 to 10 SHALL become null.
+*Verified by:* `security-ingestion.test.ts` I1 to I7, I10 and `engine-facade.test.ts` F5 to F7 (`bugfix-005`).
+**REQ-CE-029.** WHEN `generateBedrockPatch` receives a fault result, THE SYSTEM SHALL ask the model for splices relative to the target function's source, and SHALL return a suggestion whose splices carry file offsets and the file path taken from the graph, never from the model. IF any splice in the reply is malformed, out of bounds, overlapping, over-long or splits a surrogate pair, or there are more than 20 splices, THEN THE SYSTEM SHALL return no splices, confidence 0 and the reason in the rationale. IF the target function is not in the graph, the source is empty or does not match the function's range, or the call fails, THEN THE SYSTEM SHALL throw `BedrockAdvisorError`. A non-empty suggestion SHALL always be accepted by `SurgicalMutator`.
+*Verified by:* `bedrock-advisor.test.ts` B1 to B16, including the property test B15 (`bugfix-004`). The tests use an injected stub client; no live Bedrock call has been made.
 **REQ-CE-030.** WHEN `getSampleRepository` is called, THE SYSTEM SHALL return three in-memory files that
 parse with no syntax errors and yield at least 12 functions, 8 edges and 1 call cycle, with the
 documented flaws present.
@@ -164,5 +158,16 @@ type, and SHALL NOT use application vocabulary in core source or tests.
 *Verified by:* `scripts/check-boundaries.mjs` rules R1, R4, R5. R5 was checked against a deliberately
 bad file.
 
-**REQ-CE-033.** THE SYSTEM SHALL NOT import `web-tree-sitter` from the default entry point.
-*Verified by:* inspection of `src/index.ts`; there is no automated test.
+**REQ-CE-033.** THE SYSTEM SHALL NOT load `web-tree-sitter` or the AWS SDK when the default entry point is imported.
+*Verified by:* `pnpm run verify:dist` checks that neither module is in the module cache after `require("morpheus-ast-core")`.
+
+## Application-facing exports and packaging
+
+**REQ-CE-034.** WHEN `generateBugfixMarkdown` receives a `BugfixSpec`, THE SYSTEM SHALL return markdown with the three Kiro sections, SHALL keep each splice replacement inside a code fence longer than any run of backticks in it, and SHALL keep each splice description on one line.
+*Verified by:* `engine-facade.test.ts` F1 to F4, F3b (`bugfix-006`).
+
+**REQ-CE-035.** WHEN a consumer imports `morpheus-ast-core` or `morpheus-ast-core/tree-sitter`, THE SYSTEM SHALL resolve both to built files in `dist/`, with types under both `node16` and classic module resolution. IF a consumer imports a path that is not exported, THEN THE SYSTEM SHALL fail with `ERR_PACKAGE_PATH_NOT_EXPORTED`.
+*Verified by:* `pnpm run verify:dist` (real build, runtime resolution, and a type-checked consumer).
+
+**REQ-CE-036.** IF a scanner report is not an array, or an entry is `null` or lacks fields, THEN THE SYSTEM SHALL produce a finding with safe defaults, or none, and SHALL NOT throw.
+*Verified by:* `security-ingestion.test.ts` I8, I9 (arbitrary JSON, 2000 runs).

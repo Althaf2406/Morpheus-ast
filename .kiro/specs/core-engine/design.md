@@ -105,36 +105,44 @@ UTF-8 write (`bugfix-003`).
 
 ## 7. Security, Bedrock, bugfix specs, sample repository
 
-- **Security.** `runSecurityScan` (engine) builds the topology and reports uncaught-exception paths,
-  unused variables, circular calls and functions with complexity of at least 15.
-  `SecurityIngestionAdapter` also maps SonarQube, Snyk, AWS Security Hub and Aikido findings to
-  `SecurityScanResult`; it is not exposed through the engine yet.
-- **Bedrock.** `BedrockAdvisor.generatePatch` streams a Claude response and parses it into splice
-  suggestions. The AWS SDK is imported on demand from `createEngine()`.
-- **Bugfix specs.** `BugfixSpecGenerator.generate` produces a `BugfixSpec` with current, expected and
-  unchanged behaviour. `toMarkdown` serialises it; it is not exposed through the engine yet.
-- **Sample repository.** `getSampleRepository()` returns three in-memory files (about 20 functions,
-  29 call edges, one call cycle, complexity up to 20) with known flaws: high complexity, missing
-  error handling, an unused variable, an unguarded merge, and a circular call.
+- **Internal security analysis.** `runSecurityScan` builds the topology and reports uncaught-exception
+  paths, unused variables, circular calls and functions with complexity of at least 15.
+- **External scanners.** `ingestExternalFindings(report, graph)` normalises SonarQube, Snyk, AWS Security
+  Hub and Aikido reports (types in `contracts.ts`) into `SecurityScanResult`. Reports are untrusted: every
+  field is read defensively and nothing throws. A finding is attached to a function only when the report
+  gives a line inside it (innermost function wins, after normalising separators and a SonarQube
+  `projectKey:` prefix); whole-file findings have `functionId: null`.
+- **Bedrock.** `BedrockAdvisor.generatePatch` asks Claude for splices **relative to the target function's
+  source** and treats the reply as untrusted. It takes the file path from the graph, maps offsets to file
+  offsets, and rejects the whole patch (no splices, confidence 0) if any splice is malformed, out of bounds,
+  overlapping, over-long or splits a surrogate pair. A non-empty suggestion is always applicable by the
+  mutator. A client can be injected, so the advisor is tested without AWS. The AWS SDK is imported on demand.
+- **Bugfix specs.** `generateBugfixSpec` produces a `BugfixSpec`; `generateBugfixMarkdown` renders it as
+  `bugfix.md`, keeping model-supplied text inside a code fence it cannot close.
+- **Sample repository.** `getSampleRepository()` returns three in-memory files (20 functions, 29 call edges,
+  one call cycle, complexity up to 20) with known flaws: high complexity, missing error handling, an
+  unused variable, an unguarded merge, and a circular call.
 
 ## 8. Verification strategy
 
 | Layer | Mechanism |
 |---|---|
-| Types | `tsc --noEmit` over `src` and `tests`; both adapters typecheck against `contracts.ts` |
-| Boundaries | `scripts/check-boundaries.mjs`: R1 core does not import `apps/`, R2 no UI dependency in core, R3 apps import only `contracts`, R4 no `any`, R5 no application vocabulary |
-| Properties | `tests/pbt/`: blast-radius, mutator, stress (arbitrary Unicode, splice batches and graphs), Tree-sitter WASM audit, sample pipeline. `FC_RUNS=2000` for a heavy run |
-| Secrets | `scripts/scan-secrets.mjs` on staged, modified and untracked files |
+| Types | `tsc --noEmit` over `src` and `tests` |
+| Boundaries | `pnpm run lint:boundaries`: R1 core does not import `apps/`, R2 no UI dependency in core, R3 apps import only `contracts`, R4 no `any`, R5 no application vocabulary |
+| Properties | `pnpm run test:pbt`, `tests/pbt/`: blast radius, mutator, stress (arbitrary Unicode, splice batches, graphs), Tree-sitter WASM audit, sample pipeline, Bedrock advisor, scanner mapper, engine facade. `FC_RUNS=2000` for a heavy run |
+| Package | `pnpm run verify:dist`: real build, `exports` map, deep-import block, default entry loads neither `web-tree-sitter` nor the AWS SDK, types under `node16` and classic resolution |
+| Adapters | `pnpm run verify:adapters`: both adapters compiled in strict mode and driven against the real engine |
+| Secrets | `node scripts/scan-secrets.mjs` on staged, modified and untracked files |
 
 ## 9. Known limitations and open work
 
 - Call resolution is by name; ambiguous names produce no edge.
 - `hasUncaughtException` is a heuristic: a function with any call and no `try` is flagged.
 - Taint paths for `UNCAUGHT_EXCEPTION` are labelled `PROTOTYPE_POLLUTION`, which is a loose label.
-- Bedrock suggestions are not validated for bounds or required fields, and the advisor has no test
-  because it needs credentials or a stubbed client.
-- External-scanner ingestion and `BugfixSpecGenerator.toMarkdown` are not reachable through the engine.
+- No live Bedrock call has been made. The advisor is tested with a stub client, so the real model's
+  reply quality and the prompt's effectiveness are unmeasured.
 - Tree-sitter is not used by `createEngine()`.
-- A mutation request targets one file; a multi-file request is rejected by the file path.
+- A mutation request targets one file.
+- InfraShield's adapter has no in-memory mutation path; only NECRO's does.
 - No performance budgets have been measured.
-- The `exports` map in `package.json` has not been exercised against a built `dist/`.
+- Several behaviours still lack their own test (see `tasks.md`).

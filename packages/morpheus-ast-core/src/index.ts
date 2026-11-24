@@ -39,6 +39,14 @@ export function createEngine(): MorpheusASTEngine {
   return {
     getSampleRepository,
 
+    generateBugfixMarkdown: (spec) => bugfixes.toMarkdown(spec),
+    ingestExternalFindings: (report, graph) => [
+      ...security.ingestSonarQube(report.sonarqube ?? [], graph),
+      ...security.ingestSnyk(report.snyk ?? [], graph),
+      ...security.ingestAwsSecurity(report.awsSecurity ?? [], graph),
+      ...security.ingestAikido(report.aikido ?? [], graph),
+    ],
+
     parseSourceFiles: (request) => parser.parse(request),
     buildTopologyGraph: (files) => topology.build(files),
 

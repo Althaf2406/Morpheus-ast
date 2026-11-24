@@ -39,5 +39,7 @@ login, or upload is needed.
 ```
 pnpm run lint:boundaries   # import boundaries, no `any`, no application vocabulary in core
 pnpm run test:pbt          # property tests; FC_RUNS=2000 for a heavy run
+pnpm run verify:dist       # real build, exports map, deep-import block, type resolution
+pnpm run verify:adapters   # both app adapters against the real engine
 node scripts/scan-secrets.mjs
 ```

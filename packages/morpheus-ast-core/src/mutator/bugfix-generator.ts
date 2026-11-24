@@ -24,6 +24,20 @@ import type {
 // BugfixSpecGenerator
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Wraps code in a fence longer than any run of backticks inside it, so text that came from a
+ * model (or anywhere else) cannot close the block early and inject markdown.
+ */
+function fenced(code: string): string {
+  const longest = (code.match(/`+/g) ?? []).reduce((max, run) => Math.max(max, run.length), 0);
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `${fence}typescript\n${code}\n${fence}`;
+}
+
+/** Collapses whitespace, including newlines, so text stays on one markdown line. */
+function oneLine(text: string): string {
+  return text.split(/\s+/).filter((part) => part.length > 0).join(" ");
+}
 export class BugfixSpecGenerator {
   /**
    * Generates a structured BugfixSpec from fault analysis results.
@@ -87,12 +101,11 @@ export class BugfixSpecGenerator {
         ? spec.suggestedMutation.splices
             .map(
               (s, i) =>
-                `### Splice ${i + 1}: ${s.description}\n` +
+                `### Splice ${i + 1}: ${oneLine(s.description)}\n` +
                 `- **File**: \`${s.filePath}\`\n` +
                 `- **Range**: bytes \`[${s.startIndex}, ${s.endIndex})\`\n` +
-                "- **Replacement**:\n```typescript\n" +
-                s.replacement +
-                "\n```"
+                "- **Replacement**:\n" +
+                fenced(s.replacement)
             )
             .join("\n\n")
         : "_No automated patch available. Manual intervention required._";

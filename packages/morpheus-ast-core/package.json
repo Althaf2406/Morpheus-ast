@@ -8,8 +8,11 @@
     ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
     "./tree-sitter": { "types": "./dist/parser/tree-sitter.d.ts", "default": "./dist/parser/tree-sitter.js" }
   },
+  "typesVersions": {
+    "*": { "tree-sitter": ["dist/parser/tree-sitter.d.ts"] }
+  },
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "rimraf dist && tsc --project tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test:pbt": "jest --testPathPattern=tests/pbt",
     "test": "jest",

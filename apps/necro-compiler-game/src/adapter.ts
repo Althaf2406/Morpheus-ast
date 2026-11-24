@@ -25,6 +25,7 @@ import type {
   BedrockPatchSuggestion,
   BedrockPatchRequest,
   ParseRequest,
+  ExternalScanReport,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,6 +104,8 @@ export class NecroCompilerAdapter {
   private lastAISuggestion: BedrockPatchSuggestion | null = null;
   /** Sources of an in-memory repository (e.g. the pre-loaded sample), keyed by file path. Empty for disk repos. */
   private readonly virtualSources = new Map<string, string>();
+  /** Text of every analysed file (in memory or from disk), for the spell advisor. Refreshed on each analysis. */
+  private readonly analyzedSources = new Map<string, string>();
 
   constructor(engine: MorpheusASTEngine) {
     this.engine = engine;
@@ -178,36 +181,50 @@ export class NecroCompilerAdapter {
 
   // ─── AI spell advisor ────────────────────────────────────────────────────
 
+  /**
+   * Asks the AI advisor how to destroy an entity. The advisor sees the real source of the
+   * entity's function. After a spell cast on a disk repository, call loadRepository again so
+   * the text sent to the advisor is current.
+   */
   async getSpellHint(entityId: string, layout: DungeonLayout): Promise<BedrockPatchSuggestion> {
     this.requireGraph();
 
-    const entity = this.findEntity(entityId, layout);
-    if (entity == null) {
+    const room = layout.rooms.find((r) => r.entities.some((e) => e.entityId === entityId));
+    if (room === undefined) {
       throw new NecroAdapterError(`Entity "${entityId}" not found in dungeon layout.`);
     }
-
-    const targetFn = this.currentGraph!.functions.find(
-      (f) => layout.rooms.some((r) => r.id === entity.findingId && r.functionName === f.name)
-    ) ?? this.currentGraph!.functions[0];
-
-    if (targetFn == null) {
-      throw new NecroAdapterError("No function found for AI spell hint.");
+    const fn = this.currentGraph!.functions.find((f) => f.id === room.id);
+    const file = fn === undefined ? undefined : this.analyzedSources.get(fn.filePath);
+    if (fn === undefined || file === undefined) {
+      throw new NecroAdapterError(`No source available for the function in room "${room.id}".`);
     }
 
-    // Build a lightweight fault result for Bedrock context
-    const fakeFault = await this.engine.injectFault(
-      { targetFunctionId: targetFn.id, faultType: "UNCAUGHT_EXCEPTION" },
+    // The advisor needs a fault to reason about; use the most common one for a monster.
+    const fault = await this.engine.injectFault(
+      { targetFunctionId: fn.id, faultType: "UNCAUGHT_EXCEPTION" },
       this.currentGraph!
     );
 
     const patchRequest: BedrockPatchRequest = {
-      faultResult: fakeFault,
+      faultResult: fault,
       topologyGraph: this.currentGraph!,
-      targetFunctionSource: `// Source available via Live Engine Inspector`,
+      targetFunctionSource: file.slice(fn.range.startIndex, fn.range.endIndex),
     };
 
     this.lastAISuggestion = await this.engine.generateBedrockPatch(patchRequest);
     return this.lastAISuggestion;
+  }
+
+  // --- External scanner reports ------------------------------------------
+
+  /** Adds normalised SonarQube, Snyk, AWS Security Analyzer and Aikido findings as new entities. */
+  ingestExternalFindings(report: ExternalScanReport): DungeonLayout {
+    this.requireGraph();
+    this.currentFindings = [
+      ...this.currentFindings,
+      ...this.engine.ingestExternalFindings(report, this.currentGraph!),
+    ];
+    return this.buildDungeonLayout();
   }
 
   // ─── Live Engine Inspector telemetry ─────────────────────────────────────
@@ -380,6 +397,11 @@ export class NecroCompilerAdapter {
     const parseResult = await this.engine.parseSourceFiles(request);
     this.currentGraph = await this.engine.buildTopologyGraph(parseResult.files);
     this.currentFindings = [...(await this.engine.runSecurityScan(parseResult.files))];
+
+    this.analyzedSources.clear();
+    for (const file of parseResult.files) {
+      if (file.sourceText.length > 0) this.analyzedSources.set(file.filePath, file.sourceText);
+    }
   }
   private requireGraph(): void {
     if (this.currentGraph == null) {

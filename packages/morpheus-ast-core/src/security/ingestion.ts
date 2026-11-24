@@ -1,77 +1,167 @@
 /**
  * security/ingestion.ts
  *
- * Maps raw findings from SonarQube, Snyk, Aikido, and AWS Security Analyzer
- * into the unified SecurityScanResult[] contract.
+ * Normalises findings from SonarQube, Snyk, AWS Security Hub and Aikido into
+ * SecurityScanResult, and runs the engine's own lightweight analysis.
  *
- * Also performs lightweight internal static analysis (unused variables,
- * uncaught exceptions, prototype-pollution sinks) on the parsed file set.
+ * External reports are untrusted JSON: every field is read defensively, a malformed
+ * entry yields a finding with safe defaults instead of throwing, and severities are
+ * always one of the five FindingSeverity values.
+ *
+ * A finding is attached to a function (`functionId`) only when the report gives a line
+ * inside that function (innermost function wins). Whole-file findings have `functionId: null`.
  *
  * Governance (.kiro/steering/00-skeleton-isolation.md):
  *   - Zero domain-specific vocabulary
  *   - Zero `any` types
- *   - Prototype-pollution safe throughout
  */
 
 import type {
-  SecurityScanResult,
-  FindingSeverity,
+  AikidoFinding,
+  AwsSecurityFinding,
   FindingCategory,
+  FindingSeverity,
   ParsedFile,
-  TopologyGraph,
+  SecurityScanResult,
+  SnykVulnerability,
+  SonarQubeIssue,
   SourceRange,
+  TopologyGraph,
 } from "../contracts.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Raw finding shapes from external tools (narrow typed, no `any`)
-// ─────────────────────────────────────────────────────────────────────────────
+export type { AikidoFinding, AwsSecurityFinding, SnykVulnerability, SonarQubeIssue } from "../contracts.js";
 
-/** SonarQube REST API issue shape (subset we care about). */
-export interface SonarQubeIssue {
-  key: string;
-  severity: string;        // "BLOCKER" | "CRITICAL" | "MAJOR" | "MINOR" | "INFO"
-  type: string;            // "BUG" | "VULNERABILITY" | "CODE_SMELL"
-  message: string;
-  component: string;       // file path
-  textRange?: {
-    startLine: number;
-    endLine: number;
-    startOffset: number;
-    endOffset: number;
-  };
-  rule: string;            // e.g. "typescript:S2068"
-}
+type Scanner = SecurityScanResult["sourceScanner"];
 
-/** Snyk vulnerability result shape (subset). */
-export interface SnykVulnerability {
-  id: string;
-  severity: string;        // "critical" | "high" | "medium" | "low"
+interface Draft {
+  severity: FindingSeverity;
+  category: FindingCategory;
   title: string;
   description: string;
-  packageName: string;
-  filePath?: string;
-  cvssScore?: number;
-  cwe?: string[];
+  filePath: string;
+  range: SourceRange;
+  sourceScanner: Scanner;
+  cweId: string | null;
+  cvssScore: number | null;
 }
 
-/** AWS Security Hub finding shape (subset). */
-export interface AwsSecurityFinding {
-  Id: string;
-  Severity: { Label: string };  // "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFORMATIONAL"
-  Title: string;
-  Description: string;
-  Resources: Array<{ Id: string; Type: string }>;
-  Types: string[];
+// ─────────────────────────────────────────────────────────────────────────────
+// Defensive readers for untrusted JSON
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Bag = Record<string, unknown>;
+
+const asBag = (v: unknown): Bag => (typeof v === "object" && v !== null && !Array.isArray(v) ? (v as Bag) : {});
+const asString = (v: unknown, fallback = ""): string => (typeof v === "string" ? v : fallback);
+const asArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const asFiniteNumber = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+const firstString = (v: unknown): string | null => {
+  const first = asArray(v)[0];
+  return typeof first === "string" && first.length > 0 ? first : null;
+};
+
+/** Range for findings that have no line information: line 0 means "unknown". */
+const unknownLocation = (filePath: string): SourceRange => ({
+  filePath,
+  startLine: 0,
+  startColumn: 0,
+  endLine: 0,
+  endColumn: 0,
+  startIndex: 0,
+  endIndex: 0,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Paths
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lower-cases nothing and keeps the repo-relative part: unifies separators, drops a leading
+ * "./" or "/", and drops a SonarQube "projectKey:" prefix (a single letter before the colon
+ * is a Windows drive, not a project key).
+ */
+function normalizePath(raw: string): string {
+  let p = raw.split("\\").join("/");
+  const colon = p.lastIndexOf(":");
+  if (colon > 1) p = p.slice(colon + 1);
+  while (p.startsWith("./")) p = p.slice(2);
+  while (p.startsWith("/")) p = p.slice(1);
+  return p;
 }
 
-/** Aikido finding shape (subset). */
-export interface AikidoFinding {
-  id: string;
-  severity_level: number;   // 1 (critical) → 4 (low)
-  name: string;
-  description: string;
-  affected_file?: string;
-  cwe_ids?: string[];
+function samePath(a: string, b: string): boolean {
+  const x = normalizePath(a);
+  const y = normalizePath(b);
+  if (x.length === 0 || y.length === 0) return false;
+  return x === y || x.endsWith(`/${y}`) || y.endsWith(`/${x}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Severity and category mapping
+// ─────────────────────────────────────────────────────────────────────────────
+
+function sonarSeverity(raw: unknown): FindingSeverity {
+  switch (asString(raw).toUpperCase()) {
+    case "BLOCKER":
+    case "CRITICAL": return "CRITICAL";
+    case "MAJOR": return "HIGH";
+    case "MINOR": return "MEDIUM";
+    case "INFO": return "INFO";
+    default: return "LOW";
+  }
+}
+
+function snykSeverity(raw: unknown): FindingSeverity {
+  switch (asString(raw).toLowerCase()) {
+    case "critical": return "CRITICAL";
+    case "high": return "HIGH";
+    case "medium": return "MEDIUM";
+    case "low": return "LOW";
+    default: return "INFO";
+  }
+}
+
+function awsSeverity(raw: unknown): FindingSeverity {
+  switch (asString(raw).toUpperCase()) {
+    case "CRITICAL": return "CRITICAL";
+    case "HIGH": return "HIGH";
+    case "MEDIUM": return "MEDIUM";
+    case "LOW": return "LOW";
+    default: return "INFO";
+  }
+}
+
+function aikidoSeverity(raw: unknown): FindingSeverity {
+  switch (raw) {
+    case 1: return "CRITICAL";
+    case 2: return "HIGH";
+    case 3: return "MEDIUM";
+    default: return "LOW";
+  }
+}
+
+function sonarCategory(type: string, rule: string): FindingCategory {
+  if (type === "VULNERABILITY") return "VULNERABILITY";
+  const r = rule.toLowerCase();
+  if (r.includes("s2068") || r.includes("secret") || r.includes("password")) return "SECRET_LEAK";
+  return "CODE_SMELL";
+}
+
+function awsCategory(types: readonly unknown[]): FindingCategory {
+  const joined = types.filter((t): t is string => typeof t === "string").join(",").toLowerCase();
+  if (joined.includes("auth")) return "AUTH_BYPASS";
+  if (joined.includes("inject")) return "INJECTION";
+  if (joined.includes("secret") || joined.includes("credential")) return "SECRET_LEAK";
+  return "VULNERABILITY";
+}
+
+function aikidoCategory(name: string): FindingCategory {
+  const n = name.toLowerCase();
+  if (n.includes("injection") || n.includes("sql") || n.includes("xss")) return "INJECTION";
+  if (n.includes("auth") || n.includes("bypass")) return "AUTH_BYPASS";
+  if (n.includes("secret") || n.includes("credential")) return "SECRET_LEAK";
+  if (n.includes("prototype") || n.includes("pollution")) return "PROTOTYPE_POLLUTION";
+  return "VULNERABILITY";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,26 +171,36 @@ export interface AikidoFinding {
 export class SecurityIngestionAdapter {
   private findingCounter = 0;
 
-  // ─── SonarQube ────────────────────────────────────────────────────────────
+  ingestSonarQube(issues: readonly SonarQubeIssue[], graph: TopologyGraph): SecurityScanResult[] {
+    return asArray(issues).map((raw) => {
+      const issue = asBag(raw);
+      const component = asString(issue["component"], "unknown");
+      const rule = asString(issue["rule"]);
+      const message = asString(issue["message"]);
+      const textRange = asBag(issue["textRange"]);
+      const startLine = asFiniteNumber(textRange["startLine"]);
+      const endLine = asFiniteNumber(textRange["endLine"]);
 
-  ingestSonarQube(
-    issues: readonly SonarQubeIssue[],
-    graph: TopologyGraph
-  ): SecurityScanResult[] {
-    return issues.map((issue) => {
-      const severity = this.mapSonarSeverity(issue.severity);
-      const category = this.mapSonarType(issue.type, issue.rule);
-      const range = this.sonarRangeToSourceRange(issue);
-      const functionId = this.findFunctionAtRange(range, graph);
+      const range: SourceRange =
+        startLine !== null && startLine >= 1
+          ? {
+              filePath: component,
+              startLine,
+              startColumn: asFiniteNumber(textRange["startOffset"]) ?? 0,
+              endLine: endLine !== null && endLine >= startLine ? endLine : startLine,
+              endColumn: asFiniteNumber(textRange["endOffset"]) ?? 0,
+              startIndex: 0,
+              endIndex: 0,
+            }
+          : unknownLocation(component);
 
-      return this.makeResult({
-        severity,
-        category,
-        title: `[${issue.rule}] ${issue.message}`,
-        description: issue.message,
-        filePath: issue.component,
+      return this.finish(graph, {
+        severity: sonarSeverity(issue["severity"]),
+        category: sonarCategory(asString(issue["type"]), rule),
+        title: rule.length > 0 ? `[${rule}] ${message}` : message,
+        description: message,
+        filePath: component,
         range,
-        functionId,
         sourceScanner: "SONARQUBE",
         cweId: null,
         cvssScore: null,
@@ -108,54 +208,41 @@ export class SecurityIngestionAdapter {
     });
   }
 
-  // ─── Snyk ─────────────────────────────────────────────────────────────────
+  ingestSnyk(vulns: readonly SnykVulnerability[], graph: TopologyGraph): SecurityScanResult[] {
+    return asArray(vulns).map((raw) => {
+      const v = asBag(raw);
+      const filePath = asString(v["filePath"], "unknown");
+      const cvss = asFiniteNumber(v["cvssScore"]);
+      const packageName = asString(v["packageName"]);
+      const title = asString(v["title"]);
 
-  ingestSnyk(
-    vulns: readonly SnykVulnerability[],
-    graph: TopologyGraph
-  ): SecurityScanResult[] {
-    return vulns.map((v) => {
-      const severity = this.mapSnykSeverity(v.severity);
-      const range = this.defaultRange(v.filePath ?? "unknown");
-      const functionId = this.findFunctionAtRange(range, graph);
-      const cweId = v.cwe != null && v.cwe.length > 0 ? v.cwe[0] ?? null : null;
-
-      return this.makeResult({
-        severity,
+      return this.finish(graph, {
+        severity: snykSeverity(v["severity"]),
         category: "DEPENDENCY_RISK",
-        title: `${v.title} (${v.packageName})`,
-        description: v.description,
-        filePath: v.filePath ?? "unknown",
-        range,
-        functionId,
+        title: packageName.length > 0 ? `${title} (${packageName})` : title,
+        description: asString(v["description"]),
+        filePath,
+        range: unknownLocation(filePath),
         sourceScanner: "SNYK",
-        cweId,
-        cvssScore: v.cvssScore ?? null,
+        cweId: firstString(v["cwe"]),
+        cvssScore: cvss !== null && cvss >= 0 && cvss <= 10 ? cvss : null,
       });
     });
   }
 
-  // ─── AWS Security Analyzer ────────────────────────────────────────────────
+  ingestAwsSecurity(findings: readonly AwsSecurityFinding[], graph: TopologyGraph): SecurityScanResult[] {
+    return asArray(findings).map((raw) => {
+      const f = asBag(raw);
+      const firstResource = asBag(asArray(f["Resources"])[0]);
+      const filePath = asString(firstResource["Id"], "unknown");
 
-  ingestAwsSecurity(
-    findings: readonly AwsSecurityFinding[],
-    graph: TopologyGraph
-  ): SecurityScanResult[] {
-    return findings.map((f) => {
-      const severity = this.mapAwsSeverity(f.Severity.Label);
-      const filePath = f.Resources[0]?.Id ?? "unknown";
-      const range = this.defaultRange(filePath);
-      const functionId = this.findFunctionAtRange(range, graph);
-      const category = this.mapAwsType(f.Types);
-
-      return this.makeResult({
-        severity,
-        category,
-        title: f.Title,
-        description: f.Description,
+      return this.finish(graph, {
+        severity: awsSeverity(asBag(f["Severity"])["Label"]),
+        category: awsCategory(asArray(f["Types"])),
+        title: asString(f["Title"]),
+        description: asString(f["Description"]),
         filePath,
-        range,
-        functionId,
+        range: unknownLocation(filePath),
         sourceScanner: "AWS_SECURITY_ANALYZER",
         cweId: null,
         cvssScore: null,
@@ -163,251 +250,103 @@ export class SecurityIngestionAdapter {
     });
   }
 
-  // ─── Aikido ───────────────────────────────────────────────────────────────
+  ingestAikido(findings: readonly AikidoFinding[], graph: TopologyGraph): SecurityScanResult[] {
+    return asArray(findings).map((raw) => {
+      const f = asBag(raw);
+      const filePath = asString(f["affected_file"], "unknown");
+      const name = asString(f["name"]);
 
-  ingestAikido(
-    findings: readonly AikidoFinding[],
-    graph: TopologyGraph
-  ): SecurityScanResult[] {
-    return findings.map((f) => {
-      const severity = this.mapAikidoSeverity(f.severity_level);
-      const filePath = f.affected_file ?? "unknown";
-      const range = this.defaultRange(filePath);
-      const functionId = this.findFunctionAtRange(range, graph);
-      const cweId = f.cwe_ids != null && f.cwe_ids.length > 0 ? f.cwe_ids[0] ?? null : null;
-
-      return this.makeResult({
-        severity,
-        category: this.mapAikidoCategory(f.name),
-        title: f.name,
-        description: f.description,
+      return this.finish(graph, {
+        severity: aikidoSeverity(f["severity_level"]),
+        category: aikidoCategory(name),
+        title: name,
+        description: asString(f["description"]),
         filePath,
-        range,
-        functionId,
+        range: unknownLocation(filePath),
         sourceScanner: "AIKIDO",
-        cweId,
+        cweId: firstString(f["cwe_ids"]),
         cvssScore: null,
       });
     });
   }
 
-  // ─── Internal static analysis ─────────────────────────────────────────────
-
   /**
-   * Runs lightweight internal analysis on the topology graph to surface
-   * unused variables, uncaught exceptions, and circular dependencies
-   * as SecurityScanResult entries.
+   * The engine's own analysis of the topology: unused variables, uncaught exception paths,
+   * circular calls and functions with complexity of at least 15.
    */
-  runInternalAnalysis(
-    _parsedFiles: readonly ParsedFile[],
-    graph: TopologyGraph
-  ): SecurityScanResult[] {
+  runInternalAnalysis(_parsedFiles: readonly ParsedFile[], graph: TopologyGraph): SecurityScanResult[] {
     const results: SecurityScanResult[] = [];
+    const add = (fnIndex: number, draft: Omit<Draft, "filePath" | "range" | "sourceScanner" | "cweId" | "cvssScore"> & { cweId?: string }): void => {
+      const fn = graph.functions[fnIndex]!;
+      results.push(
+        this.make(
+          { ...draft, filePath: fn.filePath, range: fn.range, sourceScanner: "INTERNAL", cweId: draft.cweId ?? null, cvssScore: null },
+          fn.id
+        )
+      );
+    };
 
-    for (const fn of graph.functions) {
-      // Unused variables
-      for (const varName of fn.unusedVariables) {
-        results.push(
-          this.makeResult({
-            severity: "LOW",
-            category: "UNUSED_VARIABLE",
-            title: `Unused variable: ${varName}`,
-            description: `Variable "${varName}" is declared but never used in function "${fn.name}". Consider removing it to reduce confusion.`,
-            filePath: fn.filePath,
-            range: fn.range,
-            functionId: fn.id,
-            sourceScanner: "INTERNAL",
-            cweId: null,
-            cvssScore: null,
-          })
-        );
+    graph.functions.forEach((fn, i) => {
+      for (const name of fn.unusedVariables) {
+        add(i, {
+          severity: "LOW",
+          category: "UNUSED_VARIABLE",
+          title: `Unused variable: ${name}`,
+          description: `Variable "${name}" is declared but never used in function "${fn.name}".`,
+        });
       }
-
-      // Uncaught exceptions
       if (fn.hasUncaughtException) {
-        results.push(
-          this.makeResult({
-            severity: "HIGH",
-            category: "UNCAUGHT_EXCEPTION",
-            title: `Uncaught exception path in: ${fn.name}`,
-            description: `Function "${fn.name}" contains a code path that can throw without a surrounding try/catch or error boundary. Cyclomatic complexity: ${fn.cyclomaticComplexity}.`,
-            filePath: fn.filePath,
-            range: fn.range,
-            functionId: fn.id,
-            sourceScanner: "INTERNAL",
-            cweId: "CWE-390",
-            cvssScore: null,
-          })
-        );
+        add(i, {
+          severity: "HIGH",
+          category: "UNCAUGHT_EXCEPTION",
+          title: `Uncaught exception path in: ${fn.name}`,
+          description: `Function "${fn.name}" can throw without a surrounding try/catch. Cyclomatic complexity: ${fn.cyclomaticComplexity}.`,
+          cweId: "CWE-390",
+        });
       }
-
-      // Circular dependency
       if (fn.hasCircularDep) {
-        results.push(
-          this.makeResult({
-            severity: "MEDIUM",
-            category: "CODE_SMELL",
-            title: `Circular dependency in module: ${fn.name}`,
-            description: `Function "${fn.name}" participates in a circular dependency chain. This can cause initialization-order bugs and memory leaks.`,
-            filePath: fn.filePath,
-            range: fn.range,
-            functionId: fn.id,
-            sourceScanner: "INTERNAL",
-            cweId: "CWE-1120",
-            cvssScore: null,
-          })
-        );
+        add(i, {
+          severity: "MEDIUM",
+          category: "CODE_SMELL",
+          title: `Circular call involving: ${fn.name}`,
+          description: `Function "${fn.name}" is part of a circular call chain, which risks unbounded recursion and initialisation-order bugs.`,
+          cweId: "CWE-1120",
+        });
       }
-
-      // High complexity — potential injection risk
       if (fn.cyclomaticComplexity >= 15) {
-        results.push(
-          this.makeResult({
-            severity: "MEDIUM",
-            category: "VULNERABILITY",
-            title: `High complexity function: ${fn.name} (CC=${fn.cyclomaticComplexity})`,
-            description: `Cyclomatic Complexity of ${fn.cyclomaticComplexity} exceeds the threshold of 15. High-complexity functions are harder to audit for security vulnerabilities and are likely to contain untested edge cases.`,
-            filePath: fn.filePath,
-            range: fn.range,
-            functionId: fn.id,
-            sourceScanner: "INTERNAL",
-            cweId: "CWE-1121",
-            cvssScore: null,
-          })
-        );
+        add(i, {
+          severity: "MEDIUM",
+          category: "VULNERABILITY",
+          title: `High complexity function: ${fn.name} (CC=${fn.cyclomaticComplexity})`,
+          description: `Cyclomatic complexity ${fn.cyclomaticComplexity} is at least 15; such functions are hard to audit and likely have untested paths.`,
+          cweId: "CWE-1121",
+        });
       }
-    }
-
+    });
     return results;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Private helpers
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
-  private makeResult(params: {
-    severity: FindingSeverity;
-    category: FindingCategory;
-    title: string;
-    description: string;
-    filePath: string;
-    range: SourceRange;
-    functionId: string | null;
-    sourceScanner: SecurityScanResult["sourceScanner"];
-    cweId: string | null;
-    cvssScore: number | null;
-  }): SecurityScanResult {
+  private finish(graph: TopologyGraph, draft: Draft): SecurityScanResult {
+    return this.make(draft, findFunctionId(draft.range, graph));
+  }
+
+  private make(draft: Draft, functionId: string | null): SecurityScanResult {
     this.findingCounter += 1;
-    return {
-      findingId: `finding-${this.findingCounter.toString().padStart(6, "0")}`,
-      ...params,
-    };
+    return { findingId: `finding-${String(this.findingCounter).padStart(6, "0")}`, functionId, ...draft };
   }
+}
 
-  private findFunctionAtRange(
-    range: SourceRange,
-    graph: TopologyGraph
-  ): string | null {
-    // Find the function whose range contains the finding's start position
-    for (const fn of graph.functions) {
-      if (
-        fn.filePath === range.filePath &&
-        fn.range.startLine <= range.startLine &&
-        fn.range.endLine >= range.endLine
-      ) {
-        return fn.id;
-      }
-    }
-    return null;
+/** The innermost function containing the finding's first line, or null when the line is unknown. */
+function findFunctionId(range: SourceRange, graph: TopologyGraph): string | null {
+  if (range.startLine < 1) return null;
+  let best: { id: string; span: number } | null = null;
+  for (const fn of graph.functions) {
+    if (!samePath(fn.filePath, range.filePath)) continue;
+    if (fn.range.startLine > range.startLine || fn.range.endLine < range.startLine) continue;
+    const span = fn.range.endLine - fn.range.startLine;
+    if (best === null || span < best.span) best = { id: fn.id, span };
   }
-
-  private defaultRange(filePath: string): SourceRange {
-    return {
-      filePath,
-      startLine: 1,
-      startColumn: 0,
-      endLine: 1,
-      endColumn: 0,
-      startIndex: 0,
-      endIndex: 0,
-    };
-  }
-
-  private sonarRangeToSourceRange(issue: SonarQubeIssue): SourceRange {
-    if (issue.textRange == null) return this.defaultRange(issue.component);
-    return {
-      filePath: issue.component,
-      startLine: issue.textRange.startLine,
-      startColumn: issue.textRange.startOffset,
-      endLine: issue.textRange.endLine,
-      endColumn: issue.textRange.endOffset,
-      startIndex: 0,
-      endIndex: 0,
-    };
-  }
-
-  // ─── Severity mappers ─────────────────────────────────────────────────────
-
-  private mapSonarSeverity(s: string): FindingSeverity {
-    const upper = s.toUpperCase();
-    if (upper === "BLOCKER" || upper === "CRITICAL") return "CRITICAL";
-    if (upper === "MAJOR") return "HIGH";
-    if (upper === "MINOR") return "MEDIUM";
-    if (upper === "INFO") return "INFO";
-    return "LOW";
-  }
-
-  private mapSnykSeverity(s: string): FindingSeverity {
-    const lower = s.toLowerCase();
-    if (lower === "critical") return "CRITICAL";
-    if (lower === "high") return "HIGH";
-    if (lower === "medium") return "MEDIUM";
-    if (lower === "low") return "LOW";
-    return "INFO";
-  }
-
-  private mapAwsSeverity(label: string): FindingSeverity {
-    const upper = label.toUpperCase();
-    if (upper === "CRITICAL") return "CRITICAL";
-    if (upper === "HIGH") return "HIGH";
-    if (upper === "MEDIUM") return "MEDIUM";
-    if (upper === "LOW") return "LOW";
-    return "INFO";
-  }
-
-  private mapAikidoSeverity(level: number): FindingSeverity {
-    if (level === 1) return "CRITICAL";
-    if (level === 2) return "HIGH";
-    if (level === 3) return "MEDIUM";
-    return "LOW";
-  }
-
-  // ─── Category mappers ─────────────────────────────────────────────────────
-
-  private mapSonarType(type: string, rule: string): FindingCategory {
-    if (type === "VULNERABILITY") return "VULNERABILITY";
-    if (rule.includes("S2068") || rule.includes("secret") || rule.includes("password")) {
-      return "SECRET_LEAK";
-    }
-    return "CODE_SMELL";
-  }
-
-  private mapAwsType(types: string[]): FindingCategory {
-    const joined = types.join(",").toLowerCase();
-    if (joined.includes("auth")) return "AUTH_BYPASS";
-    if (joined.includes("inject")) return "INJECTION";
-    if (joined.includes("secret") || joined.includes("credential")) return "SECRET_LEAK";
-    return "VULNERABILITY";
-  }
-
-  private mapAikidoCategory(name: string): FindingCategory {
-    const lower = name.toLowerCase();
-    if (lower.includes("injection") || lower.includes("sql") || lower.includes("xss")) {
-      return "INJECTION";
-    }
-    if (lower.includes("auth") || lower.includes("bypass")) return "AUTH_BYPASS";
-    if (lower.includes("secret") || lower.includes("credential")) return "SECRET_LEAK";
-    if (lower.includes("prototype") || lower.includes("pollution")) return "PROTOTYPE_POLLUTION";
-    return "VULNERABILITY";
-  }
+  return best === null ? null : best.id;
 }

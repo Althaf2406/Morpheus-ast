@@ -50,3 +50,7 @@ pnpm-debug.log*
 
 # Planning documents (not part of submitted codebase)
 *.pdf
+
+# Throwaway output of scripts/verify-adapters.mjs
+.tmp-build/
+**/.tmp-build/

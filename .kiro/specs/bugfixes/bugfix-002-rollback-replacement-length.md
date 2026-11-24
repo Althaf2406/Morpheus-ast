@@ -56,8 +56,7 @@ restored =
 splice. The file-backed and in-memory paths share the same helpers (`prepareBatch`,
 `applySorted`, `restoreSegments`), so they cannot diverge.
 
-After the fix, P6, P7 and P8 pass (100 to 150 runs each) and the full suite passes
-(22 tests, 3 suites).
+After the fix, P6, P7 and P8 pass, and so do the generative round-trip properties S1 and S4 in `stress.pbt.test.ts` (arbitrary Unicode sources and splice batches, 2000 runs each, in memory and on disk).
 
 ---
 
