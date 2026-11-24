@@ -55,22 +55,6 @@ const sourceRangeArb = (): fc.Arbitrary<SourceRange> =>
     endIndex: fc.nat({ max: 50000 }),
   });
 
-/**
- * Generates a valid function ID.
- * Deliberately includes "__proto__", "constructor", "prototype" in the pool
- * to exercise prototype-pollution safety (P5).
- * Prefixed with _ because protoPollutionGraphArb uses inline constants instead.
- */
-const _fnIdArb = (): fc.Arbitrary<string> =>
-  fc.oneof(
-    fc.string({ minLength: 1, maxLength: 20 }).map((s) => `fn:${s}`),
-    fc.constant("fn:__proto__"),
-    fc.constant("fn:constructor"),
-    fc.constant("fn:prototype"),
-    fc.constant("fn:hasOwnProperty"),
-    fc.constant("fn:toString")
-  );
-
 const functionNodeArb = (id: string): fc.Arbitrary<FunctionNode> =>
   fc.record({
     id: fc.constant(id),

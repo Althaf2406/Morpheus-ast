@@ -192,7 +192,16 @@ export interface SpliceRange {
 export interface RollbackRecord {
   readonly mutationId: string;
   readonly filePath: string;
-  readonly originalSegments: readonly { startIndex: number; originalText: string }[];
+  /**
+   * One entry per splice. `startIndex` is an offset in the ORIGINAL source.
+   * `replacementLength` is the length of the text that replaced `originalText`,
+   * needed to locate the segment in the mutated source when lengths differ.
+   */
+  readonly originalSegments: readonly {
+    startIndex: number;
+    originalText: string;
+    replacementLength: number;
+  }[];
   readonly appliedAt: number;
 }
 

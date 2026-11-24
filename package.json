@@ -4,7 +4,7 @@
   "private": true,
   "description": "MORPHEUS-AST — Headless 3D AST Compiler Engine powering InfraShield 3D and NECRO-COMPILER (Kiroween 2026)",
   "scripts": {
-    "lint:boundaries": "pnpm --filter morpheus-ast-core exec ts-node ../../scripts/check-boundaries.ts",
+    "lint:boundaries": "node scripts/check-boundaries.mjs",
     "test:pbt": "pnpm --filter morpheus-ast-core run test:pbt",
     "test": "pnpm --filter morpheus-ast-core run test",
     "build": "pnpm --recursive run build",
