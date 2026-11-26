@@ -16,7 +16,6 @@ interface Props {
 
 /** Bottom spell bar: selected monster plus the Cast and Undo buttons. */
 export function SpellBar({ selected, visual, pending, castEnabled, undoEnabled, onCast, onUndo }: Props) {
-  const noSpell = selected !== null && selected.entity.suggestedSpell === null;
   return (
     <div className="hud-panel hud-bar" role="region" aria-label="Spell bar">
       <MonsterCard target={selected} visual={visual} />
@@ -43,7 +42,6 @@ export function SpellBar({ selected, visual, pending, castEnabled, undoEnabled, 
         >
           {pending?.kind === "UNDO" ? "Undoing…" : "Undo Spell"}
         </SpellButton>
-        {noSpell && <p className="hud-hint">No spell is known for this monster yet.</p>}
       </div>
     </div>
   );

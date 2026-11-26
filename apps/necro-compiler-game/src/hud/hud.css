@@ -74,6 +74,22 @@
 .hud-entry--undone .hud-entry__name { text-decoration: line-through; }
 .hud-entry__meta { font-size: 12px; }
 
+/* --- Loading screen --- */
+.hud-loading {
+  display: flex; align-items: center; justify-content: center;
+  width: 100vw; height: 100vh;
+  background: var(--panel); color: var(--gold);
+}
+.hud-loading__text {
+  margin: 0; font-family: Cinzel, Georgia, serif; font-size: 24px; font-weight: 600; letter-spacing: 0.06em;
+}
+.hud-loading__text--pulse { animation: hud-loading-pulse 1.8s ease-in-out infinite; }
+
+@keyframes hud-loading-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
 /* --- Focus and motion --- */
 .hud-button:focus-visible, .hud-close:focus-visible, canvas:focus-visible {
   outline: 3px solid var(--gold);

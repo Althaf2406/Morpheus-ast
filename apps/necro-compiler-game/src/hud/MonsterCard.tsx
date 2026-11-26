@@ -29,6 +29,9 @@ export function MonsterCard({ target, visual }: Props) {
       </header>
       <p className="hud-card__title">{entity.title}</p>
       <p className="hud-card__text">{entity.description}</p>
+      {entity.suggestedSpell === null && (
+        <p className="hud-hint">No spell is available for this monster yet.</p>
+      )}
       <p className="hud-code">
         {room.filePath} <span aria-hidden="true">·</span> {room.functionName}()
       </p>

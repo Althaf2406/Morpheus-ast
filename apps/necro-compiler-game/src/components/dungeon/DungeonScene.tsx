@@ -8,7 +8,7 @@ import { createDungeonRig, type DungeonRig } from "./dungeonRig.ts";
 import { EntityLayer } from "./EntityLayer.tsx";
 import type { MonsterBatch } from "./entityMeshes.ts";
 import type { PickHit } from "./monsterPicker.ts";
-import { useDungeonPositions } from "./useDungeonPositions.ts";
+import { useStableRoomPositions } from "../../layout/useStableRoomPositions.ts";
 import { useTickRegistry } from "./useTickRegistry.ts";
 
 interface Props {
@@ -29,7 +29,7 @@ export function DungeonScene({
   const containerRef = useRef<HTMLDivElement>(null);
   const [rig, setRig]         = useState<DungeonRig | null>(null);
   const [batches, setBatches] = useState<readonly MonsterBatch[]>(NO_BATCHES);
-  const positions             = useDungeonPositions(layout.rooms, layout.corridors);
+  const positions             = useStableRoomPositions(layout.rooms, layout.corridors);
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const { ticksRef, handleRoomTick, handleEntityTick, handleOverlayTick } = useTickRegistry();

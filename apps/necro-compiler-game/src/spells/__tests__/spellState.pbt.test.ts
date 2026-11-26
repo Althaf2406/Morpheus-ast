@@ -120,6 +120,22 @@ describe("spell reducer", () => {
     );
   });
 
+  it("undo clears the selection, since the rebuilt layout may use new entity ids", () => {
+    fc.assert(
+      fc.property(idArb, outcomeArb, (id, outcome) => {
+        const after = run([
+          { type: "SELECT", entityId: id },
+          { type: "CAST_START", entityId: id },
+          { type: "CAST_SUCCESS", entityId: id, title: id, outcome },
+          { type: "UNDO_START" },
+          { type: "UNDO_SUCCESS" },
+        ]);
+        expect(after.selectedId).toBeNull();
+        expect(visualStateOf(after, id)).toBe("ALIVE");
+      })
+    );
+  });
+
   it("P5: any action sequence keeps the history consistent", () => {
     fc.assert(
       fc.property(sequenceArb, (actions) => {

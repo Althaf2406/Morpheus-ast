@@ -1,28 +1,37 @@
 import { useState } from "react";
+import type { DungeonLayout, NecroCompilerAdapter } from "./adapter.ts";
 import { DungeonScene } from "./components/dungeon/DungeonScene.tsx";
 import type { PickHit } from "./components/dungeon/monsterPicker.ts";
+import { useAdapterLoader } from "./engine/useAdapterLoader.ts";
+import { useLayoutRefresh } from "./engine/useLayoutRefresh.ts";
+import { ErrorPanel } from "./hud/ErrorPanel.tsx";
 import { ErrorToast } from "./hud/ErrorToast.tsx";
 import { Grimoire } from "./hud/Grimoire.tsx";
+import { LoadingScreen } from "./hud/LoadingScreen.tsx";
 import { MonsterTooltip } from "./hud/MonsterTooltip.tsx";
 import { paletteStyle } from "./hud/palette.ts";
 import { SpellBar } from "./hud/SpellBar.tsx";
-import { mockDungeonLayout } from "./mock/dungeonLayout.ts";
-import { createMockSpellCaster } from "./mock/mockSpellCaster.ts";
-import { useSpellGame } from "./spells/useSpellGame.ts";
 import { visualStateOf } from "./spells/spellState.ts";
+import { useSpellGame } from "./spells/useSpellGame.ts";
 
-export default function App() {
-  // The mock caster stands in until the real NecroCompilerAdapter is connected.
-  const [caster] = useState(() => createMockSpellCaster());
-  const game = useSpellGame(mockDungeonLayout, caster);
+interface DungeonProps {
+  readonly adapter: NecroCompilerAdapter;
+  readonly initialLayout: DungeonLayout;
+}
+
+/** The game: the real adapter is the spell caster, and the layout follows the real code. */
+function Dungeon({ adapter, initialLayout }: DungeonProps) {
+  const [layout, setLayout] = useState(initialLayout);
+  const game = useSpellGame(layout, adapter);
+  const { state, selected } = game;
+  useLayoutRefresh(adapter, setLayout, state.pending, state.error);
   const [hover, setHover] = useState<PickHit | null>(null);
   const hovered = hover === null ? undefined : game.lookup.get(hover.entityId);
-  const { state, selected } = game;
 
   return (
     <div className="game-root" style={paletteStyle}>
       <DungeonScene
-        layout={mockDungeonLayout}
+        layout={layout}
         entityStates={state.states}
         selectedEntityId={state.selectedId}
         onSelectEntity={game.select}
@@ -42,4 +51,16 @@ export default function App() {
       <ErrorToast message={state.error} onDismiss={game.dismissError} />
     </div>
   );
+}
+
+export default function App() {
+  const { state, retry } = useAdapterLoader();
+  switch (state.status) {
+    case "loading":
+      return <LoadingScreen />;
+    case "error":
+      return <ErrorPanel message={state.message} onRetry={retry} />;
+    case "ready":
+      return <Dungeon adapter={state.adapter} initialLayout={state.layout} />;
+  }
 }

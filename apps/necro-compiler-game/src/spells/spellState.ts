@@ -113,7 +113,7 @@ export function spellReducer(state: SpellState, action: SpellAction): SpellState
       return {
         ...state,
         pending: null,
-        selectedId: pending.entityId,
+        selectedId: null,
         states: withVisual(state.states, pending.entityId, "ALIVE"),
         history: state.history.map((e) => (e.id === state.undoableId ? { ...e, undone: true } : e)),
         undoableId: null,
