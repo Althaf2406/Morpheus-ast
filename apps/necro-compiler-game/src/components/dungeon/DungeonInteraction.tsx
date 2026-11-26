@@ -8,7 +8,7 @@ import type { DungeonRig } from "./dungeonRig.ts";
 import type { MonsterBatch } from "./entityMeshes.ts";
 import { createMonsterGlow, type MonsterGlow } from "./monsterGlow.ts";
 import { createMonsterPicker, locateInstance, type PickHit } from "./monsterPicker.ts";
-import { roomFocusTarget } from "./roomFocus.ts";
+import { roomFocusTarget, roomReach } from "./roomFocus.ts";
 
 // --- Props ---
 interface Props {
@@ -64,7 +64,7 @@ export function DungeonInteraction({
   const glideRef = useRef<CameraGlide | null>(null);
   useEffect(() => {
     const selectGlow = createMonsterGlow(rig.scene, PALETTE.gold, SELECT_OPACITY);
-    const glide = createCameraGlide(rig.camera, rig.controls, reducedMotion, positions);
+    const glide = createCameraGlide(rig.camera, rig.controls, reducedMotion, positions, roomReach(rooms));
     selectGlowRef.current = selectGlow;
     glideRef.current = glide;
     onTickUpdate((t) => {
@@ -78,7 +78,7 @@ export function DungeonInteraction({
       glide.dispose();
       selectGlow.dispose();
     };
-  }, [rig, reducedMotion, positions, onTickUpdate]);
+  }, [rig, reducedMotion, positions, rooms, onTickUpdate]);
 
   // --- Selected monster: halo, and glide to its room ---
   useEffect(() => {

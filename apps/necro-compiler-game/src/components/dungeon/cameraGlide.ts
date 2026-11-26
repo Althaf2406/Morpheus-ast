@@ -14,7 +14,7 @@ export interface CameraGlide {
 // --- Constants ---
 const GLIDE_SECONDS = 0.9;
 /** Closest the glide brings the camera to a focused room. */
-const FOCUS_DISTANCE = 16;
+const FOCUS_DISTANCE = 24;
 
 interface Glide {
   readonly fromPosition: THREE.Vector3;
@@ -30,10 +30,11 @@ export function createCameraGlide(
   camera: THREE.PerspectiveCamera,
   controls: OrbitControls,
   reducedMotion: boolean,
-  positions: ReadonlyMap<string, THREE.Vector3>
+  positions: ReadonlyMap<string, THREE.Vector3>,
+  reach?: ReadonlyMap<string, number>,
 ): CameraGlide {
   let glide: Glide | null = null;
-  const overview = frameCamera(positions);
+  const overview = frameCamera(positions, reach);
   const cancel = () => {
     glide = null;
   };

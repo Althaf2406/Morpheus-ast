@@ -3,30 +3,27 @@ import * as THREE from "three";
 import type { DungeonRoom, RoomSize } from "../../adapter.ts";
 import { buildRoomParts, type PartBox } from "./roomParts.ts";
 import { STONE_FLOOR_FRAGMENT, STONE_FLOOR_VERTEX } from "../../shaders/index.ts";
-// --- Brightened gothic stone palette ---
-// Base footprint is 1.5x the previous size; keep SIZE_RADIUS in forceLayout.ts in step.
+// --- Room extents: footprint is about 0.75x the SIZE_RADIUS spacing in forceLayout.ts, so rooms sit close with a visible gap ---
 export const ROOM_SCALE: Record<RoomSize, [number, number, number]> = {
-  SMALL:  [2.85, 2.4, 2.85],
-  MEDIUM: [4.35, 3.3, 4.35],
-  LARGE:  [6.0, 4.8, 6.0],
-  BOSS:   [9.6, 7.2, 9.6],
+  SMALL:  [5.7, 4.8, 5.7],
+  MEDIUM: [8.7, 6.6, 8.7],
+  LARGE:  [12.0, 9.6, 12.0],
+  BOSS:   [19.2, 14.4, 19.2],
 };
 // --- Group definition ---
 interface SizeGroup {
   readonly size:              RoomSize;
-  readonly color:             number;  // hex
-  readonly emissive:          number;  // hex
+  readonly color:             number;
+  readonly emissive:          number;
   readonly emissiveIntensity: number;
 }
-// setColorAt multiplies instance color by material.color, turning it near-black.
-// We rely solely on material.color — do NOT call setColorAt anywhere here.
 const SIZE_GROUPS: readonly SizeGroup[] = [
   { size: "SMALL",  color: 0x3a3a5c, emissive: 0x1a1a2e, emissiveIntensity: 0.15 },
   { size: "MEDIUM", color: 0x5a4636, emissive: 0x2a1a10, emissiveIntensity: 0.15 },
   { size: "LARGE",  color: 0x7a5a40, emissive: 0x3a2010, emissiveIntensity: 0.15 },
   { size: "BOSS",   color: 0xb01818, emissive: 0x8b0000, emissiveIntensity: 0.60 },
 ];
-// --- Stone floor: procedural shader, dark tint derived from the size group colour ---
+// --- Stone floor ---
 function createFloorMaterial(color: number): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     vertexShader:   STONE_FLOOR_VERTEX,
@@ -75,7 +72,6 @@ export function buildRoomMeshes(
   for (const group of SIZE_GROUPS) {
     const groupRooms = rooms.filter((r) => r.size === group.size);
     if (groupRooms.length === 0) continue;
-    // One stone material per size group; color comes exclusively from here.
     const stone = new THREE.MeshStandardMaterial({
       color:             group.color,
       emissive:          group.emissive,
@@ -113,7 +109,6 @@ export function buildRoomMeshes(
 export function DungeonRooms({ rooms, positions, scene, onTickUpdate }: Props) {
   useEffect(() => {
     const dispose = buildRoomMeshes(rooms, positions, scene);
-    // Static geometry — no per-frame tick needed
     onTickUpdate(null);
     return () => {
       onTickUpdate(null);

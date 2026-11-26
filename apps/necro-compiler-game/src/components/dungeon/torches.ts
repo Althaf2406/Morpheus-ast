@@ -24,6 +24,7 @@ interface PlacedTorch {
   readonly slot: TorchSlot;
   readonly position: Origin;
   readonly seed: number;
+  readonly baseIntensity: number;
   readonly light: THREE.PointLight | null;
 }
 
@@ -32,9 +33,14 @@ interface PlacedTorch {
 const FLAME_COLOR = 0xff9a3c;
 /** Instance colour scale above 1 so the flame passes the Bloom_Pass threshold. */
 const FLAME_BLOOM_GAIN = 2.5;
+/** Flame diameter as a fraction of the room width. */
 const FLAME_RADIUS_FRACTION = 0.035;
-const LIGHT_BASE_INTENSITY = 2.5;
-const LIGHT_RANGE_FACTOR = 4;
+/** Flames are taller than wide. */
+const FLAME_STRETCH = 1.4;
+/** With decay 2, intensity scales with the square of the wall height so the light pool keeps its look at any room size. */
+const LIGHT_INTENSITY_PER_SQUARE_HEIGHT = 4;
+/** Light reach as a fraction of the room width. */
+const LIGHT_RANGE_FRACTION = 0.9;
 const SEED_STEP = 0.618033988749895;
 
 // --- Helpers ---
@@ -46,14 +52,16 @@ function placeTorches(rooms: readonly TorchRoom[], slots: readonly TorchSlot[]):
     const room = byId.get(slot.roomId);
     if (room == null) return;
     const position = torchCorners(room.origin, room.extent)[slot.corner];
-    const light = slot.lit ? createLight(position, wallHeightFor(room.extent)) : null;
-    placed.push({ slot, position, seed: (index * SEED_STEP) % 1, light });
+    const wallHeight = wallHeightFor(room.extent);
+    const baseIntensity = LIGHT_INTENSITY_PER_SQUARE_HEIGHT * wallHeight * wallHeight;
+    const light = slot.lit ? createLight(position, baseIntensity, room.extent[0] * LIGHT_RANGE_FRACTION) : null;
+    placed.push({ slot, position, seed: (index * SEED_STEP) % 1, baseIntensity, light });
   });
   return placed;
 }
 
-function createLight(position: Origin, wallHeight: number): THREE.PointLight {
-  const light = new THREE.PointLight(FLAME_COLOR, LIGHT_BASE_INTENSITY, wallHeight * LIGHT_RANGE_FACTOR, 2);
+function createLight(position: Origin, intensity: number, range: number): THREE.PointLight {
+  const light = new THREE.PointLight(FLAME_COLOR, intensity, range, 2);
   light.position.set(position.x, position.y, position.z);
   return light;
 }
@@ -72,20 +80,20 @@ export function createTorches(scene: THREE.Scene, rooms: readonly TorchRoom[], r
   const matrix = new THREE.Matrix4();
   const color = new THREE.Color();
   const baseColor = new THREE.Color(FLAME_COLOR).multiplyScalar(FLAME_BLOOM_GAIN);
-  const radiusOf = new Map(rooms.map((room) => [room.id, wallHeightFor(room.extent) * FLAME_RADIUS_FRACTION]));
+  const radiusOf = new Map(rooms.map((room) => [room.id, room.extent[0] * FLAME_RADIUS_FRACTION]));
 
   const apply = (time: number) => {
     placed.forEach((torch, i) => {
       const factor = flickerFactor(time, torch.seed, reducedMotion);
       flames.setColorAt(i, color.copy(baseColor).multiplyScalar(factor));
-      if (torch.light != null) torch.light.intensity = LIGHT_BASE_INTENSITY * factor;
+      if (torch.light != null) torch.light.intensity = torch.baseIntensity * factor;
     });
     if (flames.instanceColor != null) flames.instanceColor.needsUpdate = true;
   };
 
   placed.forEach((torch, i) => {
     const radius = radiusOf.get(torch.slot.roomId) ?? 0;
-    matrix.makeScale(radius, radius * 1.4, radius).setPosition(torch.position.x, torch.position.y, torch.position.z);
+    matrix.makeScale(radius, radius * FLAME_STRETCH, radius).setPosition(torch.position.x, torch.position.y, torch.position.z);
     flames.setMatrixAt(i, matrix);
     if (torch.light != null) scene.add(torch.light);
   });

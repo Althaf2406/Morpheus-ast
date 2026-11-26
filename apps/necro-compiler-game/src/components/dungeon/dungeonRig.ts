@@ -7,7 +7,9 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { frameCamera } from "../../layout/frameCamera.ts";
 import { createDungeonLighting } from "./dungeonLighting.ts";
 
-/** Cold fog colour and bloom tuning. */
+// --- Constants ---
+
+const BACKGROUND_COLOR = 0x0d0a08;
 const FOG_COLOR = 0x1a2230;
 const BLOOM_STRENGTH = 0.6;
 const BLOOM_RADIUS = 0.5;
@@ -26,28 +28,30 @@ export interface RigOptions {
   readonly canvas: HTMLCanvasElement;
   readonly container: HTMLElement;
   readonly positions: ReadonlyMap<string, THREE.Vector3>;
+  /** Footprint radius per room id, so the first frame fits whole rooms and not just their centres. */
+  readonly reach: ReadonlyMap<string, number>;
   /** Runs once per frame, before rendering, with the elapsed clock time in seconds. */
   readonly onFrame: (elapsed: number) => void;
 }
 
-export function createDungeonRig({ canvas, container, positions, onFrame }: RigOptions): DungeonRig {
+export function createDungeonRig({ canvas, container, positions, reach, onFrame }: RigOptions): DungeonRig {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  // Size comes from the container; updateStyle=false keeps the canvas CSS at 100%.
   let width = container.clientWidth;
   let height = container.clientHeight;
   renderer.setSize(width, height, false);
-  renderer.setClearColor(0x0d0a08);
 
-  // Compute camera frame first: fog near/far depend on camDist.
-  const frame = frameCamera(positions);
+  // --- Colour pipeline: scene passes render linear HDR; OutputPass is the only tone mapping and sRGB step ---
+  renderer.toneMapping = THREE.NoToneMapping;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  // --- Scene ---
+  const frame = frameCamera(positions, reach);
   const scene = new THREE.Scene();
-  // Linear fog scaled to camera distance: only the far background fades,
-  // however compact or spread the layout is.
-  scene.fog = new THREE.Fog(FOG_COLOR, frame.camDist * 0.8, frame.camDist * 3);
+  scene.background = new THREE.Color(BACKGROUND_COLOR);
+  scene.fog = new THREE.Fog(FOG_COLOR, frame.camDist, frame.camDist * 4);
   const lighting = createDungeonLighting(scene);
 
-  // Auto-frame: position camera to show all rooms on first load
   const camera = new THREE.PerspectiveCamera(55, height > 0 ? width / height : 1, 0.1, 2000);
   camera.position.copy(frame.position);
   camera.lookAt(frame.target);

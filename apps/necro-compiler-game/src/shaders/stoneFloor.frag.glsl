@@ -14,7 +14,5 @@ void main() {
   float top = clamp(normalize(vNormal).y, 0.0, 1.0);
   color *= 0.5 + 0.5 * top;
   gl_FragColor = vec4(color, 1.0);
-  #include <tonemapping_fragment>
-  #include <colorspace_fragment>
   #include <fog_fragment>
 }

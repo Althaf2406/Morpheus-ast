@@ -1,6 +1,11 @@
 import * as THREE from "three";
 import type { DungeonRoom } from "../../adapter.ts";
 import { ROOM_SCALE } from "./DungeonRooms.tsx";
+/** Half-diagonal of each room's footprint on the ground plane, keyed by room id. */
+export function roomReach(rooms: readonly DungeonRoom[]): ReadonlyMap<string, number> {
+  return new Map(rooms.map((room) => [room.id, Math.hypot(ROOM_SCALE[room.size][0], ROOM_SCALE[room.size][2]) / 2]));
+}
+
 /** Centre of the room containing the entity, or null when the entity or room position is unknown. */
 export function roomFocusTarget(
   rooms: readonly DungeonRoom[],

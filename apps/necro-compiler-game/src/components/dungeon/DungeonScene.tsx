@@ -9,6 +9,7 @@ import { createDungeonRig, type DungeonRig } from "./dungeonRig.ts";
 import { EntityLayer } from "./EntityLayer.tsx";
 import type { MonsterBatch } from "./entityMeshes.ts";
 import type { PickHit } from "./monsterPicker.ts";
+import { roomReach } from "./roomFocus.ts";
 import { useStableRoomPositions } from "../../layout/useStableRoomPositions.ts";
 import { useTickRegistry } from "./useTickRegistry.ts";
 
@@ -46,6 +47,7 @@ export function DungeonScene({
       canvas,
       container,
       positions,
+      reach: roomReach(layout.rooms),
       onFrame: (elapsed) => {
         if (!reducedMotion) ticksRef.current.forEach((tick) => tick(elapsed));
       },

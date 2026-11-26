@@ -44,8 +44,9 @@ function Dungeon({ adapter, initialLayout }: DungeonProps) {
         onSelectEntity={game.select}
         onHoverEntity={setHover}
       />
-      <HudTitle goalLine={GOAL_LINE} />
-      <CounterBar {...counts} />
+      <HudTitle goalLine={GOAL_LINE}>
+        <CounterBar {...counts} />
+      </HudTitle>
       {hover !== null && hovered !== undefined && <MonsterTooltip hit={hover} target={hovered} />}
       <Grimoire history={state.history} />
       <SpellBar

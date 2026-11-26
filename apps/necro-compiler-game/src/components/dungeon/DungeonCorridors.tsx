@@ -33,7 +33,6 @@ export function buildCorridorLines(
 
     const srcRoom = rooms.find((r) => r.id === corridor.fromRoomId);
     const tgtRoom = rooms.find((r) => r.id === corridor.toRoomId);
-    // Raise corridor endpoints to room mid-height
     const srcY = src.y + (srcRoom != null ? 0.5 : 0);
     const tgtY = tgt.y + (tgtRoom != null ? 0.5 : 0);
 

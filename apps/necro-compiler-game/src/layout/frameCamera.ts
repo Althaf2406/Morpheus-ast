@@ -9,67 +9,69 @@ export interface CameraFrame {
   readonly target:      THREE.Vector3;
   /** Recommended OrbitControls maxDistance. */
   readonly maxDistance: number;
-  /** Distance from position to target — used for scene-relative fog. */
+  /** Distance from position to target, used for scene-relative fog. */
   readonly camDist:     number;
 }
+
+// --- Constants ---
+
+const MIN_RADIUS = 6;
+/** Camera-to-target distance as a multiple of the bounding radius: a small margin around the footprint. */
+const DISTANCE_FACTOR = 1.2;
+/** Camera height as a fraction of its horizontal offset. */
+const ELEVATION_RATIO = 0.6;
 
 // --- Pure framing function ---
 
 /**
- * Given a set of room positions, computes a camera position that frames the
- * entire dungeon in view with a comfortable margin.
+ * Computes a camera pose that frames the whole dungeon with a small margin.
  *
  * Rules:
  *  - Target is the centroid of all positions.
- *  - Bounding sphere radius is the max distance from centroid to any position.
- *  - Camera sits above and back at ~1.1× the sphere diameter (45° elevation).
- *  - maxDistance is 3× the sphere radius (to allow zooming out further).
+ *  - Bounding radius is the largest XZ distance from the centroid to a position,
+ *    plus that position's `reach` (the room's footprint radius, 0 when absent).
+ *  - Camera sits above and back (+Z) at DISTANCE_FACTOR times the radius.
+ *  - maxDistance is 3x the radius, to allow zooming out further.
  */
 export function frameCamera(
-  positions: ReadonlyMap<string, THREE.Vector3>
+  positions: ReadonlyMap<string, THREE.Vector3>,
+  reach: ReadonlyMap<string, number> = new Map(),
 ): CameraFrame {
   if (positions.size === 0) {
+    const position = new THREE.Vector3(0, 20, 32);
     return {
-      position:    new THREE.Vector3(0, 20, 32),
+      position,
       target:      new THREE.Vector3(0, 0, 0),
       maxDistance: 200,
-      camDist:     new THREE.Vector3(0, 20, 32).length(),
+      camDist:     position.length(),
     };
   }
 
-  // Centroid
   const centroid = new THREE.Vector3();
   for (const p of positions.values()) {
     centroid.add(p);
   }
   centroid.divideScalar(positions.size);
 
-  // Bounding sphere radius (XZ only — Y is small and camera angle covers it)
   let radius = 0;
-  for (const p of positions.values()) {
-    const dx = p.x - centroid.x;
-    const dz = p.z - centroid.z;
-    const d  = Math.sqrt(dx * dx + dz * dz);
+  for (const [id, p] of positions) {
+    const d = Math.hypot(p.x - centroid.x, p.z - centroid.z) + (reach.get(id) ?? 0);
     if (d > radius) radius = d;
   }
 
-  // Minimum sensible radius so a single-room scene still frames reasonably
-  const r = Math.max(radius, 6);
-
-  // Camera sits at a 45° elevation angle, offset back along +Z.
-  // 1.1× diameter keeps the entire dungeon tightly framed without the
-  // previous 1.6×√2 ≈ 2.26× factor that pushed the camera ~270 units away.
-  const dist = r * 1.1 * Math.SQRT2; // horizontal + vertical component
-  const camPosition = new THREE.Vector3(
+  const r = Math.max(radius, MIN_RADIUS);
+  const length = r * DISTANCE_FACTOR;
+  const offset = length / Math.hypot(1, ELEVATION_RATIO);
+  const position = new THREE.Vector3(
     centroid.x,
-    centroid.y + dist * 0.6,
-    centroid.z + dist
+    centroid.y + offset * ELEVATION_RATIO,
+    centroid.z + offset,
   );
 
   return {
-    position:    camPosition,
-    target:      new THREE.Vector3(centroid.x, centroid.y, centroid.z),
+    position,
+    target:      centroid,
     maxDistance: Math.max(r * 3, 60),
-    camDist:     dist,
+    camDist:     position.distanceTo(centroid),
   };
 }

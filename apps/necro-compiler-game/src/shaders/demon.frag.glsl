@@ -14,7 +14,5 @@ void main() {
 
   float dissolveNoise = fbm(vObjPos * 3.0 + vec3(11.0));
   gl_FragColor = applyLifecycle(body + glow + cracks, 1.0, dissolveNoise, 0.0);
-  #include <tonemapping_fragment>
-  #include <colorspace_fragment>
   #include <fog_fragment>
 }

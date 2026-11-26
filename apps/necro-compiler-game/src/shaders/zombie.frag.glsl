@@ -14,7 +14,5 @@ void main() {
   vec3 sheen = uColor * fres * 0.9 * energy;
 
   gl_FragColor = applyLifecycle(flesh + ooze + sheen, 1.0, rot, decay);
-  #include <tonemapping_fragment>
-  #include <colorspace_fragment>
   #include <fog_fragment>
 }

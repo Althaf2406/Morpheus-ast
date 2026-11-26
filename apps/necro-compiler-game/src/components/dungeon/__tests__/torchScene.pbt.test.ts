@@ -12,8 +12,8 @@ import { createTorches, type TorchRoom } from "../torches.ts";
 // --- Generators ---
 
 const EXTENT: Readonly<Record<RoomSize, readonly [number, number, number]>> = {
-  SMALL: [2.85, 2.4, 2.85],
-  MEDIUM: [4.35, 3.3, 4.35],
+  SMALL: [5.7, 4.8, 5.7],
+  MEDIUM: [8.7, 6.6, 8.7],
   LARGE: [6, 4, 6],
   BOSS: [8, 5, 8],
 };
