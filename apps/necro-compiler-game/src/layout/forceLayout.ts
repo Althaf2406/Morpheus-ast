@@ -8,14 +8,14 @@ const ATTRACTION_K     = 0.02;
 const GRAVITY_K        = 0.004; // weak pull toward origin to prevent isolated rooms drifting far
 const MAX_DISPLACEMENT = 3.0;
 
-// Scaled ×1.6 to match ROOM_SCALE visual extents in DungeonRooms.tsx.
+// Scaled ×1.5 to match ROOM_SCALE visual extents in DungeonRooms.tsx.
 // Must stay consistent with the XZ half-extent of each box so the no-overlap
 // PBT (P3) reflects the actual rendered footprint.
 export const SIZE_RADIUS: Record<RoomSize, number> = {
-  SMALL:  2.4,
-  MEDIUM: 4.0,
-  LARGE:  5.6,
-  BOSS:   8.0,
+  SMALL:  3.6,
+  MEDIUM: 6.0,
+  LARGE:  8.4,
+  BOSS:   12.0,
 };
 
 const SIZE_Y: Record<RoomSize, number> = {

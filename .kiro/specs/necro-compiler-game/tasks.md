@@ -12,10 +12,10 @@
 
 ## Wave 2 — UI & Dungeon (Person B, Days 8–14)
 
-- [ ] **TASK-NC-05**: Build Gothic Dungeon 3D force-directed room layout from `DungeonLayout` data in `adapter.ts`.
-- [ ] **TASK-NC-06**: Build monster rendering system (Poltergeist Demon, Zombie Variable, Shadow Lint Ghost) with GLSL shaders.
-- [ ] **TASK-NC-07**: Build Refactoring Spell cast UI in `src/spells/` wired to `adapter.castSpell()`.
-- [ ] **TASK-NC-08**: Build Undo Spell button wired to `adapter.rollbackLastSpell()`.
+- [x] **TASK-NC-05**: Build Gothic Dungeon 3D force-directed room layout from `DungeonLayout` data in `adapter.ts`.
+- [x] **TASK-NC-06**: Build monster rendering system (Poltergeist Demon, Zombie Variable, Shadow Lint Ghost) with GLSL shaders.
+- [x] **TASK-NC-07**: Build Refactoring Spell cast UI in `src/spells/` wired to `adapter.castSpell()`.
+- [x] **TASK-NC-08**: Build Undo Spell button wired to `adapter.rollbackLastSpell()`.
 - [ ] **TASK-NC-09**: Build Bedrock "Holy Incantation" hint overlay.
 - [ ] **TASK-NC-10**: Build Live Engine Inspector Toggle showing mutation diff.
 - [ ] **TASK-NC-11**: Add Mirelo SFX / ElevenLabs Gothic horror audio (thunder, whispers, holy chants).

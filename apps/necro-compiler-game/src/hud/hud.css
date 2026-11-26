@@ -1,0 +1,91 @@
+/* --- Layout --- */
+.game-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  color: var(--bone);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.hud-panel {
+  position: absolute;
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bone) 28%, transparent);
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+
+.hud-bar {
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  width: min(880px, calc(100vw - 32px));
+  padding: 14px 18px;
+}
+
+.hud-grimoire { top: 16px; right: 16px; width: 260px; padding: 12px 14px; }
+.hud-tooltip { position: fixed; padding: 8px 10px; font-size: 13px; pointer-events: none; max-width: 280px; }
+.hud-toast {
+  top: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 12px; align-items: center;
+  padding: 10px 14px; color: var(--bloodText); border-color: var(--blood);
+}
+
+/* --- Typography --- */
+.hud-title { margin: 0; font-family: Cinzel, Georgia, serif; font-size: 17px; font-weight: 600; letter-spacing: 0.04em; color: var(--gold); }
+.hud-code { margin: 0; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; color: var(--violet); overflow-wrap: anywhere; }
+.hud-empty, .hud-hint { margin: 0; font-size: 14px; }
+.hud-hint { color: var(--bloodText); }
+
+/* --- Monster card --- */
+.hud-card { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.hud-card__head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.hud-card__title { margin: 0; font-weight: 600; }
+.hud-card__text { margin: 0; font-size: 14px; }
+.hud-status { margin-left: auto; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+.hud-badge { font-size: 12px; padding: 1px 8px; border: 1px solid currentColor; border-radius: 999px; }
+.hud-badge--CRITICAL, .hud-badge--HIGH { color: var(--bloodText); }
+.hud-badge--MEDIUM { color: var(--gold); }
+.hud-badge--LOW, .hud-badge--INFO { color: var(--violet); }
+
+/* --- Buttons --- */
+.hud-actions { display: flex; flex-direction: column; gap: 8px; justify-content: center; min-width: 230px; }
+.hud-button {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 9px 12px; font: inherit; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--bone); border-radius: 4px;
+  transition: filter 0.15s;
+}
+.hud-button--cast { background: var(--blood); color: var(--bone); }
+.hud-button--undo { background: transparent; color: var(--bone); }
+.hud-button:hover:not(:disabled) { filter: brightness(1.25); }
+.hud-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.hud-kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; padding: 1px 6px; border: 1px solid currentColor; border-radius: 3px; }
+.hud-close { background: none; border: none; color: inherit; font-size: 20px; cursor: pointer; line-height: 1; }
+
+/* --- Grimoire --- */
+.hud-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.hud-entry { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.hud-entry__name { font-weight: 600; }
+.hud-entry--undone .hud-entry__name { text-decoration: line-through; }
+.hud-entry__meta { font-size: 12px; }
+
+/* --- Focus and motion --- */
+.hud-button:focus-visible, .hud-close:focus-visible, canvas:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-button { transition: none; }
+}
+
+@media (max-width: 640px) {
+  .hud-bar { flex-direction: column; }
+  .hud-actions { min-width: 0; }
+  .hud-grimoire { display: none; }
+}

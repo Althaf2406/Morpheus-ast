@@ -1,4 +1,10 @@
-import type { DungeonLayout, DungeonRoom, DungeonCorridor } from "../adapter.ts";
+import type { DungeonCorridor, DungeonEntity, DungeonLayout, DungeonRoom } from "../adapter.ts";
+
+// --- Spells: every monster but the last has a spell; the last one shows the disabled state ---
+const spell = (filePath: string): NonNullable<DungeonEntity["suggestedSpell"]> => ({
+  splices: [{ filePath, startIndex: 0, endIndex: 0, replacement: "", description: "Refactor the flagged code" }],
+});
+
 
 // --- Rooms: 12 total, 2 boss rooms, mix of all sizes ---
 
@@ -20,7 +26,7 @@ const rooms: readonly DungeonRoom[] = [
         severity: "CRITICAL",
         title: "Uncaught exception in parser root",
         description: "Top-level parse errors propagate uncaught.",
-        suggestedSpell: null,
+        suggestedSpell: spell("src/core/parser.ts"),
       },
     ],
   },
@@ -40,7 +46,7 @@ const rooms: readonly DungeonRoom[] = [
         severity: "HIGH",
         title: "Deep recursion without guard",
         description: "Circular import resolution can stack-overflow.",
-        suggestedSpell: null,
+        suggestedSpell: spell("src/core/resolver.ts"),
       },
     ],
   },
@@ -61,7 +67,7 @@ const rooms: readonly DungeonRoom[] = [
         severity: "MEDIUM",
         title: "Unused variable: tempNodes",
         description: "Variable tempNodes is declared but never read.",
-        suggestedSpell: null,
+        suggestedSpell: spell("src/topology/builder.ts"),
       },
     ],
   },
@@ -92,7 +98,7 @@ const rooms: readonly DungeonRoom[] = [
         severity: "LOW",
         title: "Inconsistent return type",
         description: "Function returns different shapes in branches.",
-        suggestedSpell: null,
+        suggestedSpell: spell("src/mutator/splice.ts"),
       },
     ],
   },
@@ -122,7 +128,7 @@ const rooms: readonly DungeonRoom[] = [
         severity: "HIGH",
         title: "API key in source",
         description: "Bedrock API key hardcoded in function body.",
-        suggestedSpell: null,
+        suggestedSpell: spell("src/bedrock/advisor.ts"),
       },
     ],
   },

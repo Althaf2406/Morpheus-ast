@@ -1,132 +1,101 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { useEffect, useRef, useState } from "react";
 import type { DungeonLayout } from "../../adapter.ts";
-import { frameCamera } from "../../layout/frameCamera.ts";
-import { createDungeonLighting } from "./dungeonLighting.ts";
-import { useDungeonPositions } from "./useDungeonPositions.ts";
-import { DungeonRooms } from "./DungeonRooms.tsx";
+import type { EntityVisualState } from "../../entities/entityTransition.ts";
 import { DungeonCorridors } from "./DungeonCorridors.tsx";
+import { DungeonInteraction } from "./DungeonInteraction.tsx";
+import { DungeonRooms } from "./DungeonRooms.tsx";
+import { createDungeonRig, type DungeonRig } from "./dungeonRig.ts";
+import { EntityLayer } from "./EntityLayer.tsx";
+import type { MonsterBatch } from "./entityMeshes.ts";
+import type { PickHit } from "./monsterPicker.ts";
+import { useDungeonPositions } from "./useDungeonPositions.ts";
+import { useTickRegistry } from "./useTickRegistry.ts";
 
 interface Props {
   readonly layout: DungeonLayout;
+  readonly entityStates?: ReadonlyMap<string, EntityVisualState>;
+  readonly selectedEntityId: string | null;
+  readonly onSelectEntity: (entityId: string | null) => void;
+  readonly onHoverEntity: (hit: PickHit | null) => void;
 }
 
-export function DungeonScene({ layout }: Props) {
+const NO_ENTITY_STATES: ReadonlyMap<string, EntityVisualState> = new Map();
+const NO_BATCHES: readonly MonsterBatch[] = [];
+
+export function DungeonScene({
+  layout, entityStates = NO_ENTITY_STATES, selectedEntityId, onSelectEntity, onHoverEntity,
+}: Props) {
   const canvasRef    = useRef<HTMLCanvasElement>(null);
-  const [scene, setScene] = useState<THREE.Scene | null>(null);
-  const [clock]           = useState(() => new THREE.Clock());
-  const positions         = useDungeonPositions(layout.rooms, layout.corridors);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [rig, setRig]         = useState<DungeonRig | null>(null);
+  const [batches, setBatches] = useState<readonly MonsterBatch[]>(NO_BATCHES);
+  const positions             = useDungeonPositions(layout.rooms, layout.corridors);
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  const ticksRef = useRef<Map<string, (t: number) => void>>(new Map());
-
-  const registerTick = useCallback((id: string, fn: ((t: number) => void) | null) => {
-    if (fn == null) ticksRef.current.delete(id);
-    else            ticksRef.current.set(id, fn);
-  }, []);
-
-  const handleRoomTick = useCallback(
-    (tick: ((t: number) => void) | null) => registerTick("dungeon-rooms", tick),
-    [registerTick]
-  );
+  const { ticksRef, handleRoomTick, handleEntityTick, handleOverlayTick } = useTickRegistry();
 
   // --- Renderer + scene setup (runs once) ---
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas == null) return;
-
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.setClearColor(0x0d0a08);
-
-    // Compute camera frame first — fog near/far depend on camDist.
-    const frame = frameCamera(positions);
-
-    const threeScene = new THREE.Scene();
-    // Linear fog scaled to camera distance: near = camDist×0.8, far = camDist×3.
-    // This ensures the entire dungeon is always legible and only the far
-    // background fades, regardless of how compact or spread the layout is.
-    const fogNear = frame.camDist * 0.8;
-    const fogFar  = frame.camDist * 3;
-    threeScene.fog = new THREE.Fog(0x0d0a08, fogNear, fogFar);
-
-    const lighting = createDungeonLighting(threeScene);
-
-    // Auto-frame: position camera to show all rooms on first load
-    const cam = new THREE.PerspectiveCamera(
-      55,
-      canvas.clientWidth / canvas.clientHeight,
-      0.1,
-      2000
-    );
-    cam.position.copy(frame.position);
-    cam.lookAt(frame.target);
-
-    const controls = new OrbitControls(cam, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.minDistance   = 5;
-    controls.maxDistance   = frame.maxDistance;
-    controls.target.copy(frame.target);
-    controls.update();
-
-    setScene(threeScene);
-    clock.start();
-
-    let rafId: number;
-    const render = () => {
-      rafId = requestAnimationFrame(render);
-      if (!reducedMotion) {
-        const t = clock.getElapsedTime();
-        ticksRef.current.forEach((tick) => tick(t));
-      }
-      controls.update();
-      renderer.render(threeScene, cam);
-    };
-    rafId = requestAnimationFrame(render);
-
-    const onResize = () => {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      cam.aspect = w / h;
-      cam.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener("resize", onResize);
-
+    const container = containerRef.current;
+    if (canvas == null || container == null) return;
+    const created = createDungeonRig({
+      canvas,
+      container,
+      positions,
+      onFrame: (elapsed) => {
+        if (!reducedMotion) ticksRef.current.forEach((tick) => tick(elapsed));
+      },
+    });
+    setRig(created);
     return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", onResize);
-      lighting.dispose();
-      controls.dispose();
-      renderer.dispose();
-      setScene(null);
+      created.dispose();
+      setRig(null);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div ref={containerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
       <canvas
         ref={canvasRef}
+        aria-label="Dungeon view. Click a monster to select it."
         style={{ display: "block", width: "100%", height: "100%" }}
       />
-      {scene != null && (
+      {rig != null && (
         <>
           <DungeonRooms
             rooms={layout.rooms}
             positions={positions}
-            scene={scene}
+            scene={rig.scene}
             onTickUpdate={handleRoomTick}
           />
           <DungeonCorridors
             corridors={layout.corridors}
             rooms={layout.rooms}
             positions={positions}
-            scene={scene}
+            scene={rig.scene}
+          />
+          <EntityLayer
+            rooms={layout.rooms}
+            positions={positions}
+            scene={rig.scene}
+            entityStates={entityStates}
+            reducedMotion={reducedMotion}
+            onBatches={setBatches}
+            onTickUpdate={handleEntityTick}
+          />
+          <DungeonInteraction
+            rig={rig}
+            batches={batches}
+            rooms={layout.rooms}
+            positions={positions}
+            entityStates={entityStates}
+            selectedEntityId={selectedEntityId}
+            reducedMotion={reducedMotion}
+            onHover={onHoverEntity}
+            onSelect={onSelectEntity}
+            onTickUpdate={handleOverlayTick}
           />
         </>
       )}

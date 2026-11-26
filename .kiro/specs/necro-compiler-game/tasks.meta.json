@@ -11,6 +11,37 @@
         "executionId": "ae0d28af-71b6-4a34-ad44-a5ab43c82132",
         "chatSessionId": "sess_e1ab5768-c152-47e5-a074-84d864cfc2d7",
         "timestamp": 1794838589959
+      },
+      {
+        "executionId": "50674dac-a3d2-4990-9f98-b364bd5ffcd3",
+        "chatSessionId": "sess_4fa44c59-360b-40f5-ad5c-ae7fbd53fef6",
+        "timestamp": 1795688496012
+      },
+      {
+        "executionId": "50674dac-a3d2-4990-9f98-b364bd5ffcd3",
+        "chatSessionId": "sess_4fa44c59-360b-40f5-ad5c-ae7fbd53fef6",
+        "timestamp": 1795688500153
+      }
+    ],
+    "**TASK-NC-06**: Build monster rendering system (Poltergeist Demon, Zombie Variable, Shadow Lint Ghost) with GLSL shaders.": [
+      {
+        "executionId": "50674dac-a3d2-4990-9f98-b364bd5ffcd3",
+        "chatSessionId": "sess_4fa44c59-360b-40f5-ad5c-ae7fbd53fef6",
+        "timestamp": 1795688502884
+      }
+    ],
+    "**TASK-NC-07**: Build Refactoring Spell cast UI in `src/spells/` wired to `adapter.castSpell()`.": [
+      {
+        "executionId": "81b6c7e6-036b-4912-8baf-6dd83fc86caf",
+        "chatSessionId": "sess_2287e9fe-9ae9-4dbd-987a-6ee2eedac186",
+        "timestamp": 1795689978680
+      }
+    ],
+    "**TASK-NC-08**: Build Undo Spell button wired to `adapter.rollbackLastSpell()`.": [
+      {
+        "executionId": "81b6c7e6-036b-4912-8baf-6dd83fc86caf",
+        "chatSessionId": "sess_2287e9fe-9ae9-4dbd-987a-6ee2eedac186",
+        "timestamp": 1795689979364
       }
     ]
   }

@@ -51,6 +51,9 @@ importers:
 
   apps/necro-compiler-game:
     dependencies:
+      '@fontsource/cinzel':
+        specifier: ^5.3.0
+        version: 5.3.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -563,6 +566,9 @@ packages:
     engines: {node: '>=12'}
     cpu: [x64]
     os: [win32]
+
+  '@fontsource/cinzel@5.3.0':
+    resolution: {integrity: sha512-KEOYTsrRppW0uRIPWBDPrQgunCS6f8u4nzZxYRBfo9SCknKojLYjK7B0ZoVmJhyVLefz271ZQRF9EOpHZlfhRw==}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -2890,6 +2896,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.21.5':
     optional: true
+
+  '@fontsource/cinzel@5.3.0': {}
 
   '@isaacs/cliui@8.0.2':
     dependencies:
