@@ -4,11 +4,11 @@ import type { DungeonRoom } from "../../adapter.ts";
 import type { EntityVisualState } from "../../entities/entityTransition.ts";
 import { PALETTE } from "../../hud/palette.ts";
 import { createCameraGlide, type CameraGlide } from "./cameraGlide.ts";
-import { ROOM_SCALE } from "./DungeonRooms.tsx";
 import type { DungeonRig } from "./dungeonRig.ts";
 import type { MonsterBatch } from "./entityMeshes.ts";
 import { createMonsterGlow, type MonsterGlow } from "./monsterGlow.ts";
 import { createMonsterPicker, locateInstance, type PickHit } from "./monsterPicker.ts";
+import { roomFocusTarget } from "./roomFocus.ts";
 
 // --- Props ---
 interface Props {
@@ -64,7 +64,7 @@ export function DungeonInteraction({
   const glideRef = useRef<CameraGlide | null>(null);
   useEffect(() => {
     const selectGlow = createMonsterGlow(rig.scene, PALETTE.gold, SELECT_OPACITY);
-    const glide = createCameraGlide(rig.camera, rig.controls, reducedMotion);
+    const glide = createCameraGlide(rig.camera, rig.controls, reducedMotion, positions);
     selectGlowRef.current = selectGlow;
     glideRef.current = glide;
     onTickUpdate((t) => {
@@ -78,7 +78,7 @@ export function DungeonInteraction({
       glide.dispose();
       selectGlow.dispose();
     };
-  }, [rig, reducedMotion, onTickUpdate]);
+  }, [rig, reducedMotion, positions, onTickUpdate]);
 
   // --- Selected monster: halo, and glide to its room ---
   useEffect(() => {
@@ -90,11 +90,16 @@ export function DungeonInteraction({
 
   useEffect(() => {
     if (selectedEntityId === null) return;
-    const room = rooms.find((r) => r.entities.some((e) => e.entityId === selectedEntityId));
-    const origin = room === undefined ? undefined : positions.get(room.id);
-    if (room === undefined || origin === undefined) return;
-    glideRef.current?.focus(origin.clone().setY(origin.y + ROOM_SCALE[room.size][1] / 2));
+    const target = roomFocusTarget(rooms, positions, selectedEntityId);
+    if (target !== null) glideRef.current?.focus(target);
   }, [selectedEntityId, rooms, positions]);
+
+  // --- Selection cleared (Escape or empty-space click): glide back to the whole dungeon ---
+  const hadSelectionRef = useRef(false);
+  useEffect(() => {
+    if (selectedEntityId === null && hadSelectionRef.current) glideRef.current?.reset();
+    hadSelectionRef.current = selectedEntityId !== null;
+  }, [selectedEntityId]);
 
   return null;
 }

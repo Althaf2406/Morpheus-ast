@@ -1,4 +1,5 @@
 import type { Extent } from "../../entities/entityPlacement.ts";
+import { scaleFor, wallHeightFor } from "../../entities/scale.ts";
 // --- Types ---
 /** Axis-aligned box: centre position and full size, in world units. */
 export interface PartBox {
@@ -22,9 +23,7 @@ export interface Origin {
 }
 // --- Constants ---
 export const FLOOR_THICKNESS = 0.18;
-const WALL_HEIGHT_FRACTION   = 0.3;
 const DOOR_FRACTION          = 0.3;
-const BOSS_PILLAR_BOOST      = 1.45;
 const RUNE_THICKNESS         = 0.05;
 const RUNE_WIDTH             = 0.14;
 const RUNE_SPAN              = 0.7;
@@ -37,8 +36,9 @@ function thicknessFor(width: number, depth: number): number {
   return Math.min(0.3, Math.min(width, depth) * 0.08);
 }
 // --- Parts ---
-function wallBoxes(o: Origin, [w, h, d]: Extent, t: number): PartBox[] {
-  const wallH  = h * WALL_HEIGHT_FRACTION;
+function wallBoxes(o: Origin, extent: Extent, t: number): PartBox[] {
+  const [w, , d] = extent;
+  const wallH  = wallHeightFor(extent);
   const y      = o.y + wallH / 2;
   const gapX   = w * DOOR_FRACTION;
   const gapZ   = d * DOOR_FRACTION;
@@ -57,9 +57,9 @@ function wallBoxes(o: Origin, [w, h, d]: Extent, t: number): PartBox[] {
   }
   return result;
 }
-function pillarBoxes(o: Origin, [w, h, d]: Extent, t: number, isBoss: boolean): PartBox[] {
-  const height = isBoss ? h * BOSS_PILLAR_BOOST : h;
-  const girth  = t * (isBoss ? 1.2 : 1);
+function pillarBoxes(o: Origin, extent: Extent): PartBox[] {
+  const [w, , d] = extent;
+  const { pillarHeight: height, pillarGirth: girth } = scaleFor(wallHeightFor(extent));
   const result: PartBox[] = [];
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
@@ -89,7 +89,7 @@ export function buildRoomParts(origin: Origin, extent: Extent, isBoss: boolean):
   return {
     floor:   [box(origin.x, origin.y + FLOOR_THICKNESS / 2, origin.z, w, FLOOR_THICKNESS, d)],
     walls:   wallBoxes(origin, extent, t),
-    pillars: pillarBoxes(origin, extent, t, isBoss),
+    pillars: pillarBoxes(origin, extent),
     runes:   isBoss ? runeBoxes(origin, extent) : [],
   };
 }

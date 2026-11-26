@@ -14,7 +14,7 @@ import {
   MAX_SEVERITY_INTENSITY,
   MONSTER_CONFIG,
   SEVERITY_VISUAL,
-  entityRadius,
+  severityScale,
   meshFill,
   type Severity,
 } from "../monsterConfig.ts";
@@ -60,9 +60,9 @@ describe("monster config", () => {
 
   it("P2: radius and intensity never decrease as severity rises", () => {
     fc.assert(
-      fc.property(typeArb, severityArb, severityArb, (type, a, b) => {
+      fc.property(severityArb, severityArb, (a, b) => {
         const [low, high] = RANK[a] <= RANK[b] ? [a, b] : [b, a];
-        expect(entityRadius(type, high)).toBeGreaterThanOrEqual(entityRadius(type, low));
+        expect(severityScale(high)).toBeGreaterThanOrEqual(severityScale(low));
         expect(SEVERITY_VISUAL[high].intensity).toBeGreaterThanOrEqual(SEVERITY_VISUAL[low].intensity);
       })
     );

@@ -41,6 +41,14 @@
 .hud-empty, .hud-hint { margin: 0; font-size: 14px; }
 .hud-hint { color: var(--bloodText); }
 
+/* --- Title and counters --- */
+.hud-heading { top: 16px; left: 16px; padding: 10px 14px; max-width: 320px; }
+.hud-heading__title { font-size: 20px; }
+.hud-heading__goal { margin: 4px 0 0; font-size: 13px; }
+.hud-counters { position: absolute; top: 96px; left: 16px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.hud-counter--monsters { color: var(--bloodText); font-weight: 600; }
+.hud-counter--purified { color: var(--gold); }
+
 /* --- Monster card --- */
 .hud-card { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .hud-card__head { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }

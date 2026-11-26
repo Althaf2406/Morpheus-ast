@@ -7,6 +7,9 @@
  *   P2 — Every entity sphere lies inside the room box
  *   P3 — No two entity spheres overlap
  *   P4 — Radius and intensity are monotone in severity
+ *
+ * **Feature: necro-visual-polish, Property 6: Entities stay inside room bounds without overlap (regression)**
+ * **Validates: Requirements 1.7, 1.8**
  */
 import * as fc from "fast-check";
 import { describe, it, expect } from "vitest";
@@ -43,21 +46,23 @@ const originArb = fc.record({
   z: fc.double({ min: -100, max: 100, noNaN: true }),
 });
 
+const bossRoomArb = fc.boolean();
+
 describe("entity placement", () => {
   it("P1: is deterministic and independent of input order", () => {
     fc.assert(
       fc.property(entitiesArb, originArb, extentArb, (entities, origin, extent) => {
-        const first = placeRoomEntities(entities, origin, extent);
-        expect(placeRoomEntities(entities, origin, extent)).toEqual(first);
-        expect(placeRoomEntities([...entities].reverse(), origin, extent)).toEqual(first);
+        const first = placeRoomEntities(entities, origin, extent, false);
+        expect(placeRoomEntities(entities, origin, extent, false)).toEqual(first);
+        expect(placeRoomEntities([...entities].reverse(), origin, extent, false)).toEqual(first);
       })
     );
   });
 
   it("P2: every entity sphere lies inside the room box", () => {
     fc.assert(
-      fc.property(entitiesArb, originArb, extentArb, (entities, origin, [w, h, d]) => {
-        for (const p of placeRoomEntities(entities, origin, [w, h, d])) {
+      fc.property(entitiesArb, originArb, extentArb, bossRoomArb, (entities, origin, [w, h, d], isBossRoom) => {
+        for (const p of placeRoomEntities(entities, origin, [w, h, d], isBossRoom)) {
           expect(p.radius).toBeGreaterThan(0);
           expect(Math.abs(p.x - origin.x) + p.radius).toBeLessThanOrEqual(w / 2 + EPS);
           expect(Math.abs(p.z - origin.z) + p.radius).toBeLessThanOrEqual(d / 2 + EPS);
@@ -70,8 +75,8 @@ describe("entity placement", () => {
 
   it("P3: no two entity spheres overlap", () => {
     fc.assert(
-      fc.property(entitiesArb, originArb, extentArb, (entities, origin, extent) => {
-        const placed = placeRoomEntities(entities, origin, extent);
+      fc.property(entitiesArb, originArb, extentArb, bossRoomArb, (entities, origin, extent, isBossRoom) => {
+        const placed = placeRoomEntities(entities, origin, extent, isBossRoom);
         for (let a = 0; a < placed.length; a++) {
           for (let b = a + 1; b < placed.length; b++) {
             const dist = Math.hypot(placed[a].x - placed[b].x, placed[a].y - placed[b].y, placed[a].z - placed[b].z);
@@ -89,8 +94,8 @@ describe("entity placement", () => {
         fc.integer({ min: 0, max: 4 }), fc.integer({ min: 0, max: 4 }),
         (type, origin, extent, i, j) => {
           const [low, high] = [Math.min(i, j), Math.max(i, j)];
-          const [a] = placeRoomEntities([makeEntity("e", type, SEVERITIES[low])], origin, extent);
-          const [b] = placeRoomEntities([makeEntity("e", type, SEVERITIES[high])], origin, extent);
+          const [a] = placeRoomEntities([makeEntity("e", type, SEVERITIES[low])], origin, extent, false);
+          const [b] = placeRoomEntities([makeEntity("e", type, SEVERITIES[high])], origin, extent, false);
           expect(b.radius).toBeGreaterThanOrEqual(a.radius);
           expect(b.intensity).toBeGreaterThanOrEqual(a.intensity);
         }
@@ -99,6 +104,6 @@ describe("entity placement", () => {
   });
 
   it("returns nothing for an empty room", () => {
-    expect(placeRoomEntities([], { x: 0, y: 0, z: 0 }, [4, 3, 4])).toEqual([]);
+    expect(placeRoomEntities([], { x: 0, y: 0, z: 0 }, [4, 3, 4], false)).toEqual([]);
   });
 });

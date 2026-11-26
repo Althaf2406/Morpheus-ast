@@ -6,6 +6,8 @@ import vertexMain from "./monster.vert.glsl?raw";
 import demonMain from "./demon.frag.glsl?raw";
 import zombieMain from "./zombie.frag.glsl?raw";
 import ghostMain from "./ghost.frag.glsl?raw";
+import stoneVertexMain from "./stoneFloor.vert.glsl?raw";
+import stoneFragmentMain from "./stoneFloor.frag.glsl?raw";
 
 // --- Assembly: shared chunks first, then the stage's own main() ---
 
@@ -21,3 +23,6 @@ export const FRAGMENT_SOURCE: Record<EntityType, string> = {
   ZOMBIE_VARIABLE: `${fragmentShared}\n${zombieMain}`,
   SHADOW_LINT_GHOST: `${fragmentShared}\n${ghostMain}`,
 };
+// --- Stone floor: procedural flagstone, shares the common and noise chunks ---
+export const STONE_FLOOR_VERTEX: string = `${vertexShared}\n${stoneVertexMain}`;
+export const STONE_FLOOR_FRAGMENT: string = `${fragmentShared}\n${stoneFragmentMain}`;

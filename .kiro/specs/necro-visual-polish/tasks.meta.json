@@ -1,0 +1,965 @@
+{
+  "pbtResults": {
+    "1.3 Write property test for regular monster height band": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703448391
+    },
+    "2.9 Write property test for four torches per Boss_Room": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703451430
+    },
+    "1.5 Write property test for linear pillar scaling": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703452653
+    },
+    "2.8 Write property test for Boss_Room identification": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703457753
+    },
+    "1.4 Write property test for boss versus regular height": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703461676
+    },
+    "2.11 Write property test for allocation determinism": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703513351
+    },
+    "2.10 Write property test for light allocation": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703516326
+    },
+    "2.13 Write property test for torch flicker bounds": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703518906
+    },
+    "1.6 Write property test that Scale_Function is the only size source": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703583627
+    },
+    "1.7 Write property test for Boss_Monster selection": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703589934
+    },
+    "1.8 Extend placement tests as regression and add scale unit tests": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703592017
+    },
+    "3.3 Write property test for focus target": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703615100
+    },
+    "3.4 Write property test for reset target": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703672746
+    },
+    "3.5 Write property test for reduced-motion glide": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703688750
+    },
+    "2.14 Write property test for reduced-motion atmosphere": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703690693
+    },
+    "2.12 Write property test for scene PointLight count": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703692837
+    },
+    "4.3 Write property test for counters": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703775256
+    },
+    "2.16 Write property test for disposal": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703835813
+    },
+    "2.15 Write property test for the single Ember_Field": {
+      "status": "passed",
+      "lastRunTimestamp": 1795703851786
+    },
+    "5.6 Write test for Draw_Call_Count stability": {
+      "status": "passed",
+      "lastRunTimestamp": 1795704071688
+    },
+    "5.7 Write test for PointLight count": {
+      "status": "passed",
+      "lastRunTimestamp": 1795704074555
+    }
+  },
+  "executionHistory": {
+    "1.1 Create `src/entities/scale.ts`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147708
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703155647
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703245348
+      }
+    ],
+    "1.2 Route monster and pillar sizes through the Scale_Function": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147733
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703330084
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703405614
+      }
+    ],
+    "1.3 Write property test for regular monster height band": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147753
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703410866
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703470269
+      }
+    ],
+    "1.4 Write property test for boss versus regular height": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147780
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703410900
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703470607
+      }
+    ],
+    "1.5 Write property test for linear pillar scaling": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147822
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703411092
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703471174
+      }
+    ],
+    "1.6 Write property test that Scale_Function is the only size source": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147842
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703535068
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703625194
+      }
+    ],
+    "1.7 Write property test for Boss_Monster selection": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147861
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703535625
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703626292
+      }
+    ],
+    "1.8 Extend placement tests as regression and add scale unit tests": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147879
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703536428
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703627327
+      }
+    ],
+    "2.1 Create `src/components/dungeon/torchAllocation.ts`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147898
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703155689
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703245392
+      }
+    ],
+    "2.2 Create `src/components/dungeon/torches.ts`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147916
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703330126
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703403676
+      }
+    ],
+    "2.3 Create `src/components/dungeon/emberField.ts`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147936
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703156081
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703245882
+      }
+    ],
+    "2.4 Add the procedural Stone_Floor": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147955
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703156658
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703246584
+      }
+    ],
+    "2.5 Remove the GridHelper": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147975
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703157423
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703247178
+      }
+    ],
+    "2.6 Create `AtmosphereLayer.tsx` and wire it into `DungeonScene.tsx`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703147999
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703534843
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703624399
+      }
+    ],
+    "2.7 Add Bloom_Pass and cold fog in `dungeonRig.ts`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148019
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703330300
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703404190
+      }
+    ],
+    "2.8 Write property test for Boss_Room identification": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148040
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703411681
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703472188
+      }
+    ],
+    "2.9 Write property test for four torches per Boss_Room": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148079
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703412128
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703472653
+      }
+    ],
+    "2.10 Write property test for light allocation": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148108
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703484583
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703527446
+      }
+    ],
+    "2.11 Write property test for allocation determinism": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148139
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703484635
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703528195
+      }
+    ],
+    "2.12 Write property test for scene PointLight count": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148164
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703631273
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703705292
+      }
+    ],
+    "2.13 Write property test for torch flicker bounds": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148184
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703485025
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703529214
+      }
+    ],
+    "2.14 Write property test for reduced-motion atmosphere": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148204
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703632063
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703706008
+      }
+    ],
+    "2.15 Write property test for the single Ember_Field": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148224
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703792740
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704006068
+      }
+    ],
+    "2.16 Write property test for disposal": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148243
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703793790
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704006426
+      }
+    ],
+    "2.17 Write unit tests for atmosphere edge cases": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148261
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703794840
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704007227
+      }
+    ],
+    "3.1 Add `reset()` to `cameraGlide.ts`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148280
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703258421
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703324834
+      }
+    ],
+    "3.2 Wire selection clearing in `DungeonInteraction.tsx`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148298
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703330630
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703405020
+      }
+    ],
+    "3.3 Write property test for focus target": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148321
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703537043
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703627703
+      }
+    ],
+    "3.4 Write property test for reset target": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148340
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703632866
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703702984
+      }
+    ],
+    "3.5 Write property test for reduced-motion glide": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148359
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703633912
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703703676
+      }
+    ],
+    "3.6 Write property test for glide cancellation": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148380
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703634635
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703704490
+      }
+    ],
+    "4.1 Create `src/hud/HudTitle.tsx` and `src/hud/CounterBar.tsx`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148403
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703258468
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703324424
+      }
+    ],
+    "4.2 Derive counters and mount the HUD in `App.tsx`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148425
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703331025
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703403892
+      }
+    ],
+    "4.3 Write property test for counters": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148446
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703710638
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703787428
+      }
+    ],
+    "4.4 Write unit tests for HUD text": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148466
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703710680
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703788298
+      }
+    ],
+    "5.1 Create perf fixtures and helpers": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148487
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703258827
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703323626
+      }
+    ],
+    "5.2 Create the scene builder fixture `src/perf/buildPerfScene.ts`": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148504
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703795520
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704007917
+      }
+    ],
+    "5.3 Write perf test for entity placement": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148528
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703711668
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703786889
+      }
+    ],
+    "5.4 Write perf test for Scale_Function": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148548
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703712317
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703789086
+      }
+    ],
+    "5.5 Write perf test for one Frame_Loop tick": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148575
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704011353
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704085828
+      }
+    ],
+    "5.6 Write test for Draw_Call_Count stability": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148598
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704012452
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704086880
+      }
+    ],
+    "5.7 Write test for PointLight count": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148619
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704013106
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704087738
+      }
+    ],
+    "6. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148640
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704092497
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704136423
+      }
+    ],
+    "7.1 Run typecheck": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148668
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704136505
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704167058
+      }
+    ],
+    "7.2 Run tests": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148700
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704167549
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704204540
+      }
+    ],
+    "7.3 Run build and report chunk size": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148722
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704205074
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704297347
+      }
+    ],
+    "7.4 Run boundary lint": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148743
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704297533
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704309957
+      }
+    ],
+    "7.5 Re-read every changed file": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148766
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704310668
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704478616
+      }
+    ],
+    "7.6 Check line counts of changed files": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703148788
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704478659
+      },
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704498444
+      }
+    ],
+    "1. Proportional scale and boss rule": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703627385
+      }
+    ],
+    "3. Room-focus camera": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703704517
+      }
+    ],
+    "4. Minimal HUD": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795703788337
+      }
+    ],
+    "2. Gothic atmosphere": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704007252
+      }
+    ],
+    "5. Performance suite": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704087768
+      }
+    ],
+    "7. Final verification": [
+      {
+        "executionId": "f87bdda7-2998-4627-823c-70fcad6218d4",
+        "chatSessionId": "sess_23811987-11ee-4eba-9818-b2412ac15a3e",
+        "timestamp": 1795704498474
+      }
+    ]
+  }
+}

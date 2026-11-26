@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DungeonLayout } from "../../adapter.ts";
 import type { EntityVisualState } from "../../entities/entityTransition.ts";
+import { AtmosphereLayer } from "./AtmosphereLayer.tsx";
 import { DungeonCorridors } from "./DungeonCorridors.tsx";
 import { DungeonInteraction } from "./DungeonInteraction.tsx";
 import { DungeonRooms } from "./DungeonRooms.tsx";
@@ -32,7 +33,9 @@ export function DungeonScene({
   const positions             = useStableRoomPositions(layout.rooms, layout.corridors);
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const { ticksRef, handleRoomTick, handleEntityTick, handleOverlayTick } = useTickRegistry();
+  const {
+    ticksRef, handleRoomTick, handleEntityTick, handleOverlayTick, handleAtmosphereTick,
+  } = useTickRegistry();
 
   // --- Renderer + scene setup (runs once) ---
   useEffect(() => {
@@ -69,6 +72,13 @@ export function DungeonScene({
             positions={positions}
             scene={rig.scene}
             onTickUpdate={handleRoomTick}
+          />
+          <AtmosphereLayer
+            layout={layout}
+            positions={positions}
+            scene={rig.scene}
+            reducedMotion={reducedMotion}
+            onTickUpdate={handleAtmosphereTick}
           />
           <DungeonCorridors
             corridors={layout.corridors}

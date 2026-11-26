@@ -8,6 +8,7 @@ export interface TickRegistry {
   readonly handleRoomTick:   TickSetter;
   readonly handleEntityTick: TickSetter;
   readonly handleOverlayTick: TickSetter;
+  readonly handleAtmosphereTick: TickSetter;
 }
 
 /** Per-frame tick registry: layers register a callback, the render loop runs them all. */
@@ -31,5 +32,9 @@ export function useTickRegistry(): TickRegistry {
     (tick: Tick | null) => registerTick("dungeon-overlay", tick),
     [registerTick]
   );
-  return { ticksRef, handleRoomTick, handleEntityTick, handleOverlayTick };
+  const handleAtmosphereTick = useCallback(
+    (tick: Tick | null) => registerTick("dungeon-atmosphere", tick),
+    [registerTick]
+  );
+  return { ticksRef, handleRoomTick, handleEntityTick, handleOverlayTick, handleAtmosphereTick };
 }

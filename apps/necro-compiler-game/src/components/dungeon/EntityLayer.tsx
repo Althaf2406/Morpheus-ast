@@ -32,7 +32,7 @@ export function EntityLayer({
   useEffect(() => {
     const placed = rooms.flatMap((room) => {
       const origin = positions.get(room.id);
-      return origin == null ? [] : placeRoomEntities(room.entities, origin, ROOM_SCALE[room.size]);
+      return origin == null ? [] : placeRoomEntities(room.entities, origin, ROOM_SCALE[room.size], room.size === "BOSS");
     });
     const batches = buildMonsterBatches(placed);
     const driver = createEntityDriver(batches, () => statesRef.current, reducedMotion);

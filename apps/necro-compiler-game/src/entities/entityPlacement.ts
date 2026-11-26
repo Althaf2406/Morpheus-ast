@@ -1,5 +1,6 @@
 import type { DungeonEntity, EntityType } from "../adapter.ts";
-import { SEVERITY_VISUAL, entityRadius, type Severity } from "./monsterConfig.ts";
+import { SEVERITY_VISUAL, severityScale, type Severity } from "./monsterConfig.ts";
+import { bossMonsterId, monsterRadius, wallHeightFor } from "./scale.ts";
 
 export interface Vec3Like {
   readonly x: number;
@@ -52,7 +53,8 @@ export function hash01(text: string, salt: number): number {
 export function placeRoomEntities(
   entities: readonly DungeonEntity[],
   origin: Vec3Like,
-  extent: Extent
+  extent: Extent,
+  isBossRoom: boolean
 ): PlacedEntity[] {
   if (entities.length === 0) return [];
   const [width, height, depth] = extent;
@@ -63,12 +65,15 @@ export function placeRoomEntities(
   const cellD = (depth * (1 - 2 * WALL_MARGIN)) / rows;
   const halfCell = Math.min(cellW, cellD) / 2;
   const maxRadius = Math.min(halfCell, height * MAX_HEIGHT_FRACTION);
+  const wallHeight = wallHeightFor(extent);
+  const bossId = isBossRoom ? bossMonsterId(sorted) : null;
   const left = origin.x - width / 2 + width * WALL_MARGIN;
   const back = origin.z - depth / 2 + depth * WALL_MARGIN;
 
   return sorted.map((entity, i) => {
     const id = entity.entityId;
-    const radius = Math.min(entityRadius(entity.type, entity.severity), maxRadius);
+    const isBoss = id === bossId;
+    const radius = Math.min(monsterRadius(wallHeight, isBoss, severityScale(entity.severity)), maxRadius);
     const slack = halfCell - radius;
     const centerX = left + cellW * ((i % cols) + 0.5);
     const centerZ = back + cellD * (Math.floor(i / cols) + 0.5);

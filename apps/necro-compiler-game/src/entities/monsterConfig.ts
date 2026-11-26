@@ -19,7 +19,7 @@ export interface MonsterVisualConfig {
   /** Icosahedron subdivision level. */
   readonly detail: number;
   readonly stretchY: number;
-  /** Multiplier on the severity radius. */
+  /** Multiplier for shader and mesh-fill tuning; not applied to the placed radius. */
   readonly sizeScale: number;
   readonly transparent: boolean;
 }
@@ -44,28 +44,34 @@ export const MONSTER_CONFIG: Record<EntityType, MonsterVisualConfig> = {
 };
 
 // --- Severity scaling ---
-
 export interface SeverityVisual {
-  /** World-space radius of the entity's outer envelope. */
-  readonly radius: number;
   readonly intensity: number;
 }
 
 export const SEVERITY_VISUAL: Record<Severity, SeverityVisual> = {
-  INFO:     { radius: 0.3,  intensity: 0.6 },
-  LOW:      { radius: 0.38, intensity: 0.75 },
-  MEDIUM:   { radius: 0.5,  intensity: 0.9 },
-  HIGH:     { radius: 0.65, intensity: 1.1 },
-  CRITICAL: { radius: 0.85, intensity: 1.4 },
+  INFO:     { intensity: 0.6 },
+  LOW:      { intensity: 0.75 },
+  MEDIUM:   { intensity: 0.9 },
+  HIGH:     { intensity: 1.1 },
+  CRITICAL: { intensity: 1.4 },
 };
+
+/** Relative size multiplier applied inside the Scale_Function envelope. */
+const SEVERITY_SCALE: Record<Severity, number> = {
+  INFO: 0.8,
+  LOW: 0.9,
+  MEDIUM: 1.0,
+  HIGH: 1.15,
+  CRITICAL: 1.3,
+};
+
+export function severityScale(severity: Severity): number {
+  return SEVERITY_SCALE[severity];
+}
 
 export const MAX_SEVERITY_INTENSITY: number = Math.max(
   ...Object.values(SEVERITY_VISUAL).map((visual) => visual.intensity)
 );
-
-export function entityRadius(type: EntityType, severity: Severity): number {
-  return SEVERITY_VISUAL[severity].radius * MONSTER_CONFIG[type].sizeScale;
-}
 
 /**
  * Scale from the unit icosahedron to the placed radius. Shrinks the mesh so that

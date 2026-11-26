@@ -1,7 +1,17 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { frameCamera } from "../../layout/frameCamera.ts";
 import { createDungeonLighting } from "./dungeonLighting.ts";
+
+/** Cold fog colour and bloom tuning. */
+const FOG_COLOR = 0x1a2230;
+const BLOOM_STRENGTH = 0.6;
+const BLOOM_RADIUS = 0.5;
+const BLOOM_THRESHOLD = 0.85;
 
 /** Renderer, scene, camera and the single render loop of the dungeon view. */
 export interface DungeonRig {
@@ -34,7 +44,7 @@ export function createDungeonRig({ canvas, container, positions, onFrame }: RigO
   const scene = new THREE.Scene();
   // Linear fog scaled to camera distance: only the far background fades,
   // however compact or spread the layout is.
-  scene.fog = new THREE.Fog(0x0d0a08, frame.camDist * 0.8, frame.camDist * 3);
+  scene.fog = new THREE.Fog(FOG_COLOR, frame.camDist * 0.8, frame.camDist * 3);
   const lighting = createDungeonLighting(scene);
 
   // Auto-frame: position camera to show all rooms on first load
@@ -50,6 +60,17 @@ export function createDungeonRig({ canvas, container, positions, onFrame }: RigO
   controls.target.copy(frame.target);
   controls.update();
 
+  // --- Post-processing: scene render, bloom on emissive flames, then output conversion ---
+  const composer = new EffectComposer(renderer);
+  composer.setPixelRatio(renderer.getPixelRatio());
+  composer.setSize(width, height);
+  const renderPass = new RenderPass(scene, camera);
+  const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), BLOOM_STRENGTH, BLOOM_RADIUS, BLOOM_THRESHOLD);
+  const outputPass = new OutputPass();
+  composer.addPass(renderPass);
+  composer.addPass(bloomPass);
+  composer.addPass(outputPass);
+
   const clock = new THREE.Clock();
   clock.start();
   let rafId = 0;
@@ -58,7 +79,7 @@ export function createDungeonRig({ canvas, container, positions, onFrame }: RigO
     onFrame(clock.getElapsedTime());
     controls.update();
     if (width === 0 || height === 0) return;
-    renderer.render(scene, camera);
+    composer.render();
   };
   rafId = requestAnimationFrame(render);
 
@@ -69,6 +90,7 @@ export function createDungeonRig({ canvas, container, positions, onFrame }: RigO
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
+    composer.setSize(width, height);
   });
   observer.observe(container);
 
@@ -82,6 +104,10 @@ export function createDungeonRig({ canvas, container, positions, onFrame }: RigO
       observer.disconnect();
       lighting.dispose();
       controls.dispose();
+      renderPass.dispose();
+      bloomPass.dispose();
+      outputPass.dispose();
+      composer.dispose();
       renderer.dispose();
     },
   };

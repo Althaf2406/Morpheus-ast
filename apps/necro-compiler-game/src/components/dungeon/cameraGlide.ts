@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { frameCamera } from "../../layout/frameCamera.ts";
 
 export interface CameraGlide {
   /** Moves the view to look at `target`: smoothly, or at once when motion is reduced. */
   focus(target: THREE.Vector3): void;
+  /** Returns the view to the whole-dungeon pose: smoothly, or at once when motion is reduced. */
+  reset(): void;
   tick(time: number): void;
   dispose(): void;
 }
@@ -26,33 +29,41 @@ const easeInOutCubic = (s: number): number => (s < 0.5 ? 4 * s * s * s : 1 - Mat
 export function createCameraGlide(
   camera: THREE.PerspectiveCamera,
   controls: OrbitControls,
-  reducedMotion: boolean
+  reducedMotion: boolean,
+  positions: ReadonlyMap<string, THREE.Vector3>
 ): CameraGlide {
   let glide: Glide | null = null;
-  // Any manual camera input takes over from the glide.
+  const overview = frameCamera(positions);
   const cancel = () => {
     glide = null;
   };
   controls.addEventListener("start", cancel);
 
+  const moveTo = (toPosition: THREE.Vector3, toTarget: THREE.Vector3) => {
+    if (reducedMotion) {
+      glide = null;
+      camera.position.copy(toPosition);
+      controls.target.copy(toTarget);
+      controls.update();
+      return;
+    }
+    glide = {
+      fromPosition: camera.position.clone(),
+      toPosition,
+      fromTarget: controls.target.clone(),
+      toTarget: toTarget.clone(),
+      startedAt: null,
+    };
+  };
+
   return {
     focus(target) {
       const offset = camera.position.clone().sub(controls.target);
       const distance = THREE.MathUtils.clamp(offset.length(), controls.minDistance, FOCUS_DISTANCE);
-      const toPosition = target.clone().add(offset.setLength(distance));
-      if (reducedMotion) {
-        camera.position.copy(toPosition);
-        controls.target.copy(target);
-        controls.update();
-        return;
-      }
-      glide = {
-        fromPosition: camera.position.clone(),
-        toPosition,
-        fromTarget: controls.target.clone(),
-        toTarget: target.clone(),
-        startedAt: null,
-      };
+      moveTo(target.clone().add(offset.setLength(distance)), target);
+    },
+    reset() {
+      moveTo(overview.position.clone(), overview.target);
     },
     tick(time) {
       if (glide === null) return;
