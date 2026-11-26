@@ -4,11 +4,10 @@
  * **Validates: Requirements 1.3, 1.4, 1.5**
  */
 import { describe, it, expect } from "vitest";
-import { mockDungeonLayout } from "../../mock/dungeonLayout.ts";
 import {
   BOSS_MONSTER_FRACTION,
   REGULAR_MONSTER_FRACTION,
-  bossMonsterId,
+  isBossSized,
   monsterRadius,
   scaleFor,
   wallHeightFor,
@@ -53,24 +52,19 @@ describe("wallHeightFor", () => {
   });
 });
 
-describe("bossMonsterId", () => {
-  it("returns null for an empty room", () => {
-    expect(bossMonsterId([])).toBeNull();
+describe("isBossSized", () => {
+  it("is true for a boss demon in any room", () => {
+    expect(isBossSized("POLTERGEIST_DEMON_BOSS", false)).toBe(true);
+    expect(isBossSized("POLTERGEIST_DEMON_BOSS", true)).toBe(true);
   });
-
-  it("returns the only entity of room-002 in the sample dungeon", () => {
-    const room = mockDungeonLayout.rooms.find((r) => r.id === "room-002");
-    expect(room).toBeDefined();
-    expect(bossMonsterId(room?.entities ?? [])).toBe("entity-002");
+  it("is true for a plain demon only in a boss room", () => {
+    expect(isBossSized("POLTERGEIST_DEMON", true)).toBe(true);
+    expect(isBossSized("POLTERGEIST_DEMON", false)).toBe(false);
   });
-
-  it("breaks severity ties with the lowest entity id", () => {
-    expect(
-      bossMonsterId([
-        { entityId: "b", severity: "HIGH" },
-        { entityId: "a", severity: "HIGH" },
-        { entityId: "c", severity: "LOW" },
-      ])
-    ).toBe("a");
+  it("is never true for zombies and ghosts", () => {
+    for (const type of ["ZOMBIE_VARIABLE", "SHADOW_LINT_GHOST"] as const) {
+      expect(isBossSized(type, true)).toBe(false);
+      expect(isBossSized(type, false)).toBe(false);
+    }
   });
 });

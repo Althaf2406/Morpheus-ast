@@ -16,8 +16,8 @@ type MutationRequest = Parameters<NecroCompilerAdapter["castSpell"]>[0];
 const ZOMBIE_PREFIX = "Unused variable: ";
 const ROUND_TRIP_TIMEOUT_MS = 120_000;
 
-// Finding-based ids (entity-<findingId>) are regenerated per analysis from a global counter,
-// so they are not compared; the reducer clears selection on undo. Zombie ids are stable.
+// Only zombie ids are compared here; finding-based ids (entity-<findingId>) are covered by the
+// core engine's id-stability properties.
 function zombieIds(layout: DungeonLayout): readonly string[] {
   return layout.rooms
     .flatMap((room) => room.entities.map((e) => e.entityId))

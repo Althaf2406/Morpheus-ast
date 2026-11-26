@@ -10,7 +10,7 @@ import type { DungeonEntity, EntityType } from "../../adapter.ts";
 import { buildRoomParts } from "../../components/dungeon/roomParts.ts";
 import { placeRoomEntities, type Extent } from "../entityPlacement.ts";
 import { severityScale, type Severity } from "../monsterConfig.ts";
-import { bossMonsterId, monsterRadius, scaleFor, wallHeightFor } from "../scale.ts";
+import { isBossSized, monsterRadius, scaleFor, wallHeightFor } from "../scale.ts";
 
 // --- Generators ---
 
@@ -56,9 +56,8 @@ describe("scale source", () => {
     fc.assert(
       fc.property(entitiesArb, originArb, extentArb, fc.boolean(), (entities, origin, extent, isBossRoom) => {
         const wallHeight = wallHeightFor(extent);
-        const bossId = isBossRoom ? bossMonsterId(entities) : null;
         for (const placed of placeRoomEntities(entities, origin, extent, isBossRoom)) {
-          const expected = monsterRadius(wallHeight, placed.entityId === bossId, severityScale(placed.severity));
+          const expected = monsterRadius(wallHeight, isBossSized(placed.type, isBossRoom), severityScale(placed.severity));
           expect(placed.radius).toBe(expected);
         }
       }),

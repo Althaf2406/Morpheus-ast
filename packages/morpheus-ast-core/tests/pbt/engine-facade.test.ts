@@ -12,6 +12,7 @@ import type {
   FunctionNode,
   MorpheusASTEngine,
   TopologyGraph,
+  VirtualFile,
 } from "../../src/contracts.js";
 
 const RUNS = Number(process.env["FC_RUNS"] ?? "300");
@@ -140,15 +141,60 @@ describe("engine facade: external scanner ingestion", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("F7: ids stay unique across repeated calls and across the internal scan", async () => {
+  it("F7: the same input gives identical ids on repeated calls, and ids stay unique within a batch", async () => {
     const report = { snyk: [{ id: "s", severity: "low", title: "t", description: "d", packageName: "p" }] };
     const sample = engine.getSampleRepository();
     const parsed = await engine.parseSourceFiles({ filePaths: [], virtualFiles: sample.files, includeSourceText: true });
-    const all = [
-      ...engine.ingestExternalFindings(report, graph),
-      ...(await engine.runSecurityScan(parsed.files)),
-      ...engine.ingestExternalFindings(report, graph),
-    ].map((f) => f.findingId);
-    expect(new Set(all).size).toBe(all.length);
+    const first = engine.ingestExternalFindings(report, graph).map((f) => f.findingId);
+    const second = engine.ingestExternalFindings(report, graph).map((f) => f.findingId);
+    expect(second).toEqual(first);
+    const internal = (await engine.runSecurityScan(parsed.files)).map((f) => f.findingId);
+    expect(new Set(internal).size).toBe(internal.length);
+    expect((await engine.runSecurityScan(parsed.files)).map((f) => f.findingId)).toEqual(internal);
+  });
+  it("F8: exact duplicates get distinct ids, deterministically", () => {
+    const dup = { id: "s", severity: "low", title: "t", description: "d", packageName: "p" };
+    const a = engine.ingestExternalFindings({ snyk: [dup, dup, dup] }, graph).map((f) => f.findingId);
+    const b = engine.ingestExternalFindings({ snyk: [dup, dup, dup] }, graph).map((f) => f.findingId);
+    expect(new Set(a).size).toBe(3);
+    expect(b).toEqual(a);
+  });
+});
+describe("engine facade: finding id stability (PBT)", () => {
+  const engine: MorpheusASTEngine = createEngine();
+  const scanIds = async (files: readonly VirtualFile[]): Promise<readonly string[]> => {
+    const parsed = await engine.parseSourceFiles({ filePaths: [], virtualFiles: files, includeSourceText: true });
+    return (await engine.runSecurityScan(parsed.files)).map((f) => f.findingId).sort();
+  };
+  it("F9: analysing the same source twice yields the same id set", async () => {
+    const files = engine.getSampleRepository().files;
+    await fc.assert(
+      fc.asyncProperty(fc.nat({ max: files.length - 1 }), async (n) => {
+        const subset = files.slice(0, n + 1);
+        expect(await scanIds(subset)).toEqual(await scanIds(subset));
+      }),
+      { numRuns: Math.min(RUNS, 30) }
+    );
+  });
+  it("F10: apply then rollback yields the same id set as before apply", async () => {
+    const files = engine.getSampleRepository().files;
+    await fc.assert(
+      fc.asyncProperty(
+        fc.nat({ max: files.length - 1 }),
+        fc.stringOf(fc.constantFrom("a", "b", " ", "x", "1"), { maxLength: 12 }),
+        async (pick, text) => {
+          const target = files[pick]!;
+          const before = await scanIds(files);
+          const { mutatedSource, rollbackRecord } = engine.applyMutationToText(target.sourceText, [
+            { filePath: target.filePath, startIndex: 0, endIndex: 0, replacement: `// ${text}\n`, description: "prepend comment" },
+          ]);
+          const restored = engine.rollbackMutationText(mutatedSource, rollbackRecord);
+          expect(restored).toBe(target.sourceText);
+          const after = await scanIds(files.map((f) => (f === target ? { ...f, sourceText: restored } : f)));
+          expect(after).toEqual(before);
+        }
+      ),
+      { numRuns: Math.min(RUNS, 30) }
+    );
   });
 });

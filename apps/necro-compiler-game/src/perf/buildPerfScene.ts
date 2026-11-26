@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { DungeonLayout } from "../adapter.ts";
-import { bossTorchRooms, dungeonBounds } from "../components/dungeon/AtmosphereLayer.tsx";
+import { bossTorchRooms, dungeonBounds } from "../components/dungeon/atmosphereHelpers.ts";
 import { buildCorridorLines } from "../components/dungeon/DungeonCorridors.tsx";
 import { buildRoomMeshes, ROOM_SCALE } from "../components/dungeon/DungeonRooms.tsx";
 import { createEmberField, type EmberField } from "../components/dungeon/emberField.ts";

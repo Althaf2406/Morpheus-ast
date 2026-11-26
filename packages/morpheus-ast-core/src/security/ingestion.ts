@@ -169,9 +169,9 @@ function aikidoCategory(name: string): FindingCategory {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class SecurityIngestionAdapter {
-  private findingCounter = 0;
 
   ingestSonarQube(issues: readonly SonarQubeIssue[], graph: TopologyGraph): SecurityScanResult[] {
+    const ids = new IdAllocator();
     return asArray(issues).map((raw) => {
       const issue = asBag(raw);
       const component = asString(issue["component"], "unknown");
@@ -194,7 +194,7 @@ export class SecurityIngestionAdapter {
             }
           : unknownLocation(component);
 
-      return this.finish(graph, {
+      return this.finish(graph, ids, {
         severity: sonarSeverity(issue["severity"]),
         category: sonarCategory(asString(issue["type"]), rule),
         title: rule.length > 0 ? `[${rule}] ${message}` : message,
@@ -209,6 +209,7 @@ export class SecurityIngestionAdapter {
   }
 
   ingestSnyk(vulns: readonly SnykVulnerability[], graph: TopologyGraph): SecurityScanResult[] {
+    const ids = new IdAllocator();
     return asArray(vulns).map((raw) => {
       const v = asBag(raw);
       const filePath = asString(v["filePath"], "unknown");
@@ -216,7 +217,7 @@ export class SecurityIngestionAdapter {
       const packageName = asString(v["packageName"]);
       const title = asString(v["title"]);
 
-      return this.finish(graph, {
+      return this.finish(graph, ids, {
         severity: snykSeverity(v["severity"]),
         category: "DEPENDENCY_RISK",
         title: packageName.length > 0 ? `${title} (${packageName})` : title,
@@ -231,12 +232,13 @@ export class SecurityIngestionAdapter {
   }
 
   ingestAwsSecurity(findings: readonly AwsSecurityFinding[], graph: TopologyGraph): SecurityScanResult[] {
+    const ids = new IdAllocator();
     return asArray(findings).map((raw) => {
       const f = asBag(raw);
       const firstResource = asBag(asArray(f["Resources"])[0]);
       const filePath = asString(firstResource["Id"], "unknown");
 
-      return this.finish(graph, {
+      return this.finish(graph, ids, {
         severity: awsSeverity(asBag(f["Severity"])["Label"]),
         category: awsCategory(asArray(f["Types"])),
         title: asString(f["Title"]),
@@ -251,12 +253,13 @@ export class SecurityIngestionAdapter {
   }
 
   ingestAikido(findings: readonly AikidoFinding[], graph: TopologyGraph): SecurityScanResult[] {
+    const ids = new IdAllocator();
     return asArray(findings).map((raw) => {
       const f = asBag(raw);
       const filePath = asString(f["affected_file"], "unknown");
       const name = asString(f["name"]);
 
-      return this.finish(graph, {
+      return this.finish(graph, ids, {
         severity: aikidoSeverity(f["severity_level"]),
         category: aikidoCategory(name),
         title: name,
@@ -276,19 +279,26 @@ export class SecurityIngestionAdapter {
    */
   runInternalAnalysis(_parsedFiles: readonly ParsedFile[], graph: TopologyGraph): SecurityScanResult[] {
     const results: SecurityScanResult[] = [];
-    const add = (fnIndex: number, draft: Omit<Draft, "filePath" | "range" | "sourceScanner" | "cweId" | "cvssScore"> & { cweId?: string }): void => {
+    const ids = new IdAllocator();
+    const add = (
+      fnIndex: number,
+      discriminator: string,
+      draft: Omit<Draft, "filePath" | "range" | "sourceScanner" | "cweId" | "cvssScore"> & { cweId?: string }
+    ): void => {
       const fn = graph.functions[fnIndex]!;
       results.push(
-        this.make(
+        make(
+          ids,
           { ...draft, filePath: fn.filePath, range: fn.range, sourceScanner: "INTERNAL", cweId: draft.cweId ?? null, cvssScore: null },
-          fn.id
+          fn.id,
+          discriminator
         )
       );
     };
 
     graph.functions.forEach((fn, i) => {
       for (const name of fn.unusedVariables) {
-        add(i, {
+        add(i, name, {
           severity: "LOW",
           category: "UNUSED_VARIABLE",
           title: `Unused variable: ${name}`,
@@ -296,7 +306,7 @@ export class SecurityIngestionAdapter {
         });
       }
       if (fn.hasUncaughtException) {
-        add(i, {
+        add(i, "uncaught-exception", {
           severity: "HIGH",
           category: "UNCAUGHT_EXCEPTION",
           title: `Uncaught exception path in: ${fn.name}`,
@@ -305,7 +315,7 @@ export class SecurityIngestionAdapter {
         });
       }
       if (fn.hasCircularDep) {
-        add(i, {
+        add(i, "circular-call", {
           severity: "MEDIUM",
           category: "CODE_SMELL",
           title: `Circular call involving: ${fn.name}`,
@@ -314,7 +324,7 @@ export class SecurityIngestionAdapter {
         });
       }
       if (fn.cyclomaticComplexity >= 15) {
-        add(i, {
+        add(i, "high-complexity", {
           severity: "MEDIUM",
           category: "VULNERABILITY",
           title: `High complexity function: ${fn.name} (CC=${fn.cyclomaticComplexity})`,
@@ -328,16 +338,42 @@ export class SecurityIngestionAdapter {
 
   // ───────────────────────────────────────────────────────────────────────────
 
-  private finish(graph: TopologyGraph, draft: Draft): SecurityScanResult {
-    return this.make(draft, findFunctionId(draft.range, graph));
-  }
-
-  private make(draft: Draft, functionId: string | null): SecurityScanResult {
-    this.findingCounter += 1;
-    return { findingId: `finding-${String(this.findingCounter).padStart(6, "0")}`, functionId, ...draft };
+  private finish(graph: TopologyGraph, ids: IdAllocator, draft: Draft): SecurityScanResult {
+    return make(ids, draft, findFunctionId(draft.range, graph), draft.title);
   }
 }
-
+/**
+ * Hands out finding ids that depend only on the finding's content, so the same input always
+ * yields the same ids. Only exact duplicates within one batch get an ordinal suffix.
+ */
+class IdAllocator {
+  private readonly seen = new Map<string, number>();
+  next(parts: readonly string[]): string {
+    const base = `finding-${contentHash(parts.join("\u0000"))}`;
+    const count = (this.seen.get(base) ?? 0) + 1;
+    this.seen.set(base, count);
+    return count === 1 ? base : `${base}-${count}`;
+  }
+}
+/** 53-bit string hash (cyrb53), rendered as 14 hex digits. */
+function contentHash(text: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const value = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  return value.toString(16).padStart(14, "0");
+}
+/** `discriminator` separates findings of one category in one place, e.g. a variable name. */
+function make(ids: IdAllocator, draft: Draft, functionId: string | null, discriminator: string): SecurityScanResult {
+  const findingId = ids.next([draft.sourceScanner, draft.category, functionId ?? draft.filePath, discriminator]);
+  return { findingId, functionId, ...draft };
+}
 /** The innermost function containing the finding's first line, or null when the line is unknown. */
 function findFunctionId(range: SourceRange, graph: TopologyGraph): string | null {
   if (range.startLine < 1) return null;

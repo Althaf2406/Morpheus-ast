@@ -5,7 +5,7 @@
  * **Validates: Requirements 5.2, 5.5**
  */
 import { describe, it, expect } from "vitest";
-import { bossMonsterId, monsterRadius, scaleFor, wallHeightFor } from "../../entities/scale.ts";
+import { isBossSized, monsterRadius, scaleFor, wallHeightFor } from "../../entities/scale.ts";
 import { severityScale } from "../../entities/monsterConfig.ts";
 import type { Extent } from "../../entities/entityPlacement.ts";
 import { largeLayout } from "../largeLayout.ts";
@@ -20,10 +20,10 @@ function evaluateAll(): number {
   largeLayout.rooms.forEach((room, index) => {
     const extent: Extent = [8, 6 + (index % 5), 8];
     const wallHeight = wallHeightFor(extent);
-    const bossId = room.size === "BOSS" ? bossMonsterId(room.entities) : null;
+    const isBossRoom = room.size === "BOSS";
     for (const entity of room.entities) {
       sink += scaleFor(wallHeight).pillarHeight;
-      sink += monsterRadius(wallHeight, entity.entityId === bossId, severityScale(entity.severity));
+      sink += monsterRadius(wallHeight, isBossSized(entity.type, isBossRoom), severityScale(entity.severity));
     }
   });
   return sink;
