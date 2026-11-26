@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import * as THREE from "three";
 import type { CityEdge, CityNode } from "../../adapter.ts";
-import { buildingHeight, setSegmentPose } from "./instancePose.ts";
+import { groundPoint, setSegmentPose } from "./instancePose.ts";
 
 // --- Edge color and width constants ---
 const COLOR_CASCADING = new THREE.Color("#ff2222");
 const COLOR_CYCLIC    = new THREE.Color("#ffaa00");
 const COLOR_NORMAL    = new THREE.Color("#334466");
-const MIN_WIDTH       = 0.04;
-const WIDTH_PER_CENTRALITY = 0.12;
+const MIN_WIDTH       = 0.1;
+const WIDTH_PER_CENTRALITY = 0.3;
 
 interface Props {
   readonly edges: readonly CityEdge[];
@@ -23,11 +23,10 @@ function edgeColor(edge: CityEdge): THREE.Color {
   return COLOR_NORMAL;
 }
 
-/** Building-top position from base position + node complexity. */
-function buildingTop(node: CityNode | undefined, positions: Map<string, THREE.Vector3>): THREE.Vector3 {
+/** Road endpoint on the ground below a building. */
+function roadEnd(node: CityNode | undefined, positions: Map<string, THREE.Vector3>): THREE.Vector3 {
   const base = node != null ? positions.get(node.id) : undefined;
-  if (node == null || base == null) return new THREE.Vector3();
-  return new THREE.Vector3(base.x, buildingHeight(node.complexity), base.z);
+  return base == null ? new THREE.Vector3() : groundPoint(base);
 }
 
 export function CityEdges({ edges, nodes, positions, scene }: Props) {
@@ -49,7 +48,7 @@ export function CityEdges({ edges, nodes, positions, scene }: Props) {
       const tgt = byId.get(edge.targetId);
       const centrality = ((src?.centralityScore ?? 0) + (tgt?.centralityScore ?? 0)) / 2;
       setSegmentPose(
-        mesh, i, buildingTop(src, positions), buildingTop(tgt, positions),
+        mesh, i, roadEnd(src, positions), roadEnd(tgt, positions),
         MIN_WIDTH + WIDTH_PER_CENTRALITY * centrality
       );
       mesh.setColorAt(i, edgeColor(edge));

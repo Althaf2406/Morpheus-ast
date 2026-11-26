@@ -13,19 +13,26 @@ interface Props {
 }
 
 // --- Styles ---
+const SELECT_ID = "fault-type-select";
+const FIELD: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 4 };
+const LABEL: React.CSSProperties = {
+  fontSize:      "0.65rem",
+  color:         "#8b949e",
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+};
 const SELECT_STYLE: React.CSSProperties = {
-  padding:       "10px 12px",
+  height:        36,
+  padding:       "0 10px",
   fontFamily:    "monospace",
-  fontSize:      "0.85rem",
-  fontWeight:    700,
+  fontSize:      "0.8rem",
   letterSpacing: "0.04em",
   cursor:        "pointer",
-  background:    "#051218",
-  color:         "#00d4ff",
-  border:        "2px solid #0088aa",
+  background:    "#0d1117",
+  color:         "#c9d1d9",
+  border:        "1px solid #30363d",
   borderRadius:  4,
 };
-
 // --- Narrowing ---
 function isFaultType(raw: string): raw is FaultType {
   return FAULT_TYPES.some((type) => type === raw);
@@ -33,20 +40,25 @@ function isFaultType(raw: string): raw is FaultType {
 
 export function FaultTypeSelect({ value, onChange }: Props) {
   return (
-    <select
-      aria-label="Fault type"
-      style={SELECT_STYLE}
-      value={value}
-      onChange={(event) => {
-        const next = event.target.value;
-        if (isFaultType(next)) onChange(next);
-      }}
-    >
-      {FAULT_TYPES.map((type) => (
-        <option key={type} value={type}>
-          {type}
-        </option>
-      ))}
-    </select>
+    <div style={FIELD}>
+      <label htmlFor={SELECT_ID} style={LABEL}>Fault type</label>
+      <select
+        id={SELECT_ID}
+        className="sre-control"
+        aria-label="Fault type"
+        style={SELECT_STYLE}
+        value={value}
+        onChange={(event) => {
+          const next = event.target.value;
+          if (isFaultType(next)) onChange(next);
+        }}
+      >
+        {FAULT_TYPES.map((type) => (
+          <option key={type} value={type}>
+            {type}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

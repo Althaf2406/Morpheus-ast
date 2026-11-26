@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import * as THREE from "three";
 import type { CityNode } from "../../adapter.ts";
 import { COLOR_HEALTHY } from "./faultTypes.ts";
-import { buildingHeight, setBoxPose } from "./instancePose.ts";
+import { buildingHeight, buildingWidth } from "../../layout/buildingScale.ts";
+import { setBoxPose } from "./instancePose.ts";
 
 interface Props {
   readonly nodes: readonly CityNode[];
@@ -26,8 +27,9 @@ export function CityNodes({ nodes, positions, scene }: Props) {
 
     healthy.forEach((node, i) => {
       const height = buildingHeight(node.complexity);
+      const width  = buildingWidth(node.complexity);
       const pos    = positions.get(node.id) ?? new THREE.Vector3();
-      setBoxPose(mesh, i, { x: pos.x, y: height / 2, z: pos.z }, { x: 1, y: height, z: 1 });
+      setBoxPose(mesh, i, { x: pos.x, y: height / 2, z: pos.z }, { x: width, y: height, z: width });
       mesh.setColorAt(i, COLOR_HEALTHY);
     });
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;

@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { buildingHeight, setBoxPose, setSegmentPose } from "./instancePose.ts";
+import { buildingHeight, buildingWidth } from "../../layout/buildingScale.ts";
+import { groundPoint, setBoxPose, setSegmentPose } from "./instancePose.ts";
 import { applyCollapsePose } from "./faultTick.ts";
 import {
   CASCADE_STAGGER_S,
@@ -58,7 +59,7 @@ export function createFaultObjects(params: BuildParams): FaultObjects {
     const pos  = positions.get(n.id) ?? new THREE.Vector3();
     const item: CollapseItem = {
       mesh: addMesh(collapseMat, n.id), x: pos.x, z: pos.z,
-      baseHeight: buildingHeight(n.complexity), startTime: -1, settled: false,
+      baseHeight: buildingHeight(n.complexity), width: buildingWidth(n.complexity), startTime: -1, settled: false,
     };
     applyCollapsePose(item, reducedMotion ? 1 : 0);
     result.collapse.push(item);
@@ -67,6 +68,7 @@ export function createFaultObjects(params: BuildParams): FaultObjects {
   // --- Affected node cascade ---
   nodes.filter((n) => n.isAffected).forEach((n, idx) => {
     const height = buildingHeight(n.complexity);
+    const width  = buildingWidth(n.complexity);
     const pos    = positions.get(n.id) ?? new THREE.Vector3();
     const color  = reducedMotion ? COLOR_AFFECTED : COLOR_HEALTHY;
     const mat    = new THREE.MeshStandardMaterial({
@@ -74,7 +76,7 @@ export function createFaultObjects(params: BuildParams): FaultObjects {
     });
     result.materials.push(mat);
     const mesh = addMesh(mat, n.id);
-    setBoxPose(mesh, 0, { x: pos.x, y: height / 2, z: pos.z }, { x: 1, y: height, z: 1 });
+    setBoxPose(mesh, 0, { x: pos.x, y: height / 2, z: pos.z }, { x: width, y: height, z: width });
     result.cascade.push({
       mesh, nodeId: n.id, revealTime: reducedMotion ? 0 : idx * CASCADE_STAGGER_S, revealed: reducedMotion,
     });
@@ -82,7 +84,6 @@ export function createFaultObjects(params: BuildParams): FaultObjects {
 
   // --- Edges touching a faulted node fade out ---
   const faultedIds = new Set(nodes.filter((n) => n.isFaulted).map((n) => n.id));
-  const heightOf   = new Map(nodes.map((n) => [n.id, buildingHeight(n.complexity)]));
   edges
     .filter((e) => faultedIds.has(e.sourceId) || faultedIds.has(e.targetId))
     .forEach((edge) => {
@@ -96,8 +97,8 @@ export function createFaultObjects(params: BuildParams): FaultObjects {
       const mesh = addMesh(mat);
       setSegmentPose(
         mesh, 0,
-        new THREE.Vector3(src.x, heightOf.get(edge.sourceId) ?? 0.5, src.z),
-        new THREE.Vector3(tgt.x, heightOf.get(edge.targetId) ?? 0.5, tgt.z),
+        groundPoint(src),
+        groundPoint(tgt),
         EDGE_WIDTH
       );
       mesh.visible = !reducedMotion;

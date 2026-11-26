@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { CityNode, CityEdge } from "../adapter";
+import { footprintRadius } from "./buildingScale.ts";
 
 // --- Constants ---
 
@@ -24,10 +25,6 @@ interface Field {
 
 // --- Helpers ---
 
-/** Building footprint half-extent; drives both the separation and the final overlap check. */
-function footprintRadius(node: CityNode): number {
-  return Math.max(node.complexity * 0.4, 1.2);
-}
 
 /**
  * Deterministic shelf packing, largest footprints first, sized from the total footprint area.
@@ -109,7 +106,7 @@ export function computeCityForceLayout(
   const field: Field = {
     x: new Float64Array(n),
     z: new Float64Array(n),
-    r: Float64Array.from(nodes.map(footprintRadius)),
+    r: Float64Array.from(nodes.map((node) => footprintRadius(node.complexity))),
   };
   seedShelves(field);
 

@@ -9,6 +9,7 @@
 import * as fc from "fast-check";
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
+import { buildingHeight, buildingWidth } from "../buildingScale.ts";
 import { frameCamera } from "../frameCamera.ts";
 
 // --- Constants ---
@@ -86,5 +87,30 @@ describe("Property 5: camera frame keeps every building in view", () => {
     expect(isFiniteVec(frame.target)).toBe(true);
     expect(Number.isFinite(frame.camDist)).toBe(true);
     expect(Number.isFinite(frame.maxDistance)).toBe(true);
+  });
+});
+describe("Property 5b: camera frame keeps whole buildings in view", () => {
+  const sizedArb = fc.tuple(positionMapArb, fc.array(fc.integer({ min: 0, max: 80 }), { minLength: 60, maxLength: 60 }));
+  it("contains every building's bounding box, roof corners included", () => {
+    fc.assert(
+      fc.property(sizedArb, ([positions, complexityPool]) => {
+        const complexities = new Map([...positions.keys()].map((id, i) => [id, complexityPool[i]]));
+        const frame = frameCamera(positions, complexities);
+        const frustum = frustumFor(frame.position, frame.target);
+        for (const [id, p] of positions) {
+          const c = complexities.get(id) ?? 0;
+          const half = buildingWidth(c) / 2;
+          for (const dx of [-half, half]) {
+            for (const dz of [-half, half]) {
+              for (const y of [0, buildingHeight(c)]) {
+                if (!frustum.containsPoint(new THREE.Vector3(p.x + dx, y, p.z + dz))) return false;
+              }
+            }
+          }
+        }
+        return true;
+      }),
+      { numRuns: 200 }
+    );
   });
 });

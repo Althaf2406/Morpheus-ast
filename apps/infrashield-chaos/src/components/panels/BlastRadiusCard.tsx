@@ -1,10 +1,13 @@
-import type { SREDashboardData } from "../../adapter.ts";
+import type { CityNode, SREDashboardData } from "../../adapter.ts";
+import { CascadeList } from "./CascadeList.tsx";
+import { FunctionRef } from "./FunctionRef.tsx";
 
 // --- Types ---
 
 interface Props {
   readonly blastRadiusScore: number;
   readonly lastFault: SREDashboardData["lastFault"];
+  readonly nodes: readonly CityNode[];
 }
 
 // --- Helpers ---
@@ -51,7 +54,7 @@ const TRACK: React.CSSProperties = {
 
 // --- Component ---
 
-export function BlastRadiusCard({ blastRadiusScore, lastFault }: Props) {
+export function BlastRadiusCard({ blastRadiusScore, lastFault, nodes }: Props) {
   if (lastFault === null) {
     return (
       <div style={CARD}>
@@ -61,6 +64,7 @@ export function BlastRadiusCard({ blastRadiusScore, lastFault }: Props) {
     );
   }
 
+  const nodesById = new Map(nodes.map((n) => [n.id, n]));
   const pct   = scoreToPercent(blastRadiusScore);
   const color = barColor(blastRadiusScore);
 
@@ -86,21 +90,15 @@ export function BlastRadiusCard({ blastRadiusScore, lastFault }: Props) {
       </div>
 
       <div style={{ fontSize: "0.72rem", marginTop: 6, color: "#8b949e" }}>
-        Target:{" "}
-        <span style={{ color: "#e6edf3" }}>{lastFault.targetFunctionId}</span>
+        Target: <FunctionRef functionId={lastFault.targetFunctionId} nodesById={nodesById} />
       </div>
-
       <div style={{ fontSize: "0.72rem", marginTop: 2, color: "#8b949e" }}>
         Affected:{" "}
         <span style={{ color: "#e6edf3" }}>{lastFault.affectedNodes.length} nodes</span>
       </div>
       <div style={{ fontSize: "0.72rem", marginTop: 6, color: "#8b949e" }}>
-        Cascade:{" "}
-        <span style={{ color: "#e6edf3" }}>
-          {lastFault.cascadePath.length === 0
-            ? "none"
-            : lastFault.cascadePath.map((step) => step.functionId).join(" → ")}
-        </span>
+        Cascade:
+        <CascadeList cascadePath={lastFault.cascadePath} nodesById={nodesById} />
       </div>
     </div>
   );

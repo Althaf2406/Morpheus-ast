@@ -5,15 +5,13 @@ interface Props {
 }
 
 const BASE_STYLE: React.CSSProperties = {
-  position:   "absolute",
-  top:        16,
-  left:       16,
-  padding:    "10px 18px",
+  height:     36,
+  padding:    "0 16px",
   fontFamily: "monospace",
-  fontSize:   "0.9rem",
+  fontSize:   "0.85rem",
   fontWeight: 700,
   cursor:     "pointer",
-  border:     "2px solid",
+  border:     "1px solid",
   borderRadius: 4,
   letterSpacing: "0.04em",
   transition:  "background 0.15s, color 0.15s",
@@ -36,13 +34,13 @@ const RESET_STYLE: React.CSSProperties = {
 export function InjectFaultButton({ isActive, onInject, onReset }: Props) {
   if (isActive) {
     return (
-      <button style={RESET_STYLE} onClick={onReset} type="button">
+      <button className="sre-control" aria-label="Reset city" style={RESET_STYLE} onClick={onReset} type="button">
         ✕ Reset City
       </button>
     );
   }
   return (
-    <button style={INJECT_STYLE} onClick={onInject} type="button">
+    <button className="sre-control" aria-label="Inject fault" style={INJECT_STYLE} onClick={onInject} type="button">
       ⚡ Inject Fault
     </button>
   );

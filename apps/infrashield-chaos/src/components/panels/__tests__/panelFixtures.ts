@@ -1,4 +1,4 @@
-import type { CyberCityLayout, SREDashboardData } from "../../../adapter.ts";
+import type { CityNode, CyberCityLayout, SREDashboardData } from "../../../adapter.ts";
 // --- Fixtures ---
 type Fault = NonNullable<SREDashboardData["lastFault"]>;
 type Finding = CyberCityLayout["securityFindings"][number];
@@ -31,3 +31,11 @@ export const FINDING: Finding = {
   cvssScore: null,
 };
 
+
+const node = (id: string, name: string, filePath: string): CityNode => ({
+  id, name, filePath, complexity: 3, isFaulted: false, isAffected: false, centralityScore: 0,
+});
+export const NODES: readonly CityNode[] = [
+  node("src/a.ts::alpha", "alpha", "src/a.ts"),
+  node("src/b.ts::beta", "beta", "src/b.ts"),
+];

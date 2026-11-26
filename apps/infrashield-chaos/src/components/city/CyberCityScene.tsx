@@ -20,7 +20,11 @@ interface Props {
 
 export function CyberCityScene({ layout, selectedId = null, onHover, onSelect }: Props) {
   const positions = useCityPositions(layout.nodes, layout.edges);
-  const frame     = useMemo(() => frameCamera(positions), [positions]);
+  // Positions are recomputed whenever a complexity changes, so they are the only dependency needed.
+  const frame     = useMemo(
+    () => frameCamera(positions, new Map(layout.nodes.map((n) => [n.id, n.complexity]))),
+    [positions]
+  );
   const { canvasRef, view, registerTick } = useCityRenderer(frame);
 
   // --- Reduced motion (read once per mount) ---

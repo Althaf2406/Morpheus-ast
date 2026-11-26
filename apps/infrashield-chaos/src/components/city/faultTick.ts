@@ -13,7 +13,7 @@ import {
 
 const FADE_START_OPACITY  = 0.9;
 const SETTLED_EMISSIVE    = 0.08;
-const SETTLED_FOOTPRINT   = 1.1;
+const SETTLED_SPREAD      = 1.1;  // rubble is slightly wider than the building
 const SETTLED_HEIGHT      = 0.05;
 const SETTLED_TILT        = 0.25;
 
@@ -25,14 +25,14 @@ export function applyCollapsePose(item: CollapseItem, progress: number): void {
     setBoxPose(
       item.mesh, 0,
       { x: item.x, y: SETTLED_HEIGHT / 2, z: item.z },
-      { x: SETTLED_FOOTPRINT, y: SETTLED_HEIGHT, z: SETTLED_FOOTPRINT },
+      { x: item.width * SETTLED_SPREAD, y: SETTLED_HEIGHT, z: item.width * SETTLED_SPREAD },
       SETTLED_TILT
     );
     item.settled = true;
     return;
   }
   const scaleY    = Math.max(item.baseHeight * (1 - progress * 0.95), SETTLED_HEIGHT);
-  const footprint = 1 + progress * 0.1;
+  const footprint = item.width * (1 + progress * (SETTLED_SPREAD - 1));
   setBoxPose(
     item.mesh, 0,
     { x: item.x, y: scaleY / 2, z: item.z },

@@ -1,6 +1,5 @@
 import { CyberCityScene } from "./components/city/CyberCityScene.tsx";
-import { InjectFaultButton } from "./components/city/InjectFaultButton.tsx";
-import { FaultTypeSelect } from "./components/city/FaultTypeSelect.tsx";
+import { FaultToolbar } from "./components/city/FaultToolbar.tsx";
 import { SREDashboardPanel } from "./components/panels/SREDashboardPanel.tsx";
 import { LoadingScreen } from "./hud/LoadingScreen.tsx";
 import { ErrorPanel } from "./hud/ErrorPanel.tsx";
@@ -9,9 +8,6 @@ import { useCityController } from "./hooks/useCityController.ts";
 import type { CyberCityLayout, InfraShieldAdapter } from "./adapter";
 
 // --- Styles ---
-const CONTROLS: React.CSSProperties = {
-  position: "absolute", top: 16, left: 16, display: "flex", gap: 8, alignItems: "flex-start",
-};
 const ACTION_ERROR: React.CSSProperties = {
   position: "absolute", bottom: 16, left: 16, padding: "8px 12px", maxWidth: 480,
   background: "#1a0505", color: "#ff4444", border: "1px solid #ff2222",
@@ -38,10 +34,13 @@ function City({ adapter, initialLayout }: CityProps) {
           onSelect={city.setSelectedId}
         />
       </div>
-      <div style={CONTROLS}>
-        <InjectFaultButton isActive={isFaultActive} onInject={city.inject} onReset={city.reset} />
-        <FaultTypeSelect value={city.faultType} onChange={city.setFaultType} />
-      </div>
+      <FaultToolbar
+        faultType={city.faultType}
+        onFaultTypeChange={city.setFaultType}
+        isActive={isFaultActive}
+        onInject={city.inject}
+        onReset={city.reset}
+      />
       {city.actionError !== null && <div role="alert" style={ACTION_ERROR}>{city.actionError}</div>}
       <SREDashboardPanel
         adapter={adapter}

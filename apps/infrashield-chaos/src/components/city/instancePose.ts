@@ -2,8 +2,8 @@ import * as THREE from "three";
 
 // --- Constants ---
 
-const HEIGHT_PER_COMPLEXITY = 0.5;
-const MIN_BUILDING_HEIGHT   = 0.5;
+/** Roads lie on the ground plane, slightly raised to avoid z-fighting. */
+export const ROAD_Y         = 0.05;
 const MIN_SEGMENT_LENGTH    = 1e-4;
 const FORWARD_AXIS          = new THREE.Vector3(0, 0, 1);
 
@@ -18,9 +18,9 @@ const scratchDir    = new THREE.Vector3();
 
 // --- Helpers ---
 
-/** Building height derived from cyclomatic complexity. */
-export function buildingHeight(complexity: number): number {
-  return Math.max(complexity * HEIGHT_PER_COMPLEXITY, MIN_BUILDING_HEIGHT);
+/** Ground-level road endpoint below a building position. */
+export function groundPoint(base: THREE.Vector3): THREE.Vector3 {
+  return new THREE.Vector3(base.x, ROAD_Y, base.z);
 }
 
 /** Writes a box pose (position, scale, rotation about Z) into one instance slot. */

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import * as THREE from "three";
 import type { CityNode } from "../../adapter.ts";
-import { buildingHeight } from "./instancePose.ts";
+import { buildingHeight, buildingWidth } from "../../layout/buildingScale.ts";
 // --- Constants ---
 const HOVER_COLOR     = 0x9fb3c8;
 const SELECTED_COLOR  = 0xffffff;
@@ -26,9 +26,10 @@ export function BuildingHighlights({ nodes, positions, scene, hoveredId, selecte
       const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 });
       disposables.push(material);
       const height = buildingHeight(node.complexity);
+      const width  = buildingWidth(node.complexity) * margin;
       const lines  = new THREE.LineSegments(box, material);
       lines.position.set(pos.x, height / 2, pos.z);
-      lines.scale.set(margin, height * margin, margin);
+      lines.scale.set(width, height * margin, width);
       scene.add(lines);
       return lines;
     };

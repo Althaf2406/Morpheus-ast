@@ -8,10 +8,11 @@ import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { computeCityForceLayout } from "../forceLayout.ts";
 import type { CityEdge, CityNode } from "../../adapter.ts";
+import { footprintRadius } from "../buildingScale.ts";
 
 // --- Helpers ---
 
-const radius = (node: CityNode): number => Math.max(node.complexity * 0.4, 1.2);
+const radius = (node: CityNode): number => footprintRadius(node.complexity);
 
 // --- Arbitraries ---
 

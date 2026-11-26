@@ -18,6 +18,7 @@ export interface CollapseItem {
   x: number;
   z: number;
   baseHeight: number;
+  width: number;
   startTime: number;
   settled: boolean;
 }

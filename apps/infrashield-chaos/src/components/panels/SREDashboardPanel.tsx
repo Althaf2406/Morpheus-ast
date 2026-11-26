@@ -74,7 +74,7 @@ export function SREDashboardPanel({
         maxComplexity={dashboard.maxComplexity}
       />
       <div style={DIVIDER} />
-      <BlastRadiusCard blastRadiusScore={fault?.blastRadiusScore ?? 0} lastFault={fault} />
+      <BlastRadiusCard blastRadiusScore={fault?.blastRadiusScore ?? 0} lastFault={fault} nodes={layout.nodes} />
       <div style={DIVIDER} />
       <SecurityFindingsCard findings={layout.securityFindings} />
       <div style={DIVIDER} />

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { buildingHeight, buildingWidth } from "./buildingScale.ts";
 
 // --- Types ---
 
@@ -27,18 +28,20 @@ const HALF_FOV_RAD = (FOV_DEG / 2) * (Math.PI / 180);
 // --- Pure framing function ---
 
 /**
- * Computes a camera frame that shows every building with a comfortable margin.
+ * Computes a camera frame that shows every building, including its footprint and height.
  *
- * - Target is the centroid of all positions.
- * - Bounding radius is the largest XZ distance from the centroid.
+ * - Building size comes from `complexities` (node id to complexity); a missing id counts as 0.
+ * - Target is the XZ centroid of all positions, at half the tallest building height.
+ * - Bounding radius is the largest distance from the target to any building corner.
  * - Camera sits above and back (fixed elevation) at the distance where a sphere of
  *   the bounding radius fills the vertical half-fov (r / sin(halfFov)), plus a margin.
- *   Every ground point within r of the target therefore fits for any aspect >= 1.
+ *   The whole sphere therefore fits for any aspect >= 1.
  * - maxDistance is 3x the radius, never below MIN_MAX_DISTANCE or 1.25x the camera distance.
  * - An empty map yields a fixed default frame with finite values.
  */
 export function frameCamera(
-  positions: ReadonlyMap<string, THREE.Vector3>
+  positions: ReadonlyMap<string, THREE.Vector3>,
+  complexities: ReadonlyMap<string, number> = new Map()
 ): CameraFrame {
   if (positions.size === 0) {
     const position = new THREE.Vector3(0, 20, 32);
@@ -50,18 +53,22 @@ export function frameCamera(
     };
   }
 
-  // --- Centroid ---
+  // --- Target: XZ centroid at mid-height of the tallest building ---
   const centroid = new THREE.Vector3();
-  for (const p of positions.values()) {
+  let tallest = 0;
+  for (const [id, p] of positions) {
     centroid.add(p);
+    tallest = Math.max(tallest, buildingHeight(complexities.get(id) ?? 0));
   }
   centroid.divideScalar(positions.size);
-
-  // --- Bounding radius (XZ plane) ---
+  centroid.y = tallest / 2;
+  // --- Bounding radius: farthest building corner, base or roof ---
   let radius = 0;
-  for (const p of positions.values()) {
-    const d = Math.hypot(p.x - centroid.x, p.z - centroid.z);
-    if (d > radius) radius = d;
+  for (const [id, p] of positions) {
+    const complexity = complexities.get(id) ?? 0;
+    const reach = Math.hypot(p.x - centroid.x, p.z - centroid.z) + (buildingWidth(complexity) / 2) * Math.SQRT2;
+    const vertical = Math.max(buildingHeight(complexity) - centroid.y, centroid.y);
+    radius = Math.max(radius, Math.hypot(reach, vertical));
   }
   const r = Math.max(radius, MIN_RADIUS);
 

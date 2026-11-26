@@ -8,7 +8,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FAULT, FINDING } from "./panelFixtures.ts";
+import { FAULT, FINDING, NODES } from "./panelFixtures.ts";
 import { BlastRadiusCard } from "../BlastRadiusCard.tsx";
 import { BugfixDownloadButton } from "../BugfixDownloadButton.tsx";
 import { BugfixSpecButton } from "../BugfixSpecButton.tsx";
@@ -114,9 +114,11 @@ describe("Bugfix buttons", () => {
 
 describe("BlastRadiusCard", () => {
   it("shows the score and the cascade path", () => {
-    render(<BlastRadiusCard blastRadiusScore={FAULT.blastRadiusScore} lastFault={FAULT} />);
+    render(<BlastRadiusCard blastRadiusScore={FAULT.blastRadiusScore} lastFault={FAULT} nodes={NODES} />);
     expect(container.textContent).toContain("75%");
-    expect(container.textContent).toContain("src/a.ts::alpha → src/b.ts::beta");
+    expect(container.textContent).toContain("alpha");
+    expect(container.textContent).toContain("src/b.ts");
+    expect(container.textContent).not.toContain("src/a.ts::alpha");
   });
 });
 
