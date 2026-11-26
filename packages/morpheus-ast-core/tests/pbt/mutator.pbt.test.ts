@@ -43,18 +43,6 @@ import type { SpliceRange } from "../../src/contracts.js";
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function _isValidTypeScript(source: string): boolean {
-  const sf = ts.createSourceFile("test.ts", source, ts.ScriptTarget.ES2022, true);
-  // Count syntax errors
-  let errorCount = 0;
-  const visit = (node: ts.Node): void => {
-    if (node.kind === ts.SyntaxKind.Unknown) errorCount++;
-    ts.forEachChild(node, visit);
-  };
-  visit(sf);
-  return errorCount === 0;
-}
-
 /** Generates a simple but syntactically valid TypeScript source string. */
 const validTsSourceArb = (): fc.Arbitrary<string> =>
   fc.integer({ min: 1, max: 8 }).chain((fnCount) => {
@@ -69,38 +57,6 @@ const validTsSourceArb = (): fc.Arbitrary<string> =>
     return fc.constant(lines.join("\n"));
   });
 
-/**
- * Generates a set of non-overlapping splices for the given source.
- * Each splice replaces a word-boundary token with a valid expression.
- */
-const nonOverlappingSplicesArb = (
-  source: string,
-  maxSplices = 3
-): fc.Arbitrary<SpliceRange[]> => {
-  if (source.length < 20) return fc.constant([]);
-
-  return fc.integer({ min: 1, max: maxSplices }).chain((count) => {
-    // Build non-overlapping ranges by partitioning the source into segments
-    const segmentSize = Math.floor(source.length / (count + 1));
-    const splices: SpliceRange[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const start = (i + 1) * segmentSize - 2;
-      const end = start + 1; // Replace exactly 1 character
-      if (start >= 0 && end <= source.length && start < end) {
-        splices.push({
-          filePath: "test.ts",
-          startIndex: start,
-          endIndex: end,
-          replacement: "0",
-          description: `Splice ${i}: replace char at ${start}`,
-        });
-      }
-    }
-    return fc.constant(splices.filter((s) => s.startIndex >= 0));
-  });
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,7 +70,6 @@ describe("surgical mutator PBT", () => {
       fc.property(
         validTsSourceArb(),
         (source) => {
-          const _splices = nonOverlappingSplicesArb(source, 2);
           // Use a synchronous version via the arbitrary directly
           const spliceList: SpliceRange[] = [];
           const segSize = Math.floor(source.length / 3);

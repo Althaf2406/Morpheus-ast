@@ -1,15 +1,12 @@
 /**
  * parser/index.ts
  *
- * Source-code parser built on the TypeScript Compiler API.
- * Tree-sitter WASM is used for language-agnostic byte-offset tracking;
- * the TS Compiler API provides the semantic model for TypeScript files.
+ * Source-code parser built on the TypeScript Compiler API. It accepts files
+ * from disk (`filePaths`) and in-memory files (`virtualFiles`), so the same
+ * code path works in Node and in a browser bundle.
  *
- * Memory contract (.kiro/steering/ast-surgical-splice.md §4):
- *   - Every Tree object MUST be released with tree.delete() inside a
- *     try/finally block before the enclosing function returns or throws.
- *   - Parser instances MAY be reused; they MUST NOT be shared across
- *     concurrent async calls without a mutex guard.
+ * Tree-sitter parsing lives in ./tree-sitter.ts, which releases every WASM tree
+ * with tree.delete() in a finally block.
  *
  * Governance (.kiro/steering/00-skeleton-isolation.md):
  *   - Zero `any` types
@@ -30,55 +27,48 @@ import type {
 
 export class SourceParser {
   /**
-   * Parses all requested source files using the TypeScript Compiler API.
-   * Returns structured ParsedFile results with node counts and error info.
-   * Tree objects are created and deleted within this call — no leaks.
+   * Parses every requested file (disk first, then virtual) and returns node
+   * counts and syntax errors. `sourceText` is only filled in when
+   * `request.includeSourceText` is true; the topology compiler needs it.
    */
   async parse(request: ParseRequest): Promise<ParseResult> {
     const startMs = Date.now();
+    const includeSource = request.includeSourceText ?? false;
     const files: ParsedFile[] = [];
 
     for (const filePath of request.filePaths) {
-      const parsed = await this.parseFile(filePath, request.includeSourceText ?? false);
-      files.push(parsed);
+      files.push(await this.parseFromDisk(filePath, includeSource));
+    }
+    for (const virtual of request.virtualFiles ?? []) {
+      files.push(this.parseText(virtual.filePath, virtual.sourceText, includeSource));
     }
 
     return { files, durationMs: Date.now() - startMs };
   }
 
-  private async parseFile(filePath: string, includeSource: boolean): Promise<ParsedFile> {
-    // Read source text
-    let sourceText = "";
-    const errors: string[] = [];
-
+  private async parseFromDisk(filePath: string, includeSource: boolean): Promise<ParsedFile> {
+    let sourceText: string;
     try {
+      // Imported lazily so bundling for a browser does not pull in Node's fs.
       const { readFile } = await import("fs/promises");
       sourceText = await readFile(filePath, "utf-8");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return {
         filePath,
-        language: "typescript",
+        language: languageOf(filePath),
         sourceText: "",
         nodeCount: 0,
         hasErrors: true,
         errors: [`Failed to read file: ${msg}`],
       };
     }
+    return this.parseText(filePath, sourceText, includeSource);
+  }
 
-    const language = filePath.endsWith(".ts") || filePath.endsWith(".tsx")
-      ? "typescript" as const
-      : "javascript" as const;
+  private parseText(filePath: string, sourceText: string, includeSource: boolean): ParsedFile {
+    const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.ES2022, true);
 
-    // Parse with TS Compiler API (synchronous — wrapped in async context)
-    const sourceFile = ts.createSourceFile(
-      filePath,
-      sourceText,
-      ts.ScriptTarget.ES2022,
-      /* setParentNodes */ true
-    );
-
-    // Count AST nodes and collect diagnostics
     let nodeCount = 0;
     const visitNode = (node: ts.Node): void => {
       nodeCount++;
@@ -86,24 +76,20 @@ export class SourceParser {
     };
     visitNode(sourceFile);
 
-    // Collect parse errors from the TS compiler
-    const program = ts.createProgram([filePath], {
-      noEmit: true,
-      strict: true,
-      target: ts.ScriptTarget.ES2022,
+    // transpileModule reports syntactic diagnostics only, and never touches the disk.
+    const transpiled = ts.transpileModule(sourceText, {
+      fileName: filePath,
+      reportDiagnostics: true,
+      compilerOptions: { target: ts.ScriptTarget.ES2022 },
     });
-    const diagnostics = program.getSyntacticDiagnostics(sourceFile);
-
-    for (const diag of diagnostics) {
-      const msg = typeof diag.messageText === "string"
-        ? diag.messageText
-        : diag.messageText.messageText;
-      errors.push(`L${diag.start ?? 0}: ${msg}`);
-    }
+    const errors = (transpiled.diagnostics ?? []).map((diag) => {
+      const message = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+      return `offset ${diag.start ?? 0}: ${message}`;
+    });
 
     return {
       filePath,
-      language,
+      language: languageOf(filePath),
       sourceText: includeSource ? sourceText : "",
       nodeCount,
       hasErrors: errors.length > 0,
@@ -112,13 +98,17 @@ export class SourceParser {
   }
 }
 
+function languageOf(filePath: string): ParsedFile["language"] {
+  return filePath.endsWith(".ts") || filePath.endsWith(".tsx") ? "typescript" : "javascript";
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// WASM memory audit helper
+// Tree allocation auditor
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Tracks Tree-sitter tree allocations and verifies they are all deleted.
- * Used by the WASM memory audit in tests/pbt/wasm-memory-audit.test.ts.
+ * Counts Tree-sitter tree allocations and deletions. TreeSitterParser records
+ * every real tree it creates and releases here, so `leakCount` is a live check.
  */
 export class TreeMemoryAuditor {
   private allocated = 0;

@@ -30,7 +30,7 @@
  */
 
 import * as fc from "fast-check";
-import { ChaosFaultInjector, FaultInjectionError } from "../../src/blast-radius/fault-injector.js";
+import { FaultInjector, FaultInjectionError } from "../../src/blast-radius/fault-injector.js";
 import type {
   TopologyGraph,
   FunctionNode,
@@ -54,22 +54,6 @@ const sourceRangeArb = (): fc.Arbitrary<SourceRange> =>
     startIndex: fc.nat({ max: 50000 }),
     endIndex: fc.nat({ max: 50000 }),
   });
-
-/**
- * Generates a valid function ID.
- * Deliberately includes "__proto__", "constructor", "prototype" in the pool
- * to exercise prototype-pollution safety (P5).
- * Prefixed with _ because protoPollutionGraphArb uses inline constants instead.
- */
-const _fnIdArb = (): fc.Arbitrary<string> =>
-  fc.oneof(
-    fc.string({ minLength: 1, maxLength: 20 }).map((s) => `fn:${s}`),
-    fc.constant("fn:__proto__"),
-    fc.constant("fn:constructor"),
-    fc.constant("fn:prototype"),
-    fc.constant("fn:hasOwnProperty"),
-    fc.constant("fn:toString")
-  );
 
 const functionNodeArb = (id: string): fc.Arbitrary<FunctionNode> =>
   fc.record({
@@ -179,7 +163,7 @@ const faultTypeArb = (): fc.Arbitrary<FaultType> =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("blast-radius PBT", () => {
-  const injector = new ChaosFaultInjector();
+  const injector = new FaultInjector();
 
   // ── P1 & P2: Bounds ────────────────────────────────────────────────────────
   it("P1+P2: blastRadiusScore and centralityScore ∈ [0,1] for any graph", () => {

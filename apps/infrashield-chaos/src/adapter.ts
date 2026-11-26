@@ -25,6 +25,7 @@ import type {
   MutationRequest,
   MutationResult,
   RollbackRecord,
+  ExternalScanReport,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,6 +89,8 @@ export class InfraShieldAdapter {
   private lastFault: FaultInjectionResult | null = null;
   private lastPatch: BedrockPatchSuggestion | null = null;
   private lastMutation: MutationResult | null = null;
+  /** Source text of the loaded files, so Bedrock can be given the real function source. */
+  private readonly sources = new Map<string, string>();
 
   constructor(engine: MorpheusASTEngine) {
     this.engine = engine;
@@ -96,14 +99,14 @@ export class InfraShieldAdapter {
   // ─── Repository loading ──────────────────────────────────────────────────
 
   async loadRepository(filePaths: readonly string[]): Promise<CyberCityLayout> {
-    const request: ParseRequest = { filePaths, includeSourceText: true };
-    const parseResult = await this.engine.parseSourceFiles(request);
+    await this.analyze({ filePaths, includeSourceText: true });
+    return this.buildCityLayout(null, null);
+  }
 
-    this.currentGraph = await this.engine.buildTopologyGraph(parseResult.files);
-    this.currentFindings = [
-      ...(await this.engine.runSecurityScan(parseResult.files)),
-    ];
-
+  /** Loads the pre-loaded sample repository: no upload, login or file system needed. */
+  async loadSampleRepository(): Promise<CyberCityLayout> {
+    const sample = this.engine.getSampleRepository();
+    await this.analyze({ filePaths: [], virtualFiles: sample.files, includeSourceText: true });
     return this.buildCityLayout(null, null);
   }
 
@@ -112,19 +115,24 @@ export class InfraShieldAdapter {
   async injectFault(request: FaultInjectionRequest): Promise<CyberCityLayout> {
     this.requireGraph();
 
-    this.lastFault = await this.engine.injectFault(request, this.currentGraph!);
+    const fault = await this.engine.injectFault(request, this.currentGraph!);
+    this.lastFault = fault;
+    this.lastPatch = null; // a patch belongs to one fault; never reuse an earlier one
 
-    // Fire Bedrock patch request asynchronously — UI can poll lastPatch
-    void this.engine
-      .generateBedrockPatch(this.buildBedrockRequest())
-      .then((patch) => {
-        this.lastPatch = patch;
-      })
-      .catch(() => {
-        // Bedrock is best-effort — do not block the UI
-      });
+    // Ask Bedrock for a patch in the background; the UI can poll getSREDashboard().lastPatch.
+    const patchRequest = this.buildBedrockRequest();
+    if (patchRequest !== null) {
+      void this.engine
+        .generateBedrockPatch(patchRequest)
+        .then((patch) => {
+          if (this.lastFault === fault) this.lastPatch = patch; // ignore answers for an older fault
+        })
+        .catch(() => {
+          // Best effort: missing credentials or a rejected suggestion must not block the UI.
+        });
+    }
 
-    return this.buildCityLayout(this.lastFault, null);
+    return this.buildCityLayout(fault, null);
   }
 
   // ─── Blast-radius query ──────────────────────────────────────────────────
@@ -147,6 +155,29 @@ export class InfraShieldAdapter {
     );
   }
 
+  // --- Bugfix export (1-click bugfix.md) ---------------------------------
+
+  /** The markdown text of bugfix.md for the last fault simulation. */
+  generateBugfixMarkdown(): string {
+    return this.engine.generateBugfixMarkdown(this.generateBugfixSpec());
+  }
+
+  /** The 1-click export: a file name and content for the UI to offer as a download. */
+  generateBugfixFile(): { fileName: string; content: string } {
+    return { fileName: "bugfix.md", content: this.generateBugfixMarkdown() };
+  }
+
+  // --- External scanner reports ------------------------------------------
+
+  /** Adds normalised SonarQube, Snyk, AWS Security Analyzer and Aikido findings to the risk report. */
+  ingestExternalFindings(report: ExternalScanReport): CyberCityLayout {
+    this.requireGraph();
+    this.currentFindings = [
+      ...this.currentFindings,
+      ...this.engine.ingestExternalFindings(report, this.currentGraph!),
+    ];
+    return this.buildCityLayout(this.lastFault, null);
+  }
   // ─── Surgical mutation ────────────────────────────────────────────────────
 
   async applyMutation(request: MutationRequest): Promise<MutationResult> {
@@ -254,15 +285,35 @@ export class InfraShieldAdapter {
     };
   }
 
-  private buildBedrockRequest(): BedrockPatchRequest {
-    const fault = this.lastFault!;
-    const graph = this.currentGraph!;
-    const targetFn = graph.functions.find((f) => f.id === fault.targetFunctionId);
+  /** The request for Bedrock, or null when the source of the faulted function is not available. */
+  private buildBedrockRequest(): BedrockPatchRequest | null {
+    const fault = this.lastFault;
+    const graph = this.currentGraph;
+    if (fault === null || graph === null) return null;
+
+    const fn = graph.functions.find((f) => f.id === fault.targetFunctionId);
+    const file = fn === undefined ? undefined : this.sources.get(fn.filePath);
+    if (fn === undefined || file === undefined) return null;
+
     return {
       faultResult: fault,
       topologyGraph: graph,
-      targetFunctionSource: `// Source unavailable at adapter layer — provide via UI upload`,
+      targetFunctionSource: file.slice(fn.range.startIndex, fn.range.endIndex),
     };
+  }
+
+  private async analyze(request: ParseRequest): Promise<void> {
+    const parseResult = await this.engine.parseSourceFiles(request);
+    this.currentGraph = await this.engine.buildTopologyGraph(parseResult.files);
+    this.currentFindings = [...(await this.engine.runSecurityScan(parseResult.files))];
+
+    this.sources.clear();
+    for (const file of parseResult.files) {
+      if (file.sourceText.length > 0) this.sources.set(file.filePath, file.sourceText);
+    }
+    // A new repository invalidates anything derived from the previous one.
+    this.lastFault = null;
+    this.lastPatch = null;
   }
 
   private requireGraph(): void {

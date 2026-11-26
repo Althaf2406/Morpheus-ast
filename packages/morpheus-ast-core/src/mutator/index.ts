@@ -4,14 +4,12 @@
  * Surgical Line-Range AST Splice & Rollback engine.
  *
  * Governance (.kiro/steering/ast-surgical-splice.md):
- *   - All mutations use precise [startIndex, endIndex) byte-range splices.
- *   - Splices applied in DESCENDING startIndex order to avoid offset drift.
+ *   - All mutations use precise [startIndex, endIndex) offset-range splices.
+ *   - Splices are applied in DESCENDING startIndex order to avoid offset drift.
  *   - Overlapping ranges throw SpliceConflictError before any mutation.
  *   - Every mutation stores a RollbackRecord for byte-perfect reversal.
- *   - String.replace() / template-literal patching is FORBIDDEN.
  */
 
-import { readFile, writeFile } from "fs/promises";
 import type {
   MutationRequest,
   MutationResult,
@@ -37,19 +35,114 @@ export class MutationError extends Error {
   }
 }
 
+type Segment = RollbackRecord["originalSegments"][number];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pure helpers shared by the file-backed and in-memory paths
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** True when `index` sits between the two halves of a surrogate pair. */
+export function splitsSurrogatePair(source: string, index: number): boolean {
+  if (index <= 0 || index >= source.length) return false;
+  const before = source.charCodeAt(index - 1);
+  const after = source.charCodeAt(index);
+  return before >= 0xd800 && before <= 0xdbff && after >= 0xdc00 && after <= 0xdfff;
+}
+
+/** Validates a batch and returns it sorted by startIndex, descending. */
+function prepareBatch(source: string, splices: readonly SpliceRange[]): SpliceRange[] {
+  const sorted = [...splices].sort((a, b) => b.startIndex - a.startIndex);
+
+  for (const s of sorted) {
+    if (s.startIndex < 0 || s.endIndex > source.length) {
+      throw new MutationError(
+        `Splice [${s.startIndex}, ${s.endIndex}) out of bounds for source of length ${source.length}.`
+      );
+    }
+    if (s.startIndex > s.endIndex) {
+      throw new MutationError(
+        `Splice has startIndex (${s.startIndex}) > endIndex (${s.endIndex}).`
+      );
+    }
+    for (const boundary of [s.startIndex, s.endIndex]) {
+      if (splitsSurrogatePair(source, boundary)) {
+        throw new MutationError(
+          `Splice boundary ${boundary} falls inside a UTF-16 surrogate pair. ` +
+            `Writing the result as UTF-8 would corrupt the file.`
+        );
+      }
+    }
+  }
+
+  // Descending order: sorted[i] starts at or after sorted[i + 1].
+  for (let i = 0; i + 1 < sorted.length; i++) {
+    const later = sorted[i]!;
+    const earlier = sorted[i + 1]!;
+    if (earlier.endIndex > later.startIndex) {
+      throw new SpliceConflictError(
+        `Overlapping splices: [${earlier.startIndex},${earlier.endIndex}) overlaps ` +
+          `[${later.startIndex},${later.endIndex}). ` +
+          `Descriptions: "${earlier.description}" / "${later.description}"`
+      );
+    }
+  }
+  return sorted;
+}
+
+/** Applies a validated, descending-sorted batch. Also builds the rollback segments. */
+function applySorted(
+  source: string,
+  sorted: readonly SpliceRange[]
+): { mutated: string; segments: Segment[] } {
+  const segments: Segment[] = sorted.map((s) => ({
+    startIndex: s.startIndex,
+    originalText: source.slice(s.startIndex, s.endIndex),
+    replacementLength: s.replacement.length,
+  }));
+
+  let mutated = source;
+  for (const s of sorted) {
+    mutated = mutated.slice(0, s.startIndex) + s.replacement + mutated.slice(s.endIndex);
+  }
+  return { mutated, segments };
+}
+
+/**
+ * Restores the original text. Segment offsets are in original coordinates, so each
+ * segment's position in the mutated text is shifted by the length change of every
+ * earlier segment. Segments are then restored from the end backwards.
+ */
+function restoreSegments(mutated: string, segments: readonly Segment[]): string {
+  const ascending = [...segments].sort((a, b) => a.startIndex - b.startIndex);
+
+  const located: { mutatedStart: number; seg: Segment }[] = [];
+  let shift = 0;
+  for (const seg of ascending) {
+    located.push({ mutatedStart: seg.startIndex + shift, seg });
+    shift += seg.replacementLength - seg.originalText.length;
+  }
+
+  let restored = mutated;
+  for (let i = located.length - 1; i >= 0; i--) {
+    const { mutatedStart, seg } = located[i]!;
+    restored =
+      restored.slice(0, mutatedStart) +
+      seg.originalText +
+      restored.slice(mutatedStart + seg.replacementLength);
+  }
+  return restored;
+}
+
+function newMutationId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SurgicalMutator
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class SurgicalMutator {
-  /**
-   * Applies a batch of non-overlapping splice operations to a source file.
-   * Splices are sorted descending by startIndex before application to
-   * prevent offset drift as the buffer grows or shrinks.
-   *
-   * Returns a MutationResult including the RollbackRecord required for
-   * full byte-perfect reversal via rollback().
-   */
+  /** Applies a single-file batch of non-overlapping splices and writes the result. */
   async apply(request: MutationRequest): Promise<MutationResult> {
     const startMs = Date.now();
 
@@ -57,122 +150,48 @@ export class SurgicalMutator {
       throw new MutationError("MutationRequest contains zero splices.");
     }
 
-    // Validate: all splices target the same file (batch must be single-file)
     const filePaths = new Set(request.splices.map((s) => s.filePath));
     if (filePaths.size > 1) {
       throw new MutationError(
         `A single MutationRequest batch must target exactly one file. ` +
-        `Got ${filePaths.size} distinct paths: ${[...filePaths].join(", ")}`
+          `Got ${filePaths.size} distinct paths: ${[...filePaths].join(", ")}`
       );
     }
 
     const filePath = request.splices[0]!.filePath;
-    const originalSource = await readFile(filePath, "utf-8");
+    // Lazy import keeps the in-memory path usable in a browser bundle.
+    const { readFile, writeFile } = await import("fs/promises");
+    const original = await readFile(filePath, "utf-8");
 
-    // Sort descending by startIndex
-    const sorted = [...request.splices].sort((a, b) => b.startIndex - a.startIndex);
+    const sorted = prepareBatch(original, request.splices);
+    const { mutated, segments } = applySorted(original, sorted);
 
-    // Check for overlaps BEFORE mutating anything
-    this.assertNoOverlaps(sorted);
+    await writeFile(filePath, mutated, "utf-8");
 
-    // Validate all byte offsets are within bounds
-    for (const splice of sorted) {
-      if (splice.startIndex < 0 || splice.endIndex > originalSource.length) {
-        throw new MutationError(
-          `Splice out of bounds: [${splice.startIndex}, ${splice.endIndex}) ` +
-          `in file of length ${originalSource.length}. File: ${filePath}`
-        );
-      }
-      if (splice.startIndex > splice.endIndex) {
-        throw new MutationError(
-          `Splice has startIndex (${splice.startIndex}) > endIndex (${splice.endIndex}).`
-        );
-      }
-    }
-
-    // Build rollback record BEFORE applying splices
-    const originalSegments = sorted.map((s) => ({
-      startIndex: s.startIndex,
-      originalText: originalSource.slice(s.startIndex, s.endIndex),
-    }));
-
-    // Apply splices in descending order using array slicing (no String.replace)
-    const mutationId = `mutation-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    let mutatedSource = originalSource;
-
-    for (const splice of sorted) {
-      mutatedSource =
-        mutatedSource.slice(0, splice.startIndex) +
-        splice.replacement +
-        mutatedSource.slice(splice.endIndex);
-    }
-
-    // Write the mutated source back to disk
-    await writeFile(filePath, mutatedSource, "utf-8");
-
-    const rollbackRecord: RollbackRecord = {
-      mutationId,
-      filePath,
-      originalSegments,
-      appliedAt: Date.now(),
-    };
-
+    const mutationId = newMutationId("mutation");
     return {
       mutationId,
       filePath,
       splicesApplied: sorted.length,
-      mutatedSource,
-      rollbackRecord,
+      mutatedSource: mutated,
+      rollbackRecord: {
+        mutationId,
+        filePath,
+        originalSegments: segments,
+        appliedAt: Date.now(),
+      },
       durationMs: Date.now() - startMs,
     };
   }
 
-  /**
-   * Rolls back a previously applied mutation using its RollbackRecord.
-   * Restores the source file to byte-for-byte original state.
-   * Segments are re-applied in descending startIndex order.
-   */
+  /** Restores the file to its pre-mutation content using the rollback record. */
   async rollback(record: RollbackRecord): Promise<void> {
+    const { readFile, writeFile } = await import("fs/promises");
     const current = await readFile(record.filePath, "utf-8");
-
-    // Sort descending to avoid offset drift during rollback
-    const segments = [...record.originalSegments].sort(
-      (a, b) => b.startIndex - a.startIndex
-    );
-
-    let restored = current;
-    for (const seg of segments) {
-      // The replacement text in the mutated file occupies some range starting
-      // at seg.startIndex — we don't know its length without the mutation record,
-      // so we store both original text and positions. For rollback we scan
-      // forward from startIndex to find where the replacement ends.
-      //
-      // Since the rollback record stores the original text length, we can
-      // compute the mutated replacement length via the current file state.
-      // However the simplest correct approach: just rewrite from the rollback
-      // record's perspective — restore the original text at the same start
-      // position, keeping everything else intact.
-      //
-      // This works correctly when segments don't overlap and are applied
-      // in descending order (same invariant as the forward splice).
-      restored =
-        restored.slice(0, seg.startIndex) +
-        seg.originalText +
-        restored.slice(seg.startIndex + seg.originalText.length);
-    }
-
-    await writeFile(record.filePath, restored, "utf-8");
+    await writeFile(record.filePath, restoreSegments(current, record.originalSegments), "utf-8");
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Pure (in-memory) variants — used by PBT tests (no file I/O)
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Applies splices to an in-memory source string without file I/O.
-   * Returns the mutated string and a RollbackRecord.
-   * Used by fast-check PBT to verify Fix and Preservation properties.
-   */
+  /** In-memory apply, used by PBT (no file I/O). */
   applyToString(
     source: string,
     splices: readonly SpliceRange[]
@@ -180,87 +199,22 @@ export class SurgicalMutator {
     if (splices.length === 0) {
       throw new MutationError("Cannot apply zero splices.");
     }
-
-    const filePath = splices[0]!.filePath;
-    const sorted = [...splices].sort((a, b) => b.startIndex - a.startIndex);
-    this.assertNoOverlaps(sorted);
-
-    for (const splice of sorted) {
-      if (splice.startIndex < 0 || splice.endIndex > source.length) {
-        throw new MutationError(
-          `Splice [${splice.startIndex}, ${splice.endIndex}) out of bounds ` +
-          `for source of length ${source.length}.`
-        );
-      }
-    }
-
-    const originalSegments = sorted.map((s) => ({
-      startIndex: s.startIndex,
-      originalText: source.slice(s.startIndex, s.endIndex),
-    }));
-
-    const mutationId = `pbt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    let mutated = source;
-    for (const splice of sorted) {
-      mutated =
-        mutated.slice(0, splice.startIndex) +
-        splice.replacement +
-        mutated.slice(splice.endIndex);
-    }
-
+    const sorted = prepareBatch(source, splices);
+    const { mutated, segments } = applySorted(source, sorted);
+    const mutationId = newMutationId("pbt");
     return {
       mutated,
       rollbackRecord: {
         mutationId,
-        filePath,
-        originalSegments,
+        filePath: splices[0]!.filePath,
+        originalSegments: segments,
         appliedAt: Date.now(),
       },
     };
   }
 
-  /**
-   * Rolls back an in-memory mutation without file I/O.
-   * Used by fast-check PBT to verify Round-Trip Invariant.
-   */
+  /** In-memory rollback, used by PBT (no file I/O). */
   rollbackString(mutated: string, record: RollbackRecord): string {
-    const segments = [...record.originalSegments].sort(
-      (a, b) => b.startIndex - a.startIndex
-    );
-
-    let restored = mutated;
-    for (const seg of segments) {
-      restored =
-        restored.slice(0, seg.startIndex) +
-        seg.originalText +
-        restored.slice(seg.startIndex + seg.originalText.length);
-    }
-    return restored;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Private helpers
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Asserts that no two splices in the (descending-sorted) batch overlap.
-   * Overlap condition: splice[i].startIndex < splice[i-1].endIndex
-   * (since sorted descending, splice[0] has the highest startIndex).
-   */
-  private assertNoOverlaps(sortedDesc: readonly SpliceRange[]): void {
-    for (let i = 1; i < sortedDesc.length; i++) {
-      const higher = sortedDesc[i - 1]!;
-      const lower = sortedDesc[i]!;
-      // higher.startIndex >= lower.startIndex (descending sort)
-      // overlap if lower.endIndex > higher.startIndex
-      if (lower.endIndex > higher.startIndex) {
-        throw new SpliceConflictError(
-          `Overlapping splices detected: ` +
-          `[${lower.startIndex},${lower.endIndex}) overlaps ` +
-          `[${higher.startIndex},${higher.endIndex}). ` +
-          `Descriptions: "${lower.description}" / "${higher.description}"`
-        );
-      }
-    }
+    return restoreSegments(mutated, record.originalSegments);
   }
 }

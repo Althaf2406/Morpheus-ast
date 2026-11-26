@@ -3,11 +3,11 @@
 **Spec ID**: `bugfix-001`
 **Date**: 2026-11-27
 **File**: `packages/morpheus-ast-core/src/blast-radius/fault-injector.ts`
-**Function**: `ChaosFaultInjector.buildAdjacency()` / `computeBetweennessCentrality()`
+**Function**: `FaultInjector.buildAdjacency()` / `computeBetweennessCentrality()`
 **Fault Type**: `EXTREME_PAYLOAD`
 **Blast Radius Score**: 100% (affects all graph traversal paths)
-**Discovered by**: fast-check PBT — Property P5 (prototype-pollution safe), seed 45
-**Shrunk counterexample**: graph with function IDs `["fn:__proto__", "fn:constructor"]`
+**Status**: Preventive hardening. The current implementation (`Map`-based adjacency) is not affected; no failing PBT run produced this spec. Property P5 (seed 45) is the regression guard.
+**Trigger input class**: graphs whose function IDs are `fn:__proto__`, `fn:constructor`, `fn:prototype`
 
 ---
 
@@ -36,7 +36,7 @@ because assignment to a key named `"__proto__"` silently writes to
 resolve the prototype-chain key, returning stale adjacency data or corrupting
 the BFS/DFS traversal state.
 
-**Observed failure mode** (caught by PBT shrinking):
+**Failure mode if a plain-object adjacency were used** (analysis, not an observed run):
 1. `buildAdjacency()` returns a `Record` whose `"__proto__"` key resolves through
    `Object.prototype`, making `adj["fn:__proto__"]` return `undefined` instead of `[]`.
 2. `cascadePath` becomes empty even when outgoing edges exist, causing
@@ -46,7 +46,7 @@ the BFS/DFS traversal state.
    `adj.get(v)` falls back to `undefined` for the polluted key, silently
    skipping neighbors during the BFS shortest-path phase.
 
-**PBT counterexample** (fast-check seed 45, iteration 23):
+**Illustrative input** that a plain-object implementation would mishandle:
 ```
 graph.functions = [
   { id: "fn:__proto__", ... hasUncaughtException: true },
@@ -96,7 +96,7 @@ With this fix:
   has `hasUncaughtException: true` and an outgoing edge.
 - `blastRadiusScore` reflects the true propagated fraction of the graph.
 
-**PBT verification** (Property P5, 100 iterations, seed 45):
+**PBT verification** (Property P5, 100 iterations, seed 45; passes against the current `Map` implementation):
 All 100 iterations pass: `blastRadiusScore ∈ [0, 1]`, no thrown exceptions,
 cascade paths correctly populated regardless of function ID string content.
 
@@ -109,7 +109,7 @@ This fix does **not** touch the `SurgicalMutator` or any source-file mutation pa
 No `RollbackRecord` is affected. The fix is isolated to in-memory graph traversal.
 
 ### API Surface Preservation
-- `ChaosFaultInjector.inject()` signature: **unchanged**
+- `FaultInjector.inject()` signature: **unchanged**
 - `FaultInjectionResult` shape: **unchanged**
 - `contracts.ts` types: **unchanged**
 - Both app adapters: **no changes required**

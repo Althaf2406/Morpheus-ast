@@ -1,7 +1,7 @@
 /**
  * sample-repo/index.ts
  *
- * Pre-loaded Serverless Sample Repository — virtual source fixture.
+ * Pre-loaded Sample Service Repository — virtual source fixture.
  *
  * The three sample files are stored as source-text strings rather than
  * compiled TypeScript modules. This keeps them out of the TS compiler's
@@ -20,6 +20,8 @@
  *   - UserService → DatabaseClient        → circular dependency detection
  *   - unusedTimeout                       → unused variable detection
  */
+
+import type { SampleRepository, VirtualFile } from "../contracts.js";
 
 /** Virtual source text for api-gateway.ts */
 export const API_GATEWAY_SOURCE = `
@@ -184,6 +186,14 @@ export function validateUserInput(data: Record<string, unknown>): Record<string,
     if (typeof data["metadata"] !== "object") throw new Error("metadata must be object");
     if (Array.isArray(data["metadata"])) throw new Error("metadata cannot be array");
   }
+  return normalizeInput(data);
+}
+
+// Intentional flaw: normalizeInput and validateUserInput call each other (circular call).
+export function normalizeInput(data: Record<string, unknown>): Record<string, unknown> {
+  if (data["trim"] === true) {
+    return validateUserInput(data);
+  }
   return data;
 }
 `.trim();
@@ -208,34 +218,41 @@ export class DatabaseClient {
 }
 `.trim();
 
-/**
- * Virtual ParseRequest-compatible entries for the pre-loaded sample.
- * Pass these to the parser engine via a virtual-file adapter instead of
- * real file paths, so the demo works in the browser without file system access.
- */
-export const SAMPLE_REPO_VIRTUAL_FILES: readonly { filePath: string; source: string }[] = [
-  { filePath: "sample/api-gateway.ts",    source: API_GATEWAY_SOURCE },
-  { filePath: "sample/user-service.ts",   source: USER_SERVICE_SOURCE },
-  { filePath: "sample/database-client.ts", source: DATABASE_CLIENT_SOURCE },
+/** Files of the pre-loaded sample, as in-memory sources (no disk, login or upload needed). */
+export const SAMPLE_REPO_VIRTUAL_FILES: readonly VirtualFile[] = [
+  { filePath: "sample/api-gateway.ts", sourceText: API_GATEWAY_SOURCE },
+  { filePath: "sample/user-service.ts", sourceText: USER_SERVICE_SOURCE },
+  { filePath: "sample/database-client.ts", sourceText: DATABASE_CLIENT_SOURCE },
 ];
-
 /** Human-readable label shown in both apps when the demo is active. */
-export const SAMPLE_REPO_LABEL = "Serverless API (Pre-loaded Demo)";
+export const SAMPLE_REPO_LABEL = "Sample Service (Pre-loaded Demo)";
 
 /** Description shown in the app UI. */
 export const SAMPLE_REPO_DESCRIPTION =
-  "A three-file serverless TypeScript API with intentional " +
+  "A three-file TypeScript HTTP service with intentional " +
   "vulnerabilities, high-complexity functions, circular dependencies, " +
   "and uncaught exception paths — ready to audit or exorcise.";
 
-/** Expected findings for smoke-testing both apps after load. */
+/** The sample repository, as exposed to both apps through the engine. */
+export function getSampleRepository(): SampleRepository {
+  return {
+    label: SAMPLE_REPO_LABEL,
+    description: SAMPLE_REPO_DESCRIPTION,
+    files: SAMPLE_REPO_VIRTUAL_FILES,
+  };
+}
+
+/**
+ * Expected properties of the sample, checked by tests/pbt/sample-repo.test.ts.
+ * Both apps can use these as a smoke test after loading the sample.
+ */
 export const SAMPLE_REPO_EXPECTED = {
   minFunctions: 12,
   minEdges: 8,
   minCircularDeps: 1,
   minSecurityFindings: 5,
-  bossRoomFunctionNames: ["routeRequest", "validateUserInput"],
-  taintSinkFunctionNames: ["handleGetConfig"],
-  uncaughtExceptionFunctions: ["handleGetUsers", "processWebhook", "connect"],
+  highComplexityThreshold: 15,
+  highComplexityFunctionNames: ["routeRequest", "validateUserInput"],
+  uncaughtExceptionFunctions: ["handleGetUsers", "processWebhook"],
   unusedVariables: ["unusedTimeout"],
 } as const;

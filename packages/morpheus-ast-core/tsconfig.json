@@ -18,5 +18,5 @@
     "types": ["node", "jest"]
   },
   "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist", "src/sample-repo/**/*"]
+  "exclude": ["node_modules", "dist"]
 }

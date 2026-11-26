@@ -1,12 +1,12 @@
 /**
  * contracts.ts — MORPHEUS-AST Public API
  *
- * This is the ONLY file that apps/infrashield-chaos and apps/necro-compiler-game
+ * This is the ONLY file that the two applications under apps/
  * are permitted to import from packages/morpheus-ast-core.
  *
  * Rules enforced by .kiro/steering/00-skeleton-isolation.md:
  *   - No `any` types anywhere.
- *   - No domain-specific vocabulary (no "lambda", "dungeon", "spell", "monster").
+ *   - No domain-specific vocabulary (the engine is application-agnostic).
  *   - No UI framework imports.
  *   - Unidirectional: apps → contracts.ts, never core → apps.
  */
@@ -39,12 +39,27 @@ export interface ParsedFile {
   readonly errors: readonly string[];
 }
 
+/** A source file supplied as text, so no file system is needed (e.g. in a browser). */
+export interface VirtualFile {
+  readonly filePath: string;
+  readonly sourceText: string;
+}
+
 /** Input to the parser engine. */
 export interface ParseRequest {
-  /** Absolute file paths to parse. */
+  /** Absolute file paths to parse from disk. May be empty. */
   readonly filePaths: readonly string[];
+  /** In-memory files to parse in addition to `filePaths`. */
+  readonly virtualFiles?: readonly VirtualFile[];
   /** If true, include full source text in ParsedFile. Default false. */
   readonly includeSourceText?: boolean;
+}
+
+/** A ready-made repository both apps can load with no upload and no login. */
+export interface SampleRepository {
+  readonly label: string;
+  readonly description: string;
+  readonly files: readonly VirtualFile[];
 }
 
 /** Output of the parser engine. */
@@ -192,7 +207,16 @@ export interface SpliceRange {
 export interface RollbackRecord {
   readonly mutationId: string;
   readonly filePath: string;
-  readonly originalSegments: readonly { startIndex: number; originalText: string }[];
+  /**
+   * One entry per splice. `startIndex` is an offset in the ORIGINAL source.
+   * `replacementLength` is the length of the text that replaced `originalText`,
+   * needed to locate the segment in the mutated source when lengths differ.
+   */
+  readonly originalSegments: readonly {
+    startIndex: number;
+    originalText: string;
+    replacementLength: number;
+  }[];
   readonly appliedAt: number;
 }
 
@@ -380,8 +404,110 @@ export type RunSecurityScan = (
 //    via the adapter. They never instantiate core classes directly.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── External scanner reports ────────────────────────────────────────────────
+// Shapes of the third-party reports the engine normalises into SecurityScanResult.
+// Reports are untrusted input; the mapper tolerates missing or malformed fields.
+
+/** SonarQube issue (subset of the REST API shape). */
+export interface SonarQubeIssue {
+  readonly key: string;
+  /** BLOCKER, CRITICAL, MAJOR, MINOR or INFO. */
+  readonly severity: string;
+  /** BUG, VULNERABILITY or CODE_SMELL. */
+  readonly type: string;
+  readonly message: string;
+  /** File path, usually "projectKey:relative/path.ts". */
+  readonly component: string;
+  readonly textRange?: {
+    readonly startLine: number;
+    readonly endLine: number;
+    readonly startOffset: number;
+    readonly endOffset: number;
+  };
+  /** Rule key, e.g. "typescript:S2068". */
+  readonly rule: string;
+}
+
+/** Snyk vulnerability (subset). */
+export interface SnykVulnerability {
+  readonly id: string;
+  /** critical, high, medium or low. */
+  readonly severity: string;
+  readonly title: string;
+  readonly description: string;
+  readonly packageName: string;
+  readonly filePath?: string;
+  readonly cvssScore?: number;
+  readonly cwe?: readonly string[];
+}
+
+/** AWS Security Hub / Security Analyzer finding (subset of the ASFF shape). */
+export interface AwsSecurityFinding {
+  readonly Id: string;
+  readonly Severity: { readonly Label: string };
+  readonly Title: string;
+  readonly Description: string;
+  readonly Resources: readonly { readonly Id: string; readonly Type: string }[];
+  readonly Types: readonly string[];
+}
+
+/** Aikido finding (subset). */
+export interface AikidoFinding {
+  readonly id: string;
+  /** 1 (critical) to 4 (low). */
+  readonly severity_level: number;
+  readonly name: string;
+  readonly description: string;
+  readonly affected_file?: string;
+  readonly cwe_ids?: readonly string[];
+}
+
+/** Any combination of scanner reports. */
+export interface ExternalScanReport {
+  readonly sonarqube?: readonly SonarQubeIssue[];
+  readonly snyk?: readonly SnykVulnerability[];
+  readonly awsSecurity?: readonly AwsSecurityFinding[];
+  readonly aikido?: readonly AikidoFinding[];
+}
+
+/**
+ * Normalises external scanner reports into SecurityScanResult. A finding is attached to a
+ * function only when the report gives a line inside that function; whole-file findings
+ * have `functionId: null`.
+ */
+export type IngestExternalFindings = (
+  report: ExternalScanReport,
+  graph: TopologyGraph
+) => readonly SecurityScanResult[];
+
+/** Renders a BugfixSpec as the markdown text of a bugfix.md file. */
+export type GenerateBugfixMarkdown = (spec: BugfixSpec) => string;
+
+/** Result of applying splices to text held in memory (no file I/O). */
+export interface TextMutationResult {
+  readonly mutatedSource: string;
+  readonly rollbackRecord: RollbackRecord;
+}
+
+/** Applies a splice batch to a string. Same validation and rollback guarantees as the file path. */
+export type ApplyMutationToText = (
+  source: string,
+  splices: readonly SpliceRange[]
+) => TextMutationResult;
+
+/** Restores text mutated by ApplyMutationToText. */
+export type RollbackMutationText = (mutatedSource: string, record: RollbackRecord) => string;
+
+/** Returns the pre-loaded sample repository (needs no file system, login or upload). */
+export type GetSampleRepository = () => SampleRepository;
+
 /** The complete public API surface of morpheus-ast-core, as consumed by both apps. */
 export interface MorpheusASTEngine {
+  readonly generateBugfixMarkdown: GenerateBugfixMarkdown;
+  readonly ingestExternalFindings: IngestExternalFindings;
+  readonly getSampleRepository: GetSampleRepository;
+  readonly applyMutationToText: ApplyMutationToText;
+  readonly rollbackMutationText: RollbackMutationText;
   readonly parseSourceFiles: ParseSourceFiles;
   readonly buildTopologyGraph: BuildTopologyGraph;
   readonly computeBlastRadius: ComputeBlastRadius;

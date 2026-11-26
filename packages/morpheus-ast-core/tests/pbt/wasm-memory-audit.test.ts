@@ -1,6 +1,9 @@
 /**
  * tests/pbt/wasm-memory-audit.test.ts
  *
+ * NOTE: this suite tests the TreeMemoryAuditor counter itself (pairing logic only).
+ * The audit against real Tree-sitter WASM trees and the WASM heap is tests/pbt/tree-sitter-wasm.test.ts.
+ *
  * WASM Memory Leak Audit — verifies that every Tree-sitter tree allocation
  * is matched by exactly one tree.delete() call, enforcing the contract in
  * .kiro/steering/ast-surgical-splice.md §4.
