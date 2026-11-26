@@ -1,10 +1,12 @@
 import { CyberCityScene } from "./components/city/CyberCityScene.tsx";
 import { FaultToolbar } from "./components/city/FaultToolbar.tsx";
+import { InspectorDock } from "./components/panels/InspectorDock.tsx";
 import { SREDashboardPanel } from "./components/panels/SREDashboardPanel.tsx";
 import { LoadingScreen } from "./hud/LoadingScreen.tsx";
 import { ErrorPanel } from "./hud/ErrorPanel.tsx";
 import { useAdapterLoader } from "./engine/useAdapterLoader.ts";
 import { useCityController } from "./hooks/useCityController.ts";
+import { useInspectorOpen } from "./hooks/useInspectorOpen.ts";
 import type { CyberCityLayout, InfraShieldAdapter } from "./adapter";
 
 // --- Styles ---
@@ -22,6 +24,7 @@ interface CityProps {
 
 function City({ adapter, initialLayout }: CityProps) {
   const city = useCityController(adapter, initialLayout);
+  const inspector = useInspectorOpen();
   const isFaultActive = city.layout.activeFault !== null;
   const isPanelOpen = isFaultActive || city.isPatchApplied;
 
@@ -40,6 +43,11 @@ function City({ adapter, initialLayout }: CityProps) {
         isActive={isFaultActive}
         onInject={city.inject}
         onReset={city.reset}
+      />
+      <InspectorDock
+        open={inspector.open}
+        telemetry={inspector.open ? adapter.getInspectorTelemetry() : null}
+        onToggle={inspector.toggle}
       />
       {city.actionError !== null && <div role="alert" style={ACTION_ERROR}>{city.actionError}</div>}
       <SREDashboardPanel

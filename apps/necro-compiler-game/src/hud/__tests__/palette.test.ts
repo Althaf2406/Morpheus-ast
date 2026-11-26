@@ -22,6 +22,7 @@ const PAIRS: readonly (readonly [string, string, string])[] = [
   ["gold on panel", PALETTE.gold, PALETTE.panel],
   ["violet on panel", PALETTE.violet, PALETTE.panel],
   ["bloodText on panel", PALETTE.bloodText, PALETTE.panel],
+  ["added on panel", PALETTE.added, PALETTE.panel],
   ["bone on blood (Cast button)", PALETTE.bone, PALETTE.blood],
   ["ink on gold", PALETTE.ink, PALETTE.gold],
 ];

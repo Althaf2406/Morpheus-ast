@@ -19,7 +19,7 @@ Tasks are organized into parallel waves. Wave 1 must complete before Wave 2 begi
 - [x] **TASK-IS-07**: Build Cyber City 3D force-directed graph component using `TopologyGraph` data from `adapter.ts`.
 - [x] **TASK-IS-08**: Build fault animation system (pulse, edge deletion, collapse, cascade highlight).
 - [x] **TASK-IS-09**: Build SRE Dashboard panel showing blast-radius score, Bedrock patch stream, and security findings.
-- [ ] **TASK-IS-10**: Build Live Engine Inspector Toggle overlay.
+- [x] **TASK-IS-10**: Build Live Engine Inspector Toggle overlay.
 - [ ] **TASK-IS-11**: Add Mirelo SFX / ElevenLabs SRE alarm audio for cascading failure events.
 - [x] **TASK-IS-12**: Add "Generate Bugfix Spec" button wired to `adapter.getBugfixSpec()`.
 

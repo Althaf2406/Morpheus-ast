@@ -29,10 +29,13 @@ import type {
   MutationResult,
   RollbackRecord,
   ExternalScanReport,
+  DiffHunk,
+  DiffLine,
+  MutationDiff,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
 import { createEngine } from "../../../packages/morpheus-ast-core/src/index.js";
 
-export type { FaultType };
+export type { FaultType, DiffHunk, DiffLine, MutationDiff };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI-facing data shapes (domain-specific names live HERE, not in core)
@@ -84,6 +87,31 @@ export interface SREDashboardData {
   readonly lastPatch: BedrockPatchSuggestion | null;
 }
 
+/** SHA-256 hex of the edited file before the mutation, after it, and after rollback. */
+export interface SourceFingerprints {
+  readonly before: string | null;
+  readonly afterMutation: string | null;
+  readonly afterRollback: string | null;
+}
+
+/** Live Engine Inspector snapshot. */
+export interface InspectorTelemetry {
+  readonly functionCount: number;
+  readonly edgeCount: number;
+  readonly lastFault: FaultInjectionResult | null;
+  readonly lastMutationId: string | null;
+  readonly findingCount: number;
+  /** Line diff of the most recent mutation (kept after rollback); null before the first one. */
+  readonly lastDiff: MutationDiff | null;
+  /** Name of the function the most recent mutation targeted, when it could be located. */
+  readonly targetFunction: string | null;
+  readonly fingerprints: SourceFingerprints;
+  /** True when the text after rollback has the same SHA-256 as before the mutation; null until a rollback. */
+  readonly rollbackVerified: boolean | null;
+}
+
+const NO_FINGERPRINTS: SourceFingerprints = { before: null, afterMutation: null, afterRollback: null };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // InfraShieldAdapter
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,6 +123,9 @@ export class InfraShieldAdapter {
   private lastFault: FaultInjectionResult | null = null;
   private lastPatch: BedrockPatchSuggestion | null = null;
   private lastMutation: MutationResult | null = null;
+  private lastDiff: MutationDiff | null = null;
+  private targetFunction: string | null = null;
+  private fingerprints: SourceFingerprints = NO_FINGERPRINTS;
   /** The fault and patch active when the last mutation was applied, brought back by rollback. */
   private preMutation: { readonly fault: FaultInjectionResult; readonly patch: BedrockPatchSuggestion | null } | null = null;
   /** Source text of the loaded files, so Bedrock can be given the real function source. */
@@ -131,6 +162,9 @@ export class InfraShieldAdapter {
     this.lastFault = null;
     this.lastPatch = null;
     this.lastMutation = null;
+    this.lastDiff = null;
+    this.targetFunction = null;
+    this.fingerprints = NO_FINGERPRINTS;
     this.preMutation = null;
     return this.buildCityLayout(null, null);
   }
@@ -216,6 +250,7 @@ export class InfraShieldAdapter {
       durationMs: 0,
     };
     this.lastMutation = result;
+    await this.recordInspection(result, source, first.startIndex);
     this.preMutation = this.lastFault === null ? null : { fault: this.lastFault, patch: this.lastPatch };
     await this.reanalyzeVirtual();
     return result;
@@ -231,10 +266,9 @@ export class InfraShieldAdapter {
       throw new AdapterError(`rollbackLastMutation: no virtual source for ${mutation.filePath}.`);
     }
 
-    this.virtualSources.set(
-      mutation.filePath,
-      this.engine.rollbackMutationText(current, mutation.rollbackRecord)
-    );
+    const restored = this.engine.rollbackMutationText(current, mutation.rollbackRecord);
+    this.virtualSources.set(mutation.filePath, restored);
+    this.fingerprints = { ...this.fingerprints, afterRollback: await this.engine.fingerprintText(restored) };
     this.lastMutation = null;
     await this.reanalyzeVirtual();
     await this.restoreFaultAfterRollback();
@@ -286,19 +320,18 @@ export class InfraShieldAdapter {
 
   // ─── Live Engine Inspector data ───────────────────────────────────────────
 
-  getInspectorTelemetry(): {
-    functionCount: number;
-    edgeCount: number;
-    lastFault: FaultInjectionResult | null;
-    lastMutationId: string | null;
-    findingCount: number;
-  } {
+  getInspectorTelemetry(): InspectorTelemetry {
+    const { before, afterRollback } = this.fingerprints;
     return {
       functionCount: this.currentGraph?.functions.length ?? 0,
       edgeCount: this.currentGraph?.edges.length ?? 0,
       lastFault: this.lastFault,
       lastMutationId: this.lastMutation?.mutationId ?? null,
       findingCount: this.currentFindings.length,
+      lastDiff: this.lastDiff,
+      targetFunction: this.targetFunction,
+      fingerprints: this.fingerprints,
+      rollbackVerified: before === null || afterRollback === null ? null : afterRollback === before,
     };
   }
 
@@ -419,6 +452,20 @@ export class InfraShieldAdapter {
       topologyGraph: graph,
       targetFunctionSource: file.slice(fn.range.startIndex, fn.range.endIndex),
     };
+  }
+
+  /** Stores the diff, target function and before/after fingerprints of a mutation, computed by the core. */
+  private async recordInspection(result: MutationResult, original: string, startIndex: number): Promise<void> {
+    const [before, afterMutation] = await Promise.all([
+      this.engine.fingerprintText(original),
+      this.engine.fingerprintText(result.mutatedSource),
+    ]);
+    this.lastDiff = this.engine.computeMutationDiff(result.rollbackRecord, result.mutatedSource);
+    this.targetFunction =
+      this.currentGraph?.functions.find(
+        (f) => f.filePath === result.filePath && f.range.startIndex <= startIndex && startIndex < f.range.endIndex
+      )?.name ?? null;
+    this.fingerprints = { before, afterMutation, afterRollback: null };
   }
 
   private async analyze(request: ParseRequest): Promise<void> {

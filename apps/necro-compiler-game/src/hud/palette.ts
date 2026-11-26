@@ -7,6 +7,8 @@ export const PALETTE = {
   /** Lighter blood for text and icons: the base blood is too dark to read on black. */
   bloodText: "#ff8a80",
   gold: "#f2c14e",
+  /** Added lines and verified badges: a pale green that reads on black. */
+  added: "#8fe39a",
   violet: "#8a7bd8",
   /** Text on gold and bone surfaces. */
   ink: "#0b0809",

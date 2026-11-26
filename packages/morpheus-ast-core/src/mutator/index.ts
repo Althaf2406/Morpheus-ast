@@ -112,7 +112,7 @@ function applySorted(
  * segment's position in the mutated text is shifted by the length change of every
  * earlier segment. Segments are then restored from the end backwards.
  */
-function restoreSegments(mutated: string, segments: readonly Segment[]): string {
+export function restoreSegments(mutated: string, segments: readonly Segment[]): string {
   const ascending = [...segments].sort((a, b) => a.startIndex - b.startIndex);
 
   const located: { mutatedStart: number; seg: Segment }[] = [];

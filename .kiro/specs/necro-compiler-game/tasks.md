@@ -17,7 +17,7 @@
 - [x] **TASK-NC-07**: Build Refactoring Spell cast UI in `src/spells/` wired to `adapter.castSpell()`.
 - [x] **TASK-NC-08**: Build Undo Spell button wired to `adapter.rollbackLastSpell()`.
 - [ ] **TASK-NC-09**: Build Bedrock "Holy Incantation" hint overlay.
-- [ ] **TASK-NC-10**: Build Live Engine Inspector Toggle showing mutation diff.
+- [x] **TASK-NC-10**: Build Live Engine Inspector Toggle showing mutation diff.
 - [ ] **TASK-NC-11**: Add Mirelo SFX / ElevenLabs Gothic horror audio (thunder, whispers, holy chants).
 
 ## Wave 3 — Integration QA (Shared, Days 15–16)

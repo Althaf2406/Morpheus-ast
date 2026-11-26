@@ -23,6 +23,8 @@ import { TopologyCompiler } from "./topology/index.js";
 import { FaultInjector, computeBlastRadius } from "./blast-radius/fault-injector.js";
 import { SurgicalMutator } from "./mutator/index.js";
 import { BugfixSpecGenerator } from "./mutator/bugfix-generator.js";
+import { computeMutationDiff } from "./mutator/diff.js";
+import { fingerprintText } from "./mutator/fingerprint.js";
 import { SecurityIngestionAdapter } from "./security/ingestion.js";
 import { getSampleRepository } from "./sample-repo/index.js";
 import { planRemediation } from "./remediation/index.js";
@@ -61,6 +63,9 @@ export function createEngine(): MorpheusASTEngine {
       return { mutatedSource: mutated, rollbackRecord };
     },
     rollbackMutationText: (mutatedSource, record) => mutator.rollbackString(mutatedSource, record),
+
+    computeMutationDiff,
+    fingerprintText,
 
     generateBedrockPatch: async (request) => {
       // Loaded on demand so bundles that never call Bedrock do not pull in the AWS SDK.

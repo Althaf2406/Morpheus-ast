@@ -517,8 +517,57 @@ export type PlanRemediation = (
   options?: RemediationOptions
 ) => MutationRequest | null;
 
+// ── Mutation diff and text fingerprint ──────────────────────────────────────
+
+/** One line of a diff hunk. Line numbers are 1-based; `null` where the line does not exist on that side. */
+export interface DiffLine {
+  readonly kind: "context" | "removed" | "added";
+  readonly text: string;
+  /** Line number in the text before the mutation (`null` for added lines). */
+  readonly beforeLine: number | null;
+  /** Line number in the text after the mutation (`null` for removed lines). */
+  readonly afterLine: number | null;
+}
+
+/**
+ * A contiguous changed region with surrounding context lines. Lines are the pieces of
+ * `text.split("\n")`, so replacing `beforeLineCount` lines at `beforeStartLine` of the
+ * "before" text by the hunk's `context + added` lines yields the "after" text (and the
+ * reverse with `context + removed`).
+ */
+export interface DiffHunk {
+  readonly beforeStartLine: number;
+  readonly beforeLineCount: number;
+  readonly afterStartLine: number;
+  readonly afterLineCount: number;
+  readonly lines: readonly DiffLine[];
+}
+
+/** Line diff of one mutation. `hunks` is empty when the mutation changed no line. */
+export interface MutationDiff {
+  readonly mutationId: string;
+  readonly filePath: string;
+  readonly hunks: readonly DiffHunk[];
+}
+
+/**
+ * Builds the diff of a mutation from its RollbackRecord and the text the mutation produced.
+ * Pure. `mutatedText` must be the text returned by the mutation that created `record`.
+ * `contextLines` is the number of unchanged lines kept around each change (default 2).
+ */
+export type ComputeMutationDiff = (
+  record: RollbackRecord,
+  mutatedText: string,
+  contextLines?: number
+) => MutationDiff;
+
+/** Returns the SHA-256 of the UTF-8 text as 64 lowercase hex characters. */
+export type FingerprintText = (text: string) => Promise<string>;
+
 /** The complete public API surface of morpheus-ast-core, as consumed by both apps. */
 export interface MorpheusASTEngine {
+  readonly computeMutationDiff: ComputeMutationDiff;
+  readonly fingerprintText: FingerprintText;
   readonly generateBugfixMarkdown: GenerateBugfixMarkdown;
   readonly ingestExternalFindings: IngestExternalFindings;
   readonly getSampleRepository: GetSampleRepository;

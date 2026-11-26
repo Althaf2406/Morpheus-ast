@@ -19,6 +19,9 @@ import type {
   FindingSeverity,
   FindingCategory,
   MutationRequest,
+  DiffHunk,
+  DiffLine,
+  MutationDiff,
   MutationResult,
   RollbackRecord,
   BedrockPatchSuggestion,
@@ -27,6 +30,8 @@ import type {
   ExternalScanReport,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
 import { createEngine } from "../../../packages/morpheus-ast-core/src/index.js";
+
+export type { DiffHunk, DiffLine, MutationDiff };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI-facing data shapes (domain-specific names live HERE, not in core)
@@ -89,7 +94,23 @@ export interface DungeonTelemetry {
   readonly lastSpellCast: MutationResult | null;
   readonly lastSpellRollback: boolean;
   readonly activeAISuggestion: BedrockPatchSuggestion | null;
+  /** Line diff of the most recent spell (kept after undo); null before the first cast. */
+  readonly lastDiff: MutationDiff | null;
+  /** Name of the function the most recent spell targeted, when it could be located. */
+  readonly targetFunction: string | null;
+  readonly fingerprints: SourceFingerprints;
+  /** True when the text after undo has the same SHA-256 as before the cast; null until an undo. */
+  readonly rollbackVerified: boolean | null;
 }
+
+/** SHA-256 hex of the edited file before the spell, after it, and after undo. */
+export interface SourceFingerprints {
+  readonly before: string | null;
+  readonly afterMutation: string | null;
+  readonly afterRollback: string | null;
+}
+
+const NO_FINGERPRINTS: SourceFingerprints = { before: null, afterMutation: null, afterRollback: null };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NecroCompilerAdapter
@@ -102,6 +123,9 @@ export class NecroCompilerAdapter {
   private lastMutation: MutationResult | null = null;
   private lastRollback = false;
   private lastAISuggestion: BedrockPatchSuggestion | null = null;
+  private lastDiff: MutationDiff | null = null;
+  private targetFunction: string | null = null;
+  private fingerprints: SourceFingerprints = NO_FINGERPRINTS;
   /** Sources of an in-memory repository (e.g. the pre-loaded sample), keyed by file path. Empty for disk repos. */
   private readonly virtualSources = new Map<string, string>();
   /** Text of every analysed file (in memory or from disk), for the spell advisor. Refreshed on each analysis. */
@@ -151,19 +175,27 @@ export class NecroCompilerAdapter {
       throw new NecroAdapterError("castSpell: one spell cannot mix in-memory and on-disk files.");
     }
 
-    this.lastMutation =
+    // Located before the cast: re-analysis replaces the graph.
+    const target = this.functionNameAt(request);
+    const mutation =
       inMemory > 0
         ? await this.castSpellInMemory(request)
         : await this.engine.applySurgicalMutation(request);
+    await this.recordInspection(mutation, target);
+    this.lastMutation = mutation;
     this.lastRollback = false;
-    return this.lastMutation;
+    return mutation;
   }
 
   async rollbackLastSpell(): Promise<void> {
     if (this.lastMutation == null) {
       throw new NecroAdapterError("rollbackLastSpell: no spell to undo.");
     }
-    await this.rollbackRecord(this.lastMutation.rollbackRecord);
+    const { rollbackRecord, filePath, mutatedSource } = this.lastMutation;
+    await this.rollbackRecord(rollbackRecord);
+    const restored =
+      this.virtualSources.get(filePath) ?? this.engine.rollbackMutationText(mutatedSource, rollbackRecord);
+    this.fingerprints = { ...this.fingerprints, afterRollback: await this.engine.fingerprintText(restored) };
     this.lastRollback = true;
     this.lastMutation = null;
   }
@@ -237,6 +269,13 @@ export class NecroCompilerAdapter {
       lastSpellCast: this.lastMutation,
       lastSpellRollback: this.lastRollback,
       activeAISuggestion: this.lastAISuggestion,
+      lastDiff: this.lastDiff,
+      targetFunction: this.targetFunction,
+      fingerprints: this.fingerprints,
+      rollbackVerified:
+        this.fingerprints.afterRollback === null || this.fingerprints.before === null
+          ? null
+          : this.fingerprints.afterRollback === this.fingerprints.before,
     };
   }
 
@@ -391,6 +430,29 @@ export class NecroCompilerAdapter {
       map.set(finding.functionId, list);
     }
     return map;
+  }
+
+  /** Name of the function that contains the first splice of a spell, or null. */
+  private functionNameAt(request: MutationRequest): string | null {
+    const first = request.splices[0];
+    if (first === undefined) return null;
+    const fn = this.currentGraph?.functions.find(
+      (f) => f.filePath === first.filePath && f.range.startIndex <= first.startIndex && first.startIndex < f.range.endIndex
+    );
+    return fn?.name ?? null;
+  }
+
+  /** Stores the diff and the before/after fingerprints of a spell, computed by the core. */
+  private async recordInspection(mutation: MutationResult, target: string | null): Promise<void> {
+    const { rollbackRecord, mutatedSource } = mutation;
+    const original = this.engine.rollbackMutationText(mutatedSource, rollbackRecord);
+    const [before, afterMutation] = await Promise.all([
+      this.engine.fingerprintText(original),
+      this.engine.fingerprintText(mutatedSource),
+    ]);
+    this.lastDiff = this.engine.computeMutationDiff(rollbackRecord, mutatedSource);
+    this.targetFunction = target;
+    this.fingerprints = { before, afterMutation, afterRollback: null };
   }
 
   /** Applies a single-file splice batch to an in-memory source and refreshes the analysis. */

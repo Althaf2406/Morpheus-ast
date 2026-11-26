@@ -10,6 +10,8 @@ import { countMonsters, totalMonsters } from "./hud/counters.ts";
 import { ErrorToast } from "./hud/ErrorToast.tsx";
 import { Grimoire } from "./hud/Grimoire.tsx";
 import { HudTitle } from "./hud/HudTitle.tsx";
+import { InspectorDock } from "./hud/inspector/InspectorDock.tsx";
+import { useInspectorOpen } from "./hud/inspector/useInspectorOpen.ts";
 import { LoadingScreen } from "./hud/LoadingScreen.tsx";
 import { MonsterTooltip } from "./hud/MonsterTooltip.tsx";
 import { paletteStyle } from "./hud/palette.ts";
@@ -30,6 +32,12 @@ function Dungeon({ adapter, initialLayout }: DungeonProps) {
   const game = useSpellGame(layout, adapter);
   const { state, selected } = game;
   useLayoutRefresh(adapter, setLayout, state.pending, state.error);
+  const inspector = useInspectorOpen();
+  // Re-read when a spell is cast or undone, or the layout is refreshed.
+  const telemetry = useMemo(
+    () => (inspector.open ? adapter.getTelemetry() : null),
+    [adapter, inspector.open, state.history, state.pending, layout]
+  );
   const [hover, setHover] = useState<PickHit | null>(null);
   const hovered = hover === null ? undefined : game.lookup.get(hover.entityId);
   const totalCount = useMemo(() => totalMonsters(initialLayout), [initialLayout]);
@@ -47,6 +55,7 @@ function Dungeon({ adapter, initialLayout }: DungeonProps) {
       <HudTitle goalLine={GOAL_LINE}>
         <CounterBar {...counts} />
       </HudTitle>
+      <InspectorDock open={inspector.open} telemetry={telemetry} onToggle={inspector.toggle} />
       {hover !== null && hovered !== undefined && <MonsterTooltip hit={hover} target={hovered} />}
       <Grimoire history={state.history} />
       <SpellBar
