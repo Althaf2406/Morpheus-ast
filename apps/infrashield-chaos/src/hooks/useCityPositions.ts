@@ -1,21 +1,24 @@
 import { useMemo } from "react";
 import * as THREE from "three";
-import type { CityNode } from "../adapter.ts";
+import type { CityNode, CityEdge } from "../adapter.ts";
+import { computeCityForceLayout } from "../layout/forceLayout.ts";
 
-/**
- * Maps each node id to its world-space base position.
- * Grid formula: x = (i % 4) * 6 - 9, z = floor(i / 4) * 6 - 6, y = 0
- */
+// --- Helpers ---
+
+/** Topology-only key: fault state changes leave it untouched, so positions are not recomputed. */
+function topologyKey(nodes: readonly CityNode[], edges: readonly CityEdge[]): string {
+  const nodePart = nodes.map((n) => `${n.id}:${n.complexity}`).join("|");
+  const edgePart = edges.map((e) => e.id).join("|");
+  return `${nodePart}#${edgePart}`;
+}
+
+// --- Hook ---
+
+/** Maps each node id to its force-directed world-space base position. */
 export function useCityPositions(
-  nodes: readonly CityNode[]
+  nodes: readonly CityNode[],
+  edges: readonly CityEdge[]
 ): Map<string, THREE.Vector3> {
-  return useMemo(() => {
-    const map = new Map<string, THREE.Vector3>();
-    nodes.forEach((node, i) => {
-      const x = (i % 4) * 6 - 9;
-      const z = Math.floor(i / 4) * 6 - 6;
-      map.set(node.id, new THREE.Vector3(x, 0, z));
-    });
-    return map;
-  }, [nodes]);
+  const key = topologyKey(nodes, edges);
+  return useMemo(() => new Map(computeCityForceLayout(nodes, edges).positions), [key]);
 }

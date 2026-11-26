@@ -1,38 +1,64 @@
-import { useState } from "react";
 import { CyberCityScene } from "./components/city/CyberCityScene.tsx";
 import { InjectFaultButton } from "./components/city/InjectFaultButton.tsx";
+import { FaultTypeSelect } from "./components/city/FaultTypeSelect.tsx";
 import { SREDashboardPanel } from "./components/panels/SREDashboardPanel.tsx";
-import { mockHealthyLayout, mockFaultedLayout } from "./mock/faultScenario.ts";
-import {
-  mockSecurityFindings,
-  mockHealthySREDashboard,
-  mockFaultedSREDashboard,
-} from "./mock/sreDashboard.ts";
-import { mockAdapter } from "./mock/mockAdapter.ts";
-import type { CyberCityLayout } from "./adapter.ts";
+import { LoadingScreen } from "./hud/LoadingScreen.tsx";
+import { ErrorPanel } from "./hud/ErrorPanel.tsx";
+import { useAdapterLoader } from "./engine/useAdapterLoader.ts";
+import { useCityController } from "./hooks/useCityController.ts";
+import type { CyberCityLayout, InfraShieldAdapter } from "./adapter";
 
-export default function App() {
-  const [layout, setLayout] = useState<CyberCityLayout>(mockHealthyLayout);
-  const isFaultActive = layout.nodes.some((n) => n.isFaulted);
+// --- Styles ---
+const CONTROLS: React.CSSProperties = {
+  position: "absolute", top: 16, left: 16, display: "flex", gap: 8, alignItems: "flex-start",
+};
+const ACTION_ERROR: React.CSSProperties = {
+  position: "absolute", bottom: 16, left: 16, padding: "8px 12px", maxWidth: 480,
+  background: "#1a0505", color: "#ff4444", border: "1px solid #ff2222",
+  fontFamily: "monospace", fontSize: "0.8rem",
+};
 
-  const cityWidth = isFaultActive ? "calc(100vw - 320px)" : "100vw";
+// --- City ---
+interface CityProps {
+  readonly adapter: InfraShieldAdapter;
+  readonly initialLayout: CyberCityLayout;
+}
+
+function City({ adapter, initialLayout }: CityProps) {
+  const city = useCityController(adapter, initialLayout);
+  const isFaultActive = city.layout.activeFault !== null;
+  const isPanelOpen = isFaultActive || city.isPatchApplied;
 
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
-      <div style={{ width: cityWidth, height: "100vh" }}>
-        <CyberCityScene layout={layout} />
+      <div style={{ width: isPanelOpen ? "calc(100vw - 320px)" : "100vw", height: "100vh" }}>
+        <CyberCityScene
+          layout={city.layout}
+          selectedId={city.selectedId}
+          onSelect={city.setSelectedId}
+        />
       </div>
-      <InjectFaultButton
-        isActive={isFaultActive}
-        onInject={() => setLayout(mockFaultedLayout)}
-        onReset={() => setLayout(mockHealthyLayout)}
-      />
+      <div style={CONTROLS}>
+        <InjectFaultButton isActive={isFaultActive} onInject={city.inject} onReset={city.reset} />
+        <FaultTypeSelect value={city.faultType} onChange={city.setFaultType} />
+      </div>
+      {city.actionError !== null && <div role="alert" style={ACTION_ERROR}>{city.actionError}</div>}
       <SREDashboardPanel
-        dashboard={isFaultActive ? mockFaultedSREDashboard : mockHealthySREDashboard}
-        findings={mockSecurityFindings}
-        isVisible={isFaultActive}
-        adapter={mockAdapter}
+        adapter={adapter}
+        layout={city.layout}
+        patch={city.patch}
+        isPatchApplied={city.isPatchApplied}
+        onApplyPatch={city.applyPatch}
+        onRollback={city.rollback}
       />
     </div>
   );
+}
+
+// --- App ---
+export default function App() {
+  const { state, retry } = useAdapterLoader();
+  if (state.status === "loading") return <LoadingScreen />;
+  if (state.status === "error") return <ErrorPanel message={state.message} onRetry={retry} />;
+  return <City adapter={state.adapter} initialLayout={state.layout} />;
 }

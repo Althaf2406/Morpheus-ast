@@ -1,13 +1,6 @@
-// --- Local Finding interface ---
-
-export interface Finding {
-  readonly id: string;
-  readonly severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
-  readonly title: string;
-  readonly filePath: string;
-  readonly lineNumber: number;
-}
-
+import type { CyberCityLayout } from "../../adapter.ts";
+// --- Finding shape (real engine result) ---
+export type Finding = CyberCityLayout["securityFindings"][number];
 // --- Types ---
 
 interface Props {
@@ -16,12 +9,13 @@ interface Props {
 
 // --- Helpers ---
 
-export function severityColor(severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"): string {
+export function severityColor(severity: Finding["severity"]): string {
   switch (severity) {
     case "CRITICAL": return "#ff4444";
     case "HIGH":     return "#ff8800";
     case "MEDIUM":   return "#ffcc00";
     case "LOW":      return "#44aaff";
+    case "INFO":     return "#8b949e";
   }
 }
 
@@ -95,13 +89,13 @@ export function SecurityFindingsCard({ findings }: Props) {
           border: `1px solid ${color}`,
         };
         return (
-          <div key={f.id} style={ROW}>
+          <div key={f.findingId} style={ROW}>
             <span style={badge}>{f.severity}</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
               {f.title}
             </span>
             <span style={{ color: "#8b949e", flexShrink: 0 }}>
-              {f.filePath}:{f.lineNumber}
+              {f.filePath}:{f.range.startLine}
             </span>
           </div>
         );

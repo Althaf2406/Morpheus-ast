@@ -1,0 +1,540 @@
+{
+  "pbtResults": {
+    "2.4 Write property tests for the Layout_Solver": {
+      "status": "failed",
+      "failingExample": "Property 4 fails: 10 nodes all complexity 0 (radius 1.2), no edges. Layout bounding-box area (padded by radius) = 9461.7 vs. limit 4 × 57.6 = 230.4. Properties 1-3 pass.",
+      "lastRunTimestamp": 1795698259339
+    },
+    "2.5 Write property test for the camera frame": {
+      "status": "failed",
+      "failingExample": "[new Map([[\"0\",{\"x\":0,\"y\":0,\"z\":11.794150492444903}],[\"1\",{\"x\":0,\"y\":0,\"z\":0}]])] (seed -811691082)",
+      "lastRunTimestamp": 1795698267660
+    },
+    "4.4 Write tests for the selector and default target": {
+      "status": "passed",
+      "lastRunTimestamp": 1795699028967
+    },
+    "1.4 Write property test for apply then rollback": {
+      "status": "passed",
+      "lastRunTimestamp": 1795699202597
+    },
+    "1.5 Write property test for stale AI patch answers": {
+      "status": "passed",
+      "lastRunTimestamp": 1795699216469
+    },
+    "5.3 Write tests for the panels": {
+      "status": "passed",
+      "lastRunTimestamp": 1795699461142
+    }
+  },
+  "executionHistory": {
+    "1.1 Add the in-memory Virtual_Copy and `reset()` to `apps/infrashield-chaos/src/adapter.ts`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975355
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697984448
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698055987
+      }
+    ],
+    "1.2 Add Deterministic_Patch and guarded AI patch to `injectFault` in `adapter.ts`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975417
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698192263
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698285346
+      }
+    ],
+    "1.3 Write the Node-environment integration test and the Download-flow test": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975450
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699147282
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699377281
+      }
+    ],
+    "1.4 Write property test for apply then rollback": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975474
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699148279
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699472719
+      }
+    ],
+    "1.5 Write property test for stale AI patch answers": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975499
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699149508
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699377336
+      }
+    ],
+    "1.6 Write adapter unit tests": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975520
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699150517
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699378240
+      }
+    ],
+    "2.1 Create `apps/infrashield-chaos/src/layout/forceLayout.ts`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975539
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697985456
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698056910
+      }
+    ],
+    "2.2 Create `apps/infrashield-chaos/src/layout/frameCamera.ts`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975559
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697986957
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698058421
+      }
+    ],
+    "2.3 Rewrite `apps/infrashield-chaos/src/hooks/useCityPositions.ts` to use the solver": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975588
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698193026
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698285584
+      }
+    ],
+    "2.4 Write property tests for the Layout_Solver": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975605
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698194287
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699140903
+      }
+    ],
+    "2.5 Write property test for the camera frame": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975623
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698195020
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699141021
+      }
+    ],
+    "3.1 Create `apps/infrashield-chaos/src/engine/useAdapterLoader.ts`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975639
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697987727
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698059411
+      }
+    ],
+    "3.2 Create `apps/infrashield-chaos/src/hud/LoadingScreen.tsx` and `apps/infrashield-chaos/src/hud/ErrorPanel.tsx`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975655
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697988882
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698060068
+      }
+    ],
+    "3.3 Write tests for the loader and screens": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975671
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698195763
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698285724
+      }
+    ],
+    "4.1 Update the scene: camera framing, single Render_Loop, disposal, size limits": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975688
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699151034
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699379243
+      }
+    ],
+    "4.2 Add hover, selection and Building_Tooltip": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975705
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699477597
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699708458
+      }
+    ],
+    "4.3 Create `apps/infrashield-chaos/src/components/city/FaultTypeSelect.tsx` and the default-target helper": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975721
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698068172
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698187370
+      }
+    ],
+    "4.4 Write tests for the selector and default target": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975737
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698972357
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699141529
+      }
+    ],
+    "5.1 Add the patch label to `AIPatchCard`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975754
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698068945
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698139340
+      }
+    ],
+    "5.2 Add the Patch_Controller and real-data wiring to the dashboard": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975771
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698972839
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699142206
+      }
+    ],
+    "5.3 Write tests for the panels": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975787
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699384665
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699472933
+      }
+    ],
+    "6.1 Wire loader, scene, selector and dashboard in `apps/infrashield-chaos/src/App.tsx`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975803
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699712670
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699917590
+      }
+    ],
+    "6.2 Write `App` tests with a mocked adapter": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975819
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699922611
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700007311
+      }
+    ],
+    "7.1 Delete unused files under `apps/infrashield-chaos/src/mock/`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975835
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699923353
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700008015
+      }
+    ],
+    "8. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975853
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700012243
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700060211
+      }
+    ],
+    "9. Final verification": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975871
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700064524
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700425221
+      }
+    ],
+    "10. Update `.kiro/specs/infrashield-chaos/tasks.md`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795697975888
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700429610
+      },
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700479400
+      }
+    ],
+    "3. Lazy adapter loader, Loading_Screen and Error_Panel": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795698285778
+      }
+    ],
+    "2. Deterministic force-directed layout": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699141067
+      }
+    ],
+    "1. Adapter: virtual copy, deterministic patch, AI patch": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699472764
+      }
+    ],
+    "5. Dashboard panels on real data": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699473008
+      }
+    ],
+    "4. Cyber_City scene, interaction and fault controls": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795699708480
+      }
+    ],
+    "6. Rewrite `App.tsx`": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700007351
+      }
+    ],
+    "7. Remove unused mock files": [
+      {
+        "executionId": "a480e88d-efbc-4e66-83a0-2feba7ab9f4f",
+        "chatSessionId": "sess_8b09f601-2ccc-4f43-8574-aee9d46e1e77",
+        "timestamp": 1795700008050
+      }
+    ]
+  }
+}

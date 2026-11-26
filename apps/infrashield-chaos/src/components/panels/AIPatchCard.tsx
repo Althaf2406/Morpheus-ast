@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { SREDashboardData } from "../../adapter.ts";
+import { patchLabel } from "./patchLabel";
 
 // --- Types ---
 
@@ -42,6 +43,27 @@ const CODE_BOX: React.CSSProperties = {
 };
 
 const DIM: React.CSSProperties = { color: "#8b949e", fontSize: "0.72rem" };
+const BADGE: React.CSSProperties = {
+  display:       "inline-block",
+  fontSize:      "0.62rem",
+  fontWeight:    600,
+  letterSpacing: "0.05em",
+  borderRadius:  3,
+  padding:       "2px 6px",
+  marginBottom:  8,
+};
+const BADGE_DETERMINISTIC: React.CSSProperties = {
+  ...BADGE,
+  color:      "#00e5ff",
+  border:     "1px solid #00e5ff",
+  background: "rgba(0, 229, 255, 0.1)",
+};
+const BADGE_AI: React.CSSProperties = {
+  ...BADGE,
+  color:      "#ffaa00",
+  border:     "1px solid #ffaa00",
+  background: "rgba(255, 170, 0, 0.1)",
+};
 
 // --- Component ---
 
@@ -60,7 +82,7 @@ export function AIPatchCard({ lastPatch }: Props) {
       return;
     }
 
-    // Only restart stream when a new patch arrives
+    // --- Restart the stream only for a new patch ---
     if (patchIdRef.current === lastPatch.mutationId) return;
     patchIdRef.current = lastPatch.mutationId;
 
@@ -90,10 +112,12 @@ export function AIPatchCard({ lastPatch }: Props) {
   }
 
   const confidencePct = Math.round(lastPatch.confidence * 100);
+  const label = patchLabel(lastPatch);
 
   return (
     <div style={CARD}>
       <div style={HEADER}>AI Patch</div>
+      <div style={label.isDeterministic ? BADGE_DETERMINISTIC : BADGE_AI}>{label.text}</div>
 
       <div style={CODE_BOX}>
         {displayed}

@@ -14,20 +14,25 @@
 import type {
   MorpheusASTEngine,
   TopologyGraph,
+  FunctionNode,
   FaultInjectionResult,
   FaultInjectionRequest,
+  FaultType,
   BlastRadiusResult,
   BedrockPatchSuggestion,
   BedrockPatchRequest,
   BugfixSpec,
   SecurityScanResult,
   ParseRequest,
+  VirtualFile,
   MutationRequest,
   MutationResult,
   RollbackRecord,
   ExternalScanReport,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
 import { createEngine } from "../../../packages/morpheus-ast-core/src/index.js";
+
+export type { FaultType };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI-facing data shapes (domain-specific names live HERE, not in core)
@@ -90,8 +95,14 @@ export class InfraShieldAdapter {
   private lastFault: FaultInjectionResult | null = null;
   private lastPatch: BedrockPatchSuggestion | null = null;
   private lastMutation: MutationResult | null = null;
+  /** The fault and patch active when the last mutation was applied, brought back by rollback. */
+  private preMutation: { readonly fault: FaultInjectionResult; readonly patch: BedrockPatchSuggestion | null } | null = null;
   /** Source text of the loaded files, so Bedrock can be given the real function source. */
   private readonly sources = new Map<string, string>();
+  /** In-memory Virtual_Copy of the sample repository; mutations never touch the file system. */
+  private readonly virtualSources = new Map<string, string>();
+  /** The healthy sample as first loaded, restored by reset(). */
+  private healthySnapshot: readonly VirtualFile[] = [];
 
   constructor(engine: MorpheusASTEngine) {
     this.engine = engine;
@@ -107,7 +118,20 @@ export class InfraShieldAdapter {
   /** Loads the pre-loaded sample repository: no upload, login or file system needed. */
   async loadSampleRepository(): Promise<CyberCityLayout> {
     const sample = this.engine.getSampleRepository();
-    await this.analyze({ filePaths: [], virtualFiles: sample.files, includeSourceText: true });
+    this.healthySnapshot = sample.files;
+    this.restoreVirtualSources();
+    await this.reanalyzeVirtual();
+    return this.buildCityLayout(null, null);
+  }
+
+  /** Restores the healthy sample and clears the fault, patch and mutation state. */
+  async reset(): Promise<CyberCityLayout> {
+    this.restoreVirtualSources();
+    await this.reanalyzeVirtual();
+    this.lastFault = null;
+    this.lastPatch = null;
+    this.lastMutation = null;
+    this.preMutation = null;
     return this.buildCityLayout(null, null);
   }
 
@@ -118,20 +142,12 @@ export class InfraShieldAdapter {
 
     const fault = await this.engine.injectFault(request, this.currentGraph!);
     this.lastFault = fault;
-    this.lastPatch = null; // a patch belongs to one fault; never reuse an earlier one
+    this.preMutation = null; // a new fault supersedes the one a rollback would bring back
+    // A patch belongs to one fault; the rule-based patch replaces any earlier one.
+    this.lastPatch = this.buildDeterministicPatch(fault);
 
-    // Ask Bedrock for a patch in the background; the UI can poll getSREDashboard().lastPatch.
-    const patchRequest = this.buildBedrockRequest();
-    if (patchRequest !== null) {
-      void this.engine
-        .generateBedrockPatch(patchRequest)
-        .then((patch) => {
-          if (this.lastFault === fault) this.lastPatch = patch; // ignore answers for an older fault
-        })
-        .catch(() => {
-          // Best effort: missing credentials or a rejected suggestion must not block the UI.
-        });
-    }
+    // The AI patch arrives later; the UI can poll getSREDashboard().lastPatch.
+    void this.requestAIPatch(fault);
 
     return this.buildCityLayout(fault, null);
   }
@@ -182,16 +198,57 @@ export class InfraShieldAdapter {
   // ─── Surgical mutation ────────────────────────────────────────────────────
 
   async applyMutation(request: MutationRequest): Promise<MutationResult> {
-    this.lastMutation = await this.engine.applySurgicalMutation(request);
-    return this.lastMutation;
+    const first = request.splices[0];
+    if (first === undefined) throw new AdapterError("applyMutation: request has no splices.");
+    const source = this.virtualSources.get(first.filePath);
+    if (source === undefined) {
+      throw new AdapterError(`applyMutation: no virtual source for ${first.filePath}.`);
+    }
+
+    const text = this.engine.applyMutationToText(source, request.splices);
+    this.virtualSources.set(first.filePath, text.mutatedSource);
+    const result: MutationResult = {
+      mutationId: text.rollbackRecord.mutationId,
+      filePath: first.filePath,
+      splicesApplied: request.splices.length,
+      mutatedSource: text.mutatedSource,
+      rollbackRecord: text.rollbackRecord,
+      durationMs: 0,
+    };
+    this.lastMutation = result;
+    this.preMutation = this.lastFault === null ? null : { fault: this.lastFault, patch: this.lastPatch };
+    await this.reanalyzeVirtual();
+    return result;
   }
 
   async rollbackLastMutation(): Promise<void> {
-    if (this.lastMutation == null) {
+    const mutation = this.lastMutation;
+    if (mutation == null) {
       throw new AdapterError("rollbackLastMutation: no mutation to roll back.");
     }
-    await this.engine.rollbackMutation(this.lastMutation.rollbackRecord);
+    const current = this.virtualSources.get(mutation.filePath);
+    if (current === undefined) {
+      throw new AdapterError(`rollbackLastMutation: no virtual source for ${mutation.filePath}.`);
+    }
+
+    this.virtualSources.set(
+      mutation.filePath,
+      this.engine.rollbackMutationText(current, mutation.rollbackRecord)
+    );
     this.lastMutation = null;
+    await this.reanalyzeVirtual();
+    await this.restoreFaultAfterRollback();
+  }
+
+  /** The current text of a file in the Virtual_Copy, or undefined when the file is not loaded. */
+  getSourceText(filePath: string): string | undefined {
+    return this.virtualSources.get(filePath);
+  }
+
+  /** The City_Layout of the current analysis, including any active fault. */
+  getLayout(): CyberCityLayout {
+    this.requireGraph();
+    return this.buildCityLayout(this.lastFault, null);
   }
 
   async rollbackRecord(record: RollbackRecord): Promise<void> {
@@ -286,6 +343,67 @@ export class InfraShieldAdapter {
     };
   }
 
+  /** The finding that describes a fault, or null when its fault type has no remediation category. */
+  private findingForFault(fault: FaultInjectionResult, fn: FunctionNode): SecurityScanResult | null {
+    if (fault.faultType !== "UNCAUGHT_EXCEPTION") return null;
+
+    const existing = this.currentFindings.find(
+      (f) => f.functionId === fn.id && f.category === "UNCAUGHT_EXCEPTION"
+    );
+    if (existing !== undefined) return existing;
+
+    return {
+      findingId: `fault-${fn.id}`,
+      severity: "HIGH",
+      category: "UNCAUGHT_EXCEPTION",
+      title: `Uncaught exception in ${fn.name}`,
+      description: `An injected UNCAUGHT_EXCEPTION fault escapes ${fn.name} without a handler.`,
+      filePath: fn.filePath,
+      range: fn.range,
+      functionId: fn.id,
+      sourceScanner: "INTERNAL",
+      cweId: null,
+      cvssScore: null,
+    };
+  }
+
+  /** The rule-based patch for a fault, or null when no safe fix exists. No AI involved. */
+  private buildDeterministicPatch(fault: FaultInjectionResult): BedrockPatchSuggestion | null {
+    const fn = this.currentGraph?.functions.find((f) => f.id === fault.targetFunctionId);
+    if (fn === undefined) return null;
+
+    const source = this.virtualSources.get(fn.filePath) ?? this.sources.get(fn.filePath);
+    const finding = this.findingForFault(fault, fn);
+    if (source === undefined || finding === null) return null;
+
+    const plan = this.engine.planRemediation(finding, source, { errorCause: true });
+    if (plan === null) return null;
+
+    return {
+      mutationId: `deterministic-${fn.id}`,
+      targetFunctionId: fn.id,
+      suggestedSplices: plan.splices,
+      rationale:
+        "This patch comes from rule-based deterministic remediation. It was not generated by an AI model.",
+      confidence: 1,
+      modelId: "deterministic",
+      durationMs: 0,
+    };
+  }
+
+  /** Asks Bedrock for a patch when the function source is available; never throws or logs. */
+  private async requestAIPatch(fault: FaultInjectionResult): Promise<void> {
+    const patchRequest = this.buildBedrockRequest();
+    if (patchRequest === null) return;
+
+    try {
+      const patch = await this.engine.generateBedrockPatch(patchRequest);
+      if (this.lastFault === fault) this.lastPatch = patch; // ignore answers for an older fault
+    } catch {
+      // Best effort: no credentials, a browser, or a rejected suggestion keeps the rule-based patch.
+    }
+  }
+
   /** The request for Bedrock, or null when the source of the faulted function is not available. */
   private buildBedrockRequest(): BedrockPatchRequest | null {
     const fault = this.lastFault;
@@ -315,6 +433,29 @@ export class InfraShieldAdapter {
     // A new repository invalidates anything derived from the previous one.
     this.lastFault = null;
     this.lastPatch = null;
+  }
+
+  private async reanalyzeVirtual(): Promise<void> {
+    const virtualFiles = [...this.virtualSources].map(([filePath, sourceText]) => ({ filePath, sourceText }));
+    await this.analyze({ filePaths: [], virtualFiles, includeSourceText: true });
+  }
+
+  /** Re-runs the fault that was active before the rolled-back mutation on the restored source. */
+  private async restoreFaultAfterRollback(): Promise<void> {
+    const before = this.preMutation;
+    this.preMutation = null;
+    if (before === null) return;
+
+    this.lastFault = await this.engine.injectFault(
+      { targetFunctionId: before.fault.targetFunctionId, faultType: before.fault.faultType },
+      this.currentGraph!
+    );
+    this.lastPatch = before.patch;
+  }
+
+  private restoreVirtualSources(): void {
+    this.virtualSources.clear();
+    for (const file of this.healthySnapshot) this.virtualSources.set(file.filePath, file.sourceText);
   }
 
   private requireGraph(): void {

@@ -94,6 +94,14 @@ export function BlastRadiusCard({ blastRadiusScore, lastFault }: Props) {
         Affected:{" "}
         <span style={{ color: "#e6edf3" }}>{lastFault.affectedNodes.length} nodes</span>
       </div>
+      <div style={{ fontSize: "0.72rem", marginTop: 6, color: "#8b949e" }}>
+        Cascade:{" "}
+        <span style={{ color: "#e6edf3" }}>
+          {lastFault.cascadePath.length === 0
+            ? "none"
+            : lastFault.cascadePath.map((step) => step.functionId).join(" → ")}
+        </span>
+      </div>
     </div>
   );
 }

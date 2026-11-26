@@ -21,11 +21,11 @@ Tasks are organized into parallel waves. Wave 1 must complete before Wave 2 begi
 - [x] **TASK-IS-09**: Build SRE Dashboard panel showing blast-radius score, Bedrock patch stream, and security findings.
 - [ ] **TASK-IS-10**: Build Live Engine Inspector Toggle overlay.
 - [ ] **TASK-IS-11**: Add Mirelo SFX / ElevenLabs SRE alarm audio for cascading failure events.
-- [ ] **TASK-IS-12**: Add "Generate Bugfix Spec" button wired to `adapter.getBugfixSpec()`.
+- [x] **TASK-IS-12**: Add "Generate Bugfix Spec" button wired to `adapter.getBugfixSpec()`.
 
 ## Wave 3 — Integration QA (Shared, Days 15–16)
 
-- [ ] **TASK-IS-13**: End-to-end test: load pre-loaded serverless repo → inject fault → verify blast-radius → download bugfix.md.
+- [x] **TASK-IS-13**: End-to-end test: load pre-loaded serverless repo → inject fault → verify blast-radius → download bugfix.md.
 - [ ] **TASK-IS-14**: Accessibility and WebGL compatibility check across Chrome, Firefox, Safari.
 - [ ] **TASK-IS-15**: Performance profiling — confirm 30 FPS at 500 nodes and 200 ms blast-radius budget.
 - [ ] **TASK-IS-16**: Deploy to public URL (AWS CloudFront or Netlify) and verify no-login access.

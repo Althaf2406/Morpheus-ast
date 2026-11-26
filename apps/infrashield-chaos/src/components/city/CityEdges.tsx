@@ -1,11 +1,14 @@
 import { useEffect } from "react";
 import * as THREE from "three";
 import type { CityEdge, CityNode } from "../../adapter.ts";
+import { buildingHeight, setSegmentPose } from "./instancePose.ts";
 
-// --- Edge color constants ---
+// --- Edge color and width constants ---
 const COLOR_CASCADING = new THREE.Color("#ff2222");
 const COLOR_CYCLIC    = new THREE.Color("#ffaa00");
 const COLOR_NORMAL    = new THREE.Color("#334466");
+const MIN_WIDTH       = 0.04;
+const WIDTH_PER_CENTRALITY = 0.12;
 
 interface Props {
   readonly edges: readonly CityEdge[];
@@ -20,62 +23,43 @@ function edgeColor(edge: CityEdge): THREE.Color {
   return COLOR_NORMAL;
 }
 
-/** Builds a building-top position from base position + node complexity. */
-function buildingTop(
-  nodeId: string,
-  nodes: readonly CityNode[],
-  positions: Map<string, THREE.Vector3>
-): THREE.Vector3 {
-  const base = positions.get(nodeId);
-  if (base == null) return new THREE.Vector3();
-  const node   = nodes.find((n) => n.id === nodeId);
-  const height = node != null ? Math.max(node.complexity * 0.5, 0.5) : 0.5;
-  return new THREE.Vector3(base.x, height, base.z);
+/** Building-top position from base position + node complexity. */
+function buildingTop(node: CityNode | undefined, positions: Map<string, THREE.Vector3>): THREE.Vector3 {
+  const base = node != null ? positions.get(node.id) : undefined;
+  if (node == null || base == null) return new THREE.Vector3();
+  return new THREE.Vector3(base.x, buildingHeight(node.complexity), base.z);
 }
 
 export function CityEdges({ edges, nodes, positions, scene }: Props) {
   useEffect(() => {
-    // --- Static edges: exclude those connected to faulted nodes (handled by useFaultAnimation) ---
+    // --- Static edges: exclude those connected to faulted nodes (handled by the fault animation) ---
     const faultedIds = new Set(nodes.filter((n) => n.isFaulted).map((n) => n.id));
     const staticEdges = edges.filter(
       (e) => !faultedIds.has(e.sourceId) && !faultedIds.has(e.targetId)
     );
-
     if (staticEdges.length === 0) return;
 
-    // 2 vertices per edge, 3 floats per vertex
-    const posArr = new Float32Array(staticEdges.length * 2 * 3);
-    const colArr = new Float32Array(staticEdges.length * 2 * 3);
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const geo  = new THREE.BoxGeometry(1, 1, 1);
+    const mat  = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.75 });
+    const mesh = new THREE.InstancedMesh(geo, mat, staticEdges.length);
 
     staticEdges.forEach((edge, i) => {
-      const src = buildingTop(edge.sourceId, nodes, positions);
-      const tgt = buildingTop(edge.targetId, nodes, positions);
-      const col = edgeColor(edge);
-
-      const base       = i * 6;
-      posArr[base + 0] = src.x; posArr[base + 1] = src.y; posArr[base + 2] = src.z;
-      posArr[base + 3] = tgt.x; posArr[base + 4] = tgt.y; posArr[base + 5] = tgt.z;
-
-      colArr[base + 0] = col.r; colArr[base + 1] = col.g; colArr[base + 2] = col.b;
-      colArr[base + 3] = col.r; colArr[base + 4] = col.g; colArr[base + 5] = col.b;
+      const src = byId.get(edge.sourceId);
+      const tgt = byId.get(edge.targetId);
+      const centrality = ((src?.centralityScore ?? 0) + (tgt?.centralityScore ?? 0)) / 2;
+      setSegmentPose(
+        mesh, i, buildingTop(src, positions), buildingTop(tgt, positions),
+        MIN_WIDTH + WIDTH_PER_CENTRALITY * centrality
+      );
+      mesh.setColorAt(i, edgeColor(edge));
     });
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(posArr, 3));
-    geo.setAttribute("color",    new THREE.BufferAttribute(colArr, 3));
-
-    const mat = new THREE.LineBasicMaterial({
-      vertexColors: true,
-      linewidth: 1,
-      transparent: true,
-      opacity: 0.75,
-    });
-
-    const lines = new THREE.LineSegments(geo, mat);
-    scene.add(lines);
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    scene.add(mesh);
 
     return () => {
-      scene.remove(lines);
+      scene.remove(mesh);
+      mesh.dispose();
       geo.dispose();
       mat.dispose();
     };

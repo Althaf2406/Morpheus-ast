@@ -1,21 +1,25 @@
-import type { SREDashboardData } from "../../adapter.ts";
+import { useMemo } from "react";
+import type { CyberCityLayout, InfraShieldAdapter, SREDashboardData } from "../../adapter.ts";
 import { BlastRadiusCard }       from "./BlastRadiusCard.tsx";
 import { TopologyMetricsCard }   from "./TopologyMetricsCard.tsx";
 import { SecurityFindingsCard }  from "./SecurityFindingsCard.tsx";
-import type { Finding }          from "./SecurityFindingsCard.tsx";
 import { AIPatchCard }           from "./AIPatchCard.tsx";
 import { BugfixSpecButton }      from "./BugfixSpecButton.tsx";
-import type { BugfixSpecProvider } from "./BugfixSpecButton.tsx";
-
+import { BugfixDownloadButton }  from "./BugfixDownloadButton.tsx";
+import { PatchController }       from "./PatchController.tsx";
 // --- Types ---
-
+export type DashboardAdapter = Pick<
+  InfraShieldAdapter,
+  "getSREDashboard" | "generateBugfixSpec" | "generateBugfixFile"
+>;
 interface Props {
-  readonly dashboard:  SREDashboardData;
-  readonly findings:   readonly Finding[];
-  readonly isVisible:  boolean;
-  readonly adapter:    BugfixSpecProvider;
+  readonly adapter:        DashboardAdapter;
+  readonly layout:         CyberCityLayout;
+  readonly patch:          SREDashboardData["lastPatch"];
+  readonly isPatchApplied: boolean;
+  readonly onApplyPatch:   () => void;
+  readonly onRollback:     () => void;
 }
-
 // --- Styles ---
 
 const PANEL: React.CSSProperties = {
@@ -51,14 +55,17 @@ const DIVIDER: React.CSSProperties = {
 };
 
 // --- Component ---
-
-export function SREDashboardPanel({ dashboard, findings, isVisible, adapter }: Props) {
-  if (!isVisible) return null;
-
+export function SREDashboardPanel({
+  adapter, layout, patch, isPatchApplied, onApplyPatch, onRollback,
+}: Props) {
+  // --- Engine snapshot (recomputed when the layout or patch changes) ---
+  const dashboard = useMemo(() => adapter.getSREDashboard(), [adapter, layout, patch]);
+  const fault = layout.activeFault ?? dashboard.lastFault;
+  const isFaultInjected = fault !== null;
+  if (!isFaultInjected && !isPatchApplied) return null;
   return (
     <div style={PANEL}>
       <div style={HEADER}>⬡ SRE Dashboard</div>
-
       <TopologyMetricsCard
         totalFunctions={dashboard.totalFunctions}
         totalEdges={dashboard.totalEdges}
@@ -66,23 +73,20 @@ export function SREDashboardPanel({ dashboard, findings, isVisible, adapter }: P
         avgComplexity={dashboard.avgComplexity}
         maxComplexity={dashboard.maxComplexity}
       />
-
       <div style={DIVIDER} />
-
-      <BlastRadiusCard
-        blastRadiusScore={dashboard.lastFault?.blastRadiusScore ?? 0}
-        lastFault={dashboard.lastFault}
+      <BlastRadiusCard blastRadiusScore={fault?.blastRadiusScore ?? 0} lastFault={fault} />
+      <div style={DIVIDER} />
+      <SecurityFindingsCard findings={layout.securityFindings} />
+      <div style={DIVIDER} />
+      <AIPatchCard lastPatch={patch} />
+      <PatchController
+        hasPatch={patch !== null}
+        isPatchApplied={isPatchApplied}
+        onApplyPatch={onApplyPatch}
+        onRollback={onRollback}
       />
-
-      <div style={DIVIDER} />
-
-      <SecurityFindingsCard findings={findings} />
-
-      <div style={DIVIDER} />
-
-      <AIPatchCard lastPatch={dashboard.lastPatch} />
-
-      <BugfixSpecButton adapter={adapter} isEnabled={isVisible} />
+      <BugfixSpecButton adapter={adapter} isEnabled={isFaultInjected} />
+      <BugfixDownloadButton adapter={adapter} isEnabled={isFaultInjected} />
     </div>
   );
 }
