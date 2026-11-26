@@ -25,6 +25,7 @@ import { SurgicalMutator } from "./mutator/index.js";
 import { BugfixSpecGenerator } from "./mutator/bugfix-generator.js";
 import { SecurityIngestionAdapter } from "./security/ingestion.js";
 import { getSampleRepository } from "./sample-repo/index.js";
+import { planRemediation } from "./remediation/index.js";
 
 export type * from "./contracts.js";
 
@@ -72,5 +73,8 @@ export function createEngine(): MorpheusASTEngine {
       const graph = await topology.build(files);
       return security.runInternalAnalysis(files, graph);
     },
+
+    planRemediation: (finding, sourceText, options) =>
+      planRemediation(finding, sourceText, options),
   };
 }

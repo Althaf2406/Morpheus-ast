@@ -1,0 +1,410 @@
+{
+  "pbtResults": {
+    "2.2 Write property tests for unused variable remediation": {
+      "status": "passed",
+      "lastRunTimestamp": 1795695531152
+    },
+    "3.2 Write property tests for uncaught exception remediation": {
+      "status": "passed",
+      "lastRunTimestamp": 1795695655878
+    }
+  },
+  "executionHistory": {
+    "1.1 Add `RemediationOptions`, `PlanRemediation` type, engine member, dispatcher and planner stubs": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236254
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695242073
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695308335
+      }
+    ],
+    "2.1 Implement `planUnusedVariableFix`": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236284
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695311639
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695407400
+      }
+    ],
+    "2.2 Write property tests for unused variable remediation": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236307
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695410744
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695544802
+      }
+    ],
+    "3.1 Implement `planUncaughtExceptionFix` with both catch forms": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236332
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695311964
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695407188
+      }
+    ],
+    "3.2 Write property tests for uncaught exception remediation": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236354
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695548624
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695665809
+      }
+    ],
+    "4.1 Write contract-level property tests with both input generators": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236378
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695668613
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695793603
+      }
+    ],
+    "4.2 Write unit tests for concrete examples": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236475
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695411154
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695544859
+      }
+    ],
+    "5. Checkpoint - Core package": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236490
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695796623
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695830845
+      }
+    ],
+    "6.1 Assign spells and merge zombies in `apps/necro-compiler-game/src/adapter.ts`": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236507
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695834193
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695890755
+      }
+    ],
+    "6.2 Write property tests for adapter spell assignment and merge": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236524
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695894733
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695971018
+      }
+    ],
+    "7.1 Replace the \"no spell\" message in `MonsterCard.tsx`": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236553
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695834983
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695891406
+      }
+    ],
+    "7.2 Write HUD tests": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236568
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695895434
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695971490
+      }
+    ],
+    "8.1 Add real spell cast and undo cases to `realEngine.integration.test.ts`": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236584
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695895896
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695970367
+      }
+    ],
+    "9. Checkpoint - Application integration": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236599
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695974438
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696030417
+      }
+    ],
+    "10.1 Add a spell coverage report test for the Sample_Repo": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236616
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696034123
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696082277
+      }
+    ],
+    "10.2 Core tests and source hygiene": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236633
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696085691
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696128088
+      }
+    ],
+    "10.3 NECRO typecheck, test and build": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236649
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696086355
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696128508
+      }
+    ],
+    "10.4 InfraShield typecheck and test": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236667
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696087337
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696129499
+      }
+    ],
+    "10.5 Boundary lint": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236683
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696087484
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696129694
+      }
+    ],
+    "10.6 Report": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695236702
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696132702
+      },
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696186774
+      }
+    ],
+    "1. Core API surface and dispatcher": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695308362
+      }
+    ],
+    "2. Unused variable remediation": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695544828
+      }
+    ],
+    "3. Uncaught exception remediation": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695665842
+      }
+    ],
+    "4. Cross-cutting core tests": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695793626
+      }
+    ],
+    "8. Real-engine integration test": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695970387
+      }
+    ],
+    "6. NECRO adapter spells": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695971039
+      }
+    ],
+    "7. HUD lore text": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795695971509
+      }
+    ],
+    "10. Final verification": [
+      {
+        "executionId": "6e703d87-9f27-4afb-8fd2-f133a306c0ca",
+        "chatSessionId": "sess_5f221184-6d16-4b97-bd7a-2e05a08b723a",
+        "timestamp": 1795696186815
+      }
+    ]
+  }
+}

@@ -501,6 +501,22 @@ export type RollbackMutationText = (mutatedSource: string, record: RollbackRecor
 /** Returns the pre-loaded sample repository (needs no file system, login or upload). */
 export type GetSampleRepository = () => SampleRepository;
 
+/** Caller-supplied options for remediation planning. */
+export interface RemediationOptions {
+  /** True when the target runtime accepts the `cause` option on Error. Defaults to false. */
+  readonly errorCause: boolean;
+}
+
+/**
+ * Plans a deterministic fix for a finding from the source text of its file.
+ * Returns null when no safe fix exists. Pure: no file system, environment or shared state.
+ */
+export type PlanRemediation = (
+  finding: SecurityScanResult,
+  sourceText: string,
+  options?: RemediationOptions
+) => MutationRequest | null;
+
 /** The complete public API surface of morpheus-ast-core, as consumed by both apps. */
 export interface MorpheusASTEngine {
   readonly generateBugfixMarkdown: GenerateBugfixMarkdown;
@@ -517,4 +533,5 @@ export interface MorpheusASTEngine {
   readonly generateBedrockPatch: GenerateBedrockPatch;
   readonly generateBugfixSpec: GenerateBugfixSpec;
   readonly runSecurityScan: RunSecurityScan;
+  readonly planRemediation: PlanRemediation;
 }

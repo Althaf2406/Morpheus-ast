@@ -301,8 +301,13 @@ export class NecroCompilerAdapter {
     findings: SecurityScanResult[]
   ): DungeonEntity[] {
     const entities: DungeonEntity[] = [];
+    const covered = new Set<string>();
 
     for (const finding of findings) {
+      if (finding.category === "UNUSED_VARIABLE") {
+        const name = this.unusedVariableName(finding, fn);
+        if (name !== null) covered.add(name);
+      }
       entities.push({
         entityId: `entity-${finding.findingId}`,
         findingId: finding.findingId,
@@ -310,24 +315,60 @@ export class NecroCompilerAdapter {
         severity: finding.severity,
         title: finding.title,
         description: finding.description,
-        suggestedSpell: null, // Populated asynchronously via getSpellHint()
+        suggestedSpell: this.planSpell(finding),
       });
     }
 
-    // Unused variables become zombie entities even without a formal finding
+    // Unused variables without a matching finding become zombie entities
     for (const varName of fn.unusedVariables) {
+      if (covered.has(varName)) continue;
+      const title = `Unused variable: ${varName}`;
+      const description = `Variable "${varName}" is declared but never used.`;
+      const synthetic: SecurityScanResult = {
+        findingId: `zombie-${fn.id}-${varName}`,
+        severity: "LOW",
+        category: "UNUSED_VARIABLE",
+        title,
+        description,
+        filePath: fn.filePath,
+        range: fn.range,
+        functionId: fn.id,
+        sourceScanner: "INTERNAL",
+        cweId: null,
+        cvssScore: null,
+      };
       entities.push({
         entityId: `zombie-${fn.id}-${varName}`,
         findingId: fn.id,
         type: "ZOMBIE_VARIABLE",
         severity: "LOW",
-        title: `Unused variable: ${varName}`,
-        description: `Variable "${varName}" is declared but never used.`,
-        suggestedSpell: null,
+        title,
+        description,
+        suggestedSpell: this.planSpell(synthetic),
       });
     }
 
     return entities;
+  }
+
+  /** Asks the core planner for the fix of a finding; null when no safe fix exists. */
+  private planSpell(finding: SecurityScanResult): MutationRequest | null {
+    const source = this.analyzedSources.get(finding.filePath);
+    if (source === undefined) return null;
+    return this.engine.planRemediation(finding, source, { errorCause: true });
+  }
+
+  /**
+   * Variable name an UNUSED_VARIABLE finding refers to: the identifier text at its range,
+   * or (engine findings span the whole function) the name carried in its title.
+   */
+  private unusedVariableName(finding: SecurityScanResult, fn: FunctionNode): string | null {
+    const source = this.analyzedSources.get(finding.filePath);
+    const atRange = source?.slice(finding.range.startIndex, finding.range.endIndex);
+    if (atRange !== undefined && fn.unusedVariables.includes(atRange)) return atRange;
+    const prefix = "Unused variable: ";
+    if (finding.title.startsWith(prefix)) return finding.title.slice(prefix.length);
+    return null;
   }
 
   private findingToEntityType(

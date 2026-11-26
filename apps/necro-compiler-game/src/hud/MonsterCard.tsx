@@ -13,6 +13,9 @@ const STATUS_LABEL: Record<EntityVisualState, string> = {
   PURIFIED: "Purified",
 };
 
+const IMMUNE_LORE =
+  "This monster is immune to ordinary spells. Only a Holy Incantation can banish it, and that rite is not yet known.";
+
 export function MonsterCard({ target, visual }: Props) {
   if (target === null) {
     return (
@@ -30,7 +33,7 @@ export function MonsterCard({ target, visual }: Props) {
       <p className="hud-card__title">{entity.title}</p>
       <p className="hud-card__text">{entity.description}</p>
       {entity.suggestedSpell === null && (
-        <p className="hud-hint">No spell is available for this monster yet.</p>
+        <p className="hud-hint">{IMMUNE_LORE}</p>
       )}
       <p className="hud-code">
         {room.filePath} <span aria-hidden="true">·</span> {room.functionName}()

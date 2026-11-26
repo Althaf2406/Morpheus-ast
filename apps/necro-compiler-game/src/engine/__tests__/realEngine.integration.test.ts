@@ -9,7 +9,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { createNecroAdapter } from "../../adapter.ts";
-import type { DungeonEntity, DungeonRoom, NecroCompilerAdapter } from "../../adapter.ts";
+import type { DungeonEntity, DungeonLayout, DungeonRoom, NecroCompilerAdapter } from "../../adapter.ts";
 
 // --- Helpers ---
 type MutationRequest = Parameters<NecroCompilerAdapter["castSpell"]>[0];
@@ -41,7 +41,7 @@ describe("real engine: cast then undo on the sample repository", () => {
     const startIndex = original!.indexOf(variableName);
     expect(startIndex).toBeGreaterThanOrEqual(0);
 
-    // suggestedSpell is null for every entity, so the request is built here from the entity's range.
+    // This test builds its own request from the entity's range, independent of any planned suggestedSpell.
     const request: MutationRequest = {
       splices: [
         {
@@ -62,5 +62,69 @@ describe("real engine: cast then undo on the sample repository", () => {
 
     await adapter.rollbackLastSpell();
     expect(adapter.getSourceText(room.filePath)).toBe(original);
+  });
+});
+
+// --- Real planned spells: cast the entity's own suggestedSpell, then undo ---
+const UNCAUGHT_PREFIX = "Uncaught exception path in: ";
+
+/** Entity identity that survives re-analysis (entity ids are renumbered by each scan). */
+const entityKey = (room: DungeonRoom, entity: DungeonEntity): string =>
+  `${room.filePath}::${room.functionName}::${entity.title}`;
+
+function countEntities(layout: DungeonLayout, key: string): number {
+  return layout.rooms.reduce((sum, room) => sum + room.entities.filter((e) => entityKey(room, e) === key).length, 0);
+}
+
+function findCastable(
+  layout: DungeonLayout,
+  titlePrefix: string
+): { room: DungeonRoom; entity: DungeonEntity; spell: MutationRequest } | undefined {
+  for (const room of layout.rooms) {
+    for (const entity of room.entities) {
+      if (entity.title.startsWith(titlePrefix) && entity.suggestedSpell !== null) {
+        return { room, entity, spell: entity.suggestedSpell };
+      }
+    }
+  }
+  return undefined;
+}
+
+async function castAndUndo(titlePrefix: string): Promise<{ original: string; cast: string }> {
+  const adapter = createNecroAdapter();
+  const layout = await adapter.loadSampleRepository();
+
+  const target = findCastable(layout, titlePrefix);
+  expect(target).toBeDefined();
+  const { room, entity, spell } = target!;
+  const key = entityKey(room, entity);
+  const original = adapter.getSourceText(room.filePath)!;
+  const before = countEntities(layout, key);
+  expect(before).toBe(1);
+
+  await adapter.castSpell(spell);
+  const cast = adapter.getSourceText(room.filePath)!;
+  expect(cast).not.toBe(original);
+  expect(countEntities(adapter.buildDungeonLayout(), key)).toBe(0);
+
+  await adapter.rollbackLastSpell();
+  expect(adapter.getSourceText(room.filePath)).toBe(original);
+  expect(countEntities(adapter.buildDungeonLayout(), key)).toBe(before);
+  return { original, cast };
+}
+
+describe("real engine: planned spells (suggestedSpell) cast and undo", () => {
+  it("UNUSED_VARIABLE: the zombie is gone after cast and back after undo", async () => {
+    await castAndUndo(ZOMBIE_PREFIX);
+  });
+
+  it("UNCAUGHT_EXCEPTION: the demon is gone after cast and back after undo, with a cause and no return", async () => {
+    const { original, cast } = await castAndUndo(UNCAUGHT_PREFIX);
+    expect(cast).toMatch(/\{ cause: \w+ \}/);
+
+    // The wrapper's catch clause contains only the throw: no return was added.
+    const wrapperCatches = [...cast.matchAll(/\} catch \((\w+)\) \{\n  throw new Error\([^\n]*\{ cause: \1 \}\);\n\}/g)];
+    expect(wrapperCatches).toHaveLength(1);
+    expect(original).not.toMatch(/\{ cause: /);
   });
 });
