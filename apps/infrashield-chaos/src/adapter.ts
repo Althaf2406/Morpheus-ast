@@ -4,7 +4,7 @@
  * InfraShield 3D — Core Engine Adapter (Person A stub)
  *
  * This file is the ONLY connection between the UI layer (Person B) and
- * packages/morpheus-ast-core. It imports exclusively from contracts.ts.
+ * packages/morpheus-ast-core. Types come from contracts.ts; the only value import is createEngine from core src/index.ts (composition root).
  *
  * Person B imports from this adapter only — never from morpheus-ast-core directly.
  *
@@ -27,6 +27,7 @@ import type {
   RollbackRecord,
   ExternalScanReport,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
+import { createEngine } from "../../../packages/morpheus-ast-core/src/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI-facing data shapes (domain-specific names live HERE, not in core)
@@ -321,6 +322,11 @@ export class InfraShieldAdapter {
       throw new AdapterError("No repository loaded. Call loadRepository() first.");
     }
   }
+}
+
+/** Composition root: builds the adapter on top of the real core engine. */
+export function createInfraShieldAdapter(): InfraShieldAdapter {
+  return new InfraShieldAdapter(createEngine());
 }
 
 export class AdapterError extends Error {

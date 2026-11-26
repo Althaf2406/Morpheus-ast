@@ -5,7 +5,9 @@
  * Enforces .kiro/steering/00-skeleton-isolation.md:
  *   R1. packages/morpheus-ast-core must never import from apps/.
  *   R2. packages/morpheus-ast-core/package.json must not depend on UI frameworks.
- *   R3. apps/* may import from morpheus-ast-core only via src/contracts.
+ *   R3. apps/* may import from morpheus-ast-core only via src/contracts. The single exception is
+ *       apps/<app>/src/adapter.ts (the composition root), which may also import src/index to call
+ *       createEngine(). UI files import only from ./adapter.
  *   R4. packages/morpheus-ast-core must not contain the TypeScript `any` type.
  *   R5. packages/morpheus-ast-core (src and tests) must not use application vocabulary.
  *
@@ -91,16 +93,19 @@ for (const section of ["dependencies", "devDependencies", "peerDependencies"]) {
   }
 }
 
-// R3: apps import core only via contracts
+// R3: apps import core only via contracts; adapter.ts (composition root) may also import src/index
+const CONTRACTS_RE = /\/src\/contracts(\.js|\.ts)?$|^morpheus-ast-core\/contracts$/;
+const INDEX_RE = /\/src\/index(\.js|\.ts)?$/;
 for (const file of walk(appsDir)) {
   const src = readFileSync(file, "utf8");
+  const isAdapter = /^apps\/[^/]+\/src\/adapter\.ts$/.test(rel(file));
   for (const { spec, line } of specifiers(src)) {
-    if (/morpheus-ast-core/.test(spec) && !/\/src\/contracts(\.js|\.ts)?$|^morpheus-ast-core\/contracts$/.test(spec)) {
-      violations.push(`R3 ${rel(file)}:${line} app imports a non-contract core path ("${spec}")`);
-    }
+    if (!/morpheus-ast-core/.test(spec)) continue;
+    if (CONTRACTS_RE.test(spec)) continue;
+    if (isAdapter && INDEX_RE.test(spec)) continue;
+    violations.push(`R3 ${rel(file)}:${line} app imports a non-contract core path ("${spec}")`);
   }
 }
-
 if (violations.length > 0) {
   console.error(`lint:boundaries FAILED (${violations.length} violation${violations.length === 1 ? "" : "s"}):`);
   for (const v of violations) console.error("  " + v);

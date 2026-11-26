@@ -4,7 +4,7 @@
  * NECRO-COMPILER — Core Engine Adapter (Person A stub)
  *
  * This file is the ONLY connection between the UI layer (Person B) and
- * packages/morpheus-ast-core. It imports exclusively from contracts.ts.
+ * packages/morpheus-ast-core. Types come from contracts.ts; the only value import is createEngine from core src/index.ts (composition root).
  *
  * Person B imports from this adapter only — never from morpheus-ast-core directly.
  *
@@ -15,7 +15,6 @@ import type {
   MorpheusASTEngine,
   TopologyGraph,
   FunctionNode,
-  FaultInjectionResult,
   SecurityScanResult,
   FindingSeverity,
   FindingCategory,
@@ -27,6 +26,7 @@ import type {
   ParseRequest,
   ExternalScanReport,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
+import { createEngine } from "../../../packages/morpheus-ast-core/src/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI-facing data shapes (domain-specific names live HERE, not in core)
@@ -352,18 +352,6 @@ export class NecroCompilerAdapter {
     return map;
   }
 
-  private findEntity(
-    entityId: string,
-    layout: DungeonLayout
-  ): DungeonEntity | null {
-    for (const room of layout.rooms) {
-      for (const entity of room.entities) {
-        if (entity.entityId === entityId) return entity;
-      }
-    }
-    return null;
-  }
-
   /** Applies a single-file splice batch to an in-memory source and refreshes the analysis. */
   private async castSpellInMemory(request: MutationRequest): Promise<MutationResult> {
     const filePath = request.splices[0]!.filePath;
@@ -408,6 +396,11 @@ export class NecroCompilerAdapter {
       throw new NecroAdapterError("No repository loaded. Call loadRepository() first.");
     }
   }
+}
+
+/** Composition root: builds the adapter on top of the real core engine. */
+export function createNecroAdapter(): NecroCompilerAdapter {
+  return new NecroCompilerAdapter(createEngine());
 }
 
 export class NecroAdapterError extends Error {

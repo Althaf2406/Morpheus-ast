@@ -17,7 +17,8 @@ This monorepo strictly enforces the Skeleton Crew pattern:
 - Files inside `packages/morpheus-ast-core/` **MUST NEVER** import from `apps/infrashield-chaos/` or `apps/necro-compiler-game/`.
 - `packages/morpheus-ast-core/` **MUST** remain 100% free of domain-specific terminology (no cloud/SRE UI terms, and no horror/monster/dungeon/spell terms) and UI rendering dependencies.
 - Both applications **MUST** interact with the core engine exclusively through the typed interfaces defined in `packages/morpheus-ast-core/src/contracts.ts`.
-- The only file inside `packages/morpheus-ast-core/` that apps may import is `contracts.ts`. No other internal module paths are public API.
+- `apps/*/src/adapter.ts` is the single composition root of each app: it is the only app file allowed to import `packages/morpheus-ast-core/src/index` (to call `createEngine()`), in addition to `contracts.ts`. UI code imports only from `./adapter`.
+- No other internal module paths of `packages/morpheus-ast-core/` are public API.
 
 ## 3. Coding & Verification Standards
 
@@ -28,7 +29,7 @@ This monorepo strictly enforces the Skeleton Crew pattern:
 
 ## 4. Import Boundary Enforcement
 
-The root `lint:boundaries` script (`pnpm run lint:boundaries`) **MUST** pass with zero violations before every commit. The `ast-roundtrip-guard` Agent Hook runs this check automatically on every file save inside `packages/morpheus-ast-core/src/`.
+The root `lint:boundaries` script (`pnpm run lint:boundaries`) **MUST** pass with zero violations before every commit. Rule R3 allows `src/index` imports only from `apps/*/src/adapter.ts`; every other app file may import only `contracts`. The `ast-roundtrip-guard` Agent Hook runs this check automatically on every file save inside `packages/morpheus-ast-core/src/`.
 
 ## 5. Forbidden Patterns (AI Agent Guard)
 
