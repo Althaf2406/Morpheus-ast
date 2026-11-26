@@ -123,7 +123,7 @@ describe("real engine: planned spells (suggestedSpell) cast and undo", () => {
     expect(cast).toMatch(/\{ cause: \w+ \}/);
 
     // The wrapper's catch clause contains only the throw: no return was added.
-    const wrapperCatches = [...cast.matchAll(/\} catch \((\w+)\) \{\n  throw new Error\([^\n]*\{ cause: \1 \}\);\n\}/g)];
+    const wrapperCatches = [...cast.matchAll(/\n([ \t]*)\} catch \((\w+)\) \{\n\1(?:  |    |\t)throw new Error\([^\n]*\{ cause: \2 \}\);\n\1\}/g)];
     expect(wrapperCatches).toHaveLength(1);
     expect(original).not.toMatch(/\{ cause: /);
   });

@@ -600,28 +600,59 @@ describe("remediation PBT: uncaught exception", () => {
       { numRuns: NUM_RUNS }
     );
   });
-  // Feature: deterministic-remediation, Property 10: Uncaught-exception plans use exactly two zero-width insertion splices, regardless of form
+  // Feature: deterministic-remediation, Property 10: Uncaught-exception plans only insert text, regardless of form
   // **Validates: Requirements 3.8**
-  it("Property 10: exactly two zero-width splices and the body text is unchanged", async () => {
+  it("Property 10: splices are insertions that remove no original text, one per line", async () => {
     await fc.assert(
       fc.asyncProperty(uncaughtCaseArb, fc.constantFrom(...BOTH_FORMS), async (c, options) => {
         const finding = await uncaughtFindingFor(c.source, FILE_PATH, c.functionName);
         expect(finding).not.toBeNull();
         const request = plan(finding!, c.source, options);
         expect(request).not.toBeNull();
-        expect(request!.splices).toHaveLength(2);
-        for (const s of request!.splices) expect(s.startIndex).toBe(s.endIndex);
-        const [open, close] = [...request!.splices].sort((x, y) => x.startIndex - y.startIndex) as [
-          MutationRequest["splices"][number],
-          MutationRequest["splices"][number],
-        ];
+        const starts = request!.splices.map((s) => s.startIndex);
+        expect(new Set(starts).size).toBe(starts.length);
+        for (const s of request!.splices) {
+          const replaced = c.source.slice(s.startIndex, s.endIndex);
+          expect(replaced.trim()).toBe("");
+          expect(s.replacement.startsWith(replaced)).toBe(true);
+        }
         const mutated = apply(c.source, request!);
-        const originalBody = c.source.slice(open.startIndex, close.startIndex);
-        const shifted = mutated.slice(
-          open.startIndex + open.replacement.length,
-          close.startIndex + open.replacement.length
-        );
-        expect(shifted).toBe(originalBody);
+        const stripWhitespace = (t: string): string => t.replace(/\s+/g, "");
+        const inserted = stripWhitespace(insertedParts(request!));
+        const original = stripWhitespace(c.source);
+        expect(stripWhitespace(mutated).length).toBe(original.length + inserted.length);
+      }),
+      { numRuns: NUM_RUNS }
+    );
+  });
+  // Feature: deterministic-remediation, formatting: body lines keep their indentation plus one level
+  it("Property 10b: every original body line gains exactly one indentation level and try/catch are aligned", async () => {
+    await fc.assert(
+      fc.asyncProperty(uncaughtCaseArb, fc.boolean(), async (c, errorCause) => {
+        const finding = await uncaughtFindingFor(c.source, FILE_PATH, c.functionName);
+        expect(finding).not.toBeNull();
+        const request = engine.planRemediation(finding!, c.source, { errorCause });
+        expect(request).not.toBeNull();
+        const mutated = apply(c.source, request!);
+        const original = c.source.split(/\r?\n/);
+        const out = mutated.split(/\r?\n/);
+        const widths = original.filter((l) => /^ +\S/.test(l)).map((l) => l.length - l.trimStart().length);
+        const unit = original.some((l) => l.startsWith("\t")) ? "\t" : " ".repeat(Math.min(...widths));
+        const tryAt = out.findIndex((l) => l.trim() === "try {");
+        const catchAt = out.findIndex((l) => /^\s*} catch \(\w+\) \{$/.test(l));
+        expect(tryAt).toBeGreaterThan(0);
+        expect(catchAt).toBeGreaterThan(tryAt);
+        const bodyIndent = out[tryAt]!.slice(0, out[tryAt]!.length - "try {".length);
+        expect(bodyIndent).toBe(unit);
+        expect(out[catchAt]!.startsWith(`${bodyIndent}} catch (`)).toBe(true);
+        expect(out[catchAt + 1]!.startsWith(`${bodyIndent}${unit}throw new Error(`)).toBe(true);
+        expect(out[catchAt + 2]).toBe(`${bodyIndent}}`);
+        const bodyLines = original.slice(1, original.length - 2);
+        const wrapped = out.slice(tryAt + 1, catchAt);
+        expect(wrapped).toHaveLength(bodyLines.length);
+        bodyLines.forEach((line, i) => {
+          expect(wrapped[i]).toBe(`${unit}${line}`);
+        });
       }),
       { numRuns: NUM_RUNS }
     );
@@ -898,7 +929,7 @@ describe("remediation PBT: contract", () => {
           expect(request.splices.length).toBeLessThanOrEqual(2);
           expect(new Set(lines).size).toBe(lines.length);
         } else {
-          expect(request.splices).toHaveLength(2);
+          expect(request.splices.length).toBeGreaterThanOrEqual(2);
         }
       },
       isSupported

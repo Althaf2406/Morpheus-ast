@@ -103,7 +103,7 @@ describe("planRemediation: UNCAUGHT_EXCEPTION concrete examples", () => {
   for (const fn of FUNCTIONS) {
     describe(`${fn.label} function`, () => {
       const finding = uncaughtFinding(fn.source, `function ${fn.name}`);
-      const catchEnd = (id: string): string => `\n} catch (${id}) {\n`;
+      const catchEnd = (id: string): string => `\n  } catch (${id}) {\n`;
 
       it("Cause_Form with { errorCause: true }", () => {
         const out = applyPlan(fn.source, finding, CAUSE_OPTIONS);
@@ -141,17 +141,42 @@ describe("planRemediation: UNCAUGHT_EXCEPTION concrete examples", () => {
         );
       });
 
-      it("uses exactly two zero-width insertion splices", () => {
+      it("uses insertion-style splices that never overlap and remove no original text", () => {
         const plan = planRemediation(finding, fn.source, CAUSE_OPTIONS);
         expect(plan).not.toBeNull();
-        expect(plan?.splices).toHaveLength(2);
-        for (const splice of plan?.splices ?? []) {
-          expect(splice.startIndex).toBe(splice.endIndex);
+        const splices = plan?.splices ?? [];
+        expect(splices.length).toBeGreaterThanOrEqual(2);
+        const starts = splices.map((splice) => splice.startIndex);
+        expect(new Set(starts).size).toBe(starts.length);
+        for (const splice of splices) {
+          const replaced = fn.source.slice(splice.startIndex, splice.endIndex);
+          expect(replaced.trim()).toBe("");
+          expect(splice.replacement.startsWith(replaced)).toBe(true);
         }
       });
     });
   }
 
+  it("formats the result like hand-written code", () => {
+    const source = "function run() {\n  const a = 1;\n\n  doWork(a);\n}\n";
+    const out = applyPlan(source, uncaughtFinding(source, "function run"), PLAIN_OPTIONS);
+    expect(out).toBe(
+      "function run() {\n  try {\n    const a = 1;\n\n    doWork(a);\n" +
+        "  } catch (error) {\n    throw new Error(`run failed: ${String(error)}`);\n  }\n}\n"
+    );
+  });
+  it("indents with a tab and leaves multi-line template content untouched", () => {
+    const source = "function run() {\n\tconst t = `a\nb`;\n\tdoWork(t);\n}\n";
+    const out = applyPlan(source, uncaughtFinding(source, "function run"), PLAIN_OPTIONS);
+    expect(out).toContain("\n\t\tconst t = `a\nb`;\n\t\tdoWork(t);\n\t} catch");
+    expect(parsesCleanly(out)).toBe(true);
+  });
+  it("keeps a one-line body valid", () => {
+    const source = "function run() { doWork(); }\n";
+    const out = applyPlan(source, uncaughtFinding(source, "function run"), PLAIN_OPTIONS);
+    expect(parsesCleanly(out)).toBe(true);
+    expect(out).toContain("catch (error)");
+  });
   it("keeps the async modifier and wraps inside the same function", () => {
     const source = FUNCTIONS[3]!.source;
     const out = applyPlan(source, uncaughtFinding(source, "function save"), CAUSE_OPTIONS);
