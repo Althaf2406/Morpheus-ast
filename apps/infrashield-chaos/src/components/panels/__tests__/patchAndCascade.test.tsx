@@ -18,6 +18,15 @@ const PATCH: Patch = {
   modelId: "deterministic", durationMs: 1,
   suggestedSplices: [{ filePath: "src/a.ts", startIndex: 4, endIndex: 9, replacement: CODE, description: "add guard" }],
 };
+const INDENT = (at: number) => ({ filePath: "src/a.ts", startIndex: at, endIndex: at, replacement: "  ", description: "Indent one level inside the try block of alpha" });
+const INDENT_PATCH: Patch = {
+  ...PATCH,
+  suggestedSplices: [
+    { filePath: "src/a.ts", startIndex: 90, endIndex: 90, replacement: "\n} catch (error) {\n  throw error;\n}", description: "Close try block" },
+    INDENT(60), INDENT(40), INDENT(20),
+    { filePath: "src/a.ts", startIndex: 0, endIndex: 4, replacement: "try {\n  ", description: "Open try block" },
+  ],
+};
 const STEPS = Array.from({ length: 8 }, (_, i) => ({ functionId: `fn${i}`, reason: "NO_FALLBACK" as const, depth: i }));
 // --- Helpers ---
 let container: HTMLDivElement;
@@ -49,6 +58,25 @@ describe("AIPatchCard", () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true }));
     act(() => root.render(<AIPatchCard lastPatch={PATCH} />));
     expect(container.querySelector("[aria-label='Replacement code 1']")?.textContent).toBe(CODE);
+  });
+});
+describe("AIPatchCard whitespace splices", () => {
+  it("merges whitespace-only splices into one summary line and keeps code splices with their blocks", () => {
+    act(() => root.render(<AIPatchCard lastPatch={INDENT_PATCH} />));
+    act(() => { vi.advanceTimersByTime(5000); });
+    const text = container.textContent ?? "";
+    expect(text.match(/Re-indented 3 lines inside the try block/g)).toHaveLength(1);
+    expect(text).not.toContain("Indent one level");
+    expect(container.querySelectorAll("[aria-label^='Replacement code']")).toHaveLength(2);
+    expect(container.querySelector("[aria-label='Replacement code 1']")?.textContent).toContain("} catch (error) {");
+    expect(container.querySelector("[aria-label='Replacement code 2']")?.textContent).toBe("try {\n  ");
+    expect(text.indexOf("Close try block")).toBeLessThan(text.indexOf("Re-indented"));
+    expect(text.indexOf("Re-indented")).toBeLessThan(text.indexOf("Open try block"));
+  });
+  it("does not spend typing time on whitespace-only splices", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    act(() => root.render(<AIPatchCard lastPatch={INDENT_PATCH} />));
+    expect(container.querySelector("[aria-label='Replacement code 2']")?.textContent).toBe("try {\n  ");
   });
 });
 describe("CascadeList", () => {

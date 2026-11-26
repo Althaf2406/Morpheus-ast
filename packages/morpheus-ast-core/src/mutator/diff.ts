@@ -11,6 +11,13 @@ import { restoreSegments } from "./index.js";
 
 const DEFAULT_CONTEXT_LINES = 2;
 
+/** Largest before-lines x after-lines product of one region that is searched for re-indented pairs. */
+const MAX_PAIRING_CELLS = 250_000;
+const LEADING_WHITESPACE = /^\s*/;
+/** The line without its leading whitespace; two lines with equal keys differ at most in indentation. */
+function indentKey(line: string): string {
+  return line.slice(LEADING_WHITESPACE.exec(line)?.[0].length ?? 0);
+}
 /** Changed lines of one side pair, as 0-based inclusive line indexes. */
 interface Region {
   b1: number;
@@ -84,6 +91,62 @@ function groupRegions(regions: readonly Region[], contextLines: number): Region[
   return groups;
 }
 
+/**
+ * Longest common subsequence of the two line ranges, comparing lines without leading whitespace.
+ * Returns matched [beforeIndex, afterIndex] pairs in ascending order (empty when the region is too large).
+ */
+function matchByIndentKey(beforeLines: readonly string[], afterLines: readonly string[], region: Region): Array<[number, number]> {
+  const n = region.b2 - region.b1 + 1;
+  const m = region.a2 - region.a1 + 1;
+  if (n * m > MAX_PAIRING_CELLS) return [];
+  const beforeKeys = beforeLines.slice(region.b1, region.b2 + 1).map(indentKey);
+  const afterKeys = afterLines.slice(region.a1, region.a2 + 1).map(indentKey);
+  // table[i][j] = length of the LCS of beforeKeys[i..] and afterKeys[j..].
+  const table: number[][] = Array.from({ length: n + 1 }, () => new Array<number>(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      table[i]![j] =
+        beforeKeys[i] === afterKeys[j] ? table[i + 1]![j + 1]! + 1 : Math.max(table[i + 1]![j]!, table[i]![j + 1]!);
+    }
+  }
+  const pairs: Array<[number, number]> = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (beforeKeys[i] === afterKeys[j]) {
+      pairs.push([region.b1 + i, region.a1 + j]);
+      i++;
+      j++;
+    } else if (table[i + 1]![j]! >= table[i]![j + 1]!) {
+      i++;
+    } else {
+      j++;
+    }
+  }
+  return pairs;
+}
+/** Lines of one changed region: re-indented pairs once, every other changed line as removed or added. */
+function regionLines(region: Region, beforeLines: string[], afterLines: string[]): DiffLine[] {
+  const lines: DiffLine[] = [];
+  let b = region.b1;
+  let a = region.a1;
+  const flush = (beforeEnd: number, afterEnd: number): void => {
+    for (; b < beforeEnd; b++) lines.push({ kind: "removed", text: beforeLines[b]!, beforeLine: b + 1, afterLine: null });
+    for (; a < afterEnd; a++) lines.push({ kind: "added", text: afterLines[a]!, beforeLine: null, afterLine: a + 1 });
+  };
+  for (const [pb, pa] of matchByIndentKey(beforeLines, afterLines, region)) {
+    flush(pb, pa);
+    if (beforeLines[pb] === afterLines[pa]) {
+      flush(pb + 1, pa + 1);
+    } else {
+      lines.push({ kind: "reindent", text: afterLines[pa]!, beforeText: beforeLines[pb]!, beforeLine: pb + 1, afterLine: pa + 1 });
+      b = pb + 1;
+      a = pa + 1;
+    }
+  }
+  flush(region.b2 + 1, region.a2 + 1);
+  return lines;
+}
 function buildHunk(group: readonly Region[], beforeLines: string[], afterLines: string[], contextLines: number): DiffHunk {
   const first = group[0]!;
   const last = group[group.length - 1]!;
@@ -99,12 +162,7 @@ function buildHunk(group: readonly Region[], beforeLines: string[], afterLines: 
   const start = Math.max(0, first.b1 - contextLines);
   addContext(start, first.b1, first.a1 - first.b1);
   group.forEach((region, k) => {
-    for (let i = region.b1; i <= region.b2; i++) {
-      lines.push({ kind: "removed", text: beforeLines[i]!, beforeLine: i + 1, afterLine: null });
-    }
-    for (let j = region.a1; j <= region.a2; j++) {
-      lines.push({ kind: "added", text: afterLines[j]!, beforeLine: null, afterLine: j + 1 });
-    }
+    lines.push(...regionLines(region, beforeLines, afterLines));
     const next = group[k + 1];
     if (next !== undefined) addContext(region.b2 + 1, next.b1, region.a2 - region.b2);
   });

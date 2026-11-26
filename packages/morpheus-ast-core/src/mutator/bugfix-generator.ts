@@ -18,6 +18,7 @@ import type {
   BedrockPatchSuggestion,
   TopologyGraph,
   MutationRequest,
+  SpliceRange,
 } from "../contracts.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,6 +38,56 @@ function fenced(code: string): string {
 /** Collapses whitespace, including newlines, so text stays on one markdown line. */
 function oneLine(text: string): string {
   return text.split(/\s+/).filter((part) => part.length > 0).join(" ");
+}
+/** A splice that only inserts whitespace: it adds no code and removes none. */
+function isWhitespaceInsertion(splice: SpliceRange): boolean {
+  return splice.startIndex === splice.endIndex && splice.replacement.length > 0 && splice.replacement.trim() === "";
+}
+/** One summary entry for all whitespace-only splices of one file. */
+function whitespaceSummary(splices: readonly SpliceRange[]): string {
+  const first = splices[0]!;
+  const start = Math.min(...splices.map((s) => s.startIndex));
+  const end = Math.max(...splices.map((s) => s.endIndex));
+  const characters = splices.reduce((sum, s) => sum + s.replacement.length, 0);
+  return (
+    `### Whitespace-only splices: ${splices.length} insertion${splices.length === 1 ? "" : "s"}\n` +
+    `- **File**: \`${first.filePath}\`\n` +
+    `- **Range**: bytes \`[${start}, ${end})\` (${characters} whitespace characters inserted, no code added or removed)`
+  );
+}
+/**
+ * Splices with code are listed one by one and numbered. Whitespace-only insertions are merged
+ * into one summary entry per file, placed where that file's first such splice stood.
+ */
+function renderSplices(splices: readonly SpliceRange[]): string {
+  if (splices.length === 0) return "_No automated patch available. Manual intervention required._";
+  const whitespaceByFile = new Map<string, SpliceRange[]>();
+  for (const splice of splices) {
+    if (!isWhitespaceInsertion(splice)) continue;
+    const group = whitespaceByFile.get(splice.filePath);
+    if (group === undefined) whitespaceByFile.set(splice.filePath, [splice]);
+    else group.push(splice);
+  }
+  const entries: string[] = [];
+  const summarised = new Set<string>();
+  let number = 0;
+  for (const splice of splices) {
+    if (isWhitespaceInsertion(splice)) {
+      if (summarised.has(splice.filePath)) continue;
+      summarised.add(splice.filePath);
+      entries.push(whitespaceSummary(whitespaceByFile.get(splice.filePath)!));
+      continue;
+    }
+    number += 1;
+    entries.push(
+      `### Splice ${number}: ${oneLine(splice.description)}\n` +
+        `- **File**: \`${splice.filePath}\`\n` +
+        `- **Range**: bytes \`[${splice.startIndex}, ${splice.endIndex})\`\n` +
+        "- **Replacement**:\n" +
+        fenced(splice.replacement)
+    );
+  }
+  return entries.join("\n\n");
 }
 export class BugfixSpecGenerator {
   /**
@@ -94,22 +145,7 @@ export class BugfixSpecGenerator {
    */
   toMarkdown(spec: BugfixSpec): string {
     const date = new Date(spec.createdAt).toISOString().split("T")[0];
-    const spliceCount = spec.suggestedMutation.splices.length;
-
-    const spliceSection =
-      spliceCount > 0
-        ? spec.suggestedMutation.splices
-            .map(
-              (s, i) =>
-                `### Splice ${i + 1}: ${oneLine(s.description)}\n` +
-                `- **File**: \`${s.filePath}\`\n` +
-                `- **Range**: bytes \`[${s.startIndex}, ${s.endIndex})\`\n` +
-                "- **Replacement**:\n" +
-                fenced(s.replacement)
-            )
-            .join("\n\n")
-        : "_No automated patch available. Manual intervention required._";
-
+    const spliceSection = renderSplices(spec.suggestedMutation.splices);
     return `# Bugfix Spec: ${spec.title}
 
 **Spec ID**: \`${spec.specId}\`

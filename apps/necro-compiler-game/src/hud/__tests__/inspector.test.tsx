@@ -50,6 +50,27 @@ const undone: DungeonTelemetry = {
   },
 };
 
+const reindented: DungeonTelemetry = {
+  ...undone,
+  lastDiff: {
+    mutationId: "m2",
+    filePath: "sample/api.ts",
+    hunks: [
+      {
+        beforeStartLine: 10,
+        beforeLineCount: 3,
+        afterStartLine: 10,
+        afterLineCount: 4,
+        lines: [
+          { kind: "context", text: "function f() {", beforeLine: 10, afterLine: 10 },
+          { kind: "added", text: "  try {", beforeLine: null, afterLine: 11 },
+          { kind: "reindent", text: "    run();", beforeText: "  run();", beforeLine: 11, afterLine: 12 },
+          { kind: "reindent", text: "    stop();", beforeText: "  stop();", beforeLine: 12, afterLine: 13 },
+        ],
+      },
+    ],
+  },
+};
 function Harness() {
   const inspector = useInspectorOpen();
   return <InspectorDock open={inspector.open} telemetry={idle} onToggle={inspector.toggle} />;
@@ -85,6 +106,34 @@ describe("InspectorPanel", () => {
   });
 });
 
+describe("InspectorDiff whitespace changes", () => {
+  it("shows each re-indented line once, dim and marked, while real additions stay added", () => {
+    const { container } = render(<InspectorPanel telemetry={reindented} onClose={() => undefined} />);
+    const toggle = screen.getByLabelText("Show whitespace changes") as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    expect(container.querySelectorAll("tbody tr")).toHaveLength(4);
+    expect(container.querySelectorAll(".hud-diff__row--added")).toHaveLength(1);
+    expect(container.querySelectorAll(".hud-diff__row--removed")).toHaveLength(0);
+    const dim = container.querySelectorAll(".hud-diff__row--reindent");
+    expect(dim).toHaveLength(2);
+    expect(dim[0]?.textContent).toContain("    run();");
+    expect(dim[0]?.textContent).toContain("↳ indent");
+    expect(dim[0]?.textContent).toContain("re-indented");
+  });
+  it("shows the full removed/added diff when the toggle is on", () => {
+    const { container } = render(<InspectorPanel telemetry={reindented} onClose={() => undefined} />);
+    fireEvent.click(screen.getByLabelText("Show whitespace changes"));
+    expect(container.querySelectorAll("tbody tr")).toHaveLength(6);
+    expect(container.querySelectorAll(".hud-diff__row--reindent")).toHaveLength(0);
+    const removed = container.querySelectorAll(".hud-diff__row--removed");
+    const added = container.querySelectorAll(".hud-diff__row--added");
+    expect(removed).toHaveLength(2);
+    expect(added).toHaveLength(3);
+    expect(removed[0]?.textContent).toContain("  run();");
+    expect(added[1]?.textContent).toContain("    run();");
+    expect(container.textContent).not.toContain("↳ indent");
+  });
+});
 describe("InspectorDock and the I key", () => {
   it("opens and closes with the button, keeping aria-expanded in sync", () => {
     render(<Harness />);

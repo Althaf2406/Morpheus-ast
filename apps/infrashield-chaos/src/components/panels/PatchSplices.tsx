@@ -1,9 +1,10 @@
 import type { SREDashboardData } from "../../adapter.ts";
+import { groupSplices } from "./spliceGroups.ts";
 // --- Types ---
 type Patch = NonNullable<SREDashboardData["lastPatch"]>;
 interface Props {
   readonly splices: Patch["suggestedSplices"];
-  /** Characters of replacement code revealed so far, counted across all splices in order. */
+  /** Characters of replacement code revealed so far, counted across the code splices in order. */
   readonly revealed: number;
 }
 // --- Styles ---
@@ -24,12 +25,20 @@ const CODE_BOX: React.CSSProperties = {
   lineHeight:   1.5,
 };
 // --- Component ---
-/** Each splice as file, byte range and description, then its replacement code. */
+/** Each code splice as file, byte range and description, then its replacement code; whitespace-only splices as one summary line. */
 export function PatchSplices({ splices, revealed }: Props) {
   let remaining = revealed;
   return (
     <>
-      {splices.map((splice, i) => {
+      {groupSplices(splices).map((item, i) => {
+        if (item.kind === "whitespace") {
+          return (
+            <div key={`whitespace-${i}`} style={{ ...META, ...ITEM }}>
+              {item.summary}
+            </div>
+          );
+        }
+        const { splice, index } = item;
         const shown = splice.replacement.slice(0, Math.max(remaining, 0));
         remaining -= splice.replacement.length;
         const isTyping = shown.length < splice.replacement.length;
@@ -40,7 +49,7 @@ export function PatchSplices({ splices, revealed }: Props) {
               [{splice.startIndex}, {splice.endIndex})
             </div>
             <div style={META}>{splice.description}</div>
-            <div style={CODE_BOX} aria-label={`Replacement code ${i + 1}`}>
+            <div style={CODE_BOX} aria-label={`Replacement code ${index + 1}`}>
               {shown}
               {isTyping && shown.length > 0 && <span aria-hidden="true">▌</span>}
             </div>

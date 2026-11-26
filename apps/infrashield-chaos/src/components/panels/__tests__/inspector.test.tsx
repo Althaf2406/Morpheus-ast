@@ -34,6 +34,21 @@ const BASE: InspectorTelemetry = {
     }],
   },
 };
+const WITH_REINDENT: InspectorTelemetry = {
+  ...BASE,
+  lastDiff: {
+    mutationId: "m-2", filePath: "src/api.ts",
+    hunks: [{
+      beforeStartLine: 3, beforeLineCount: 3, afterStartLine: 3, afterLineCount: 4,
+      lines: [
+        { kind: "context", text: "ctx", beforeLine: 3, afterLine: 3 },
+        { kind: "added", text: "  try {", beforeLine: null, afterLine: 4 },
+        { kind: "reindent", text: "    run();", beforeText: "  run();", beforeLine: 4, afterLine: 5 },
+        { kind: "reindent", text: "    stop();", beforeText: "  stop();", beforeLine: 5, afterLine: 6 },
+      ],
+    }],
+  },
+};
 const VERIFIED: InspectorTelemetry = {
   ...BASE, lastMutationId: null, rollbackVerified: true,
   fingerprints: { before: BEFORE, afterMutation: MUTATED, afterRollback: BEFORE },
@@ -98,6 +113,38 @@ describe("InspectorPanel", () => {
   });
 });
 
+describe("InspectorDiff whitespace changes", () => {
+  const rows = (): string[] => [...container.querySelectorAll("tbody tr")].map((r) => r.textContent ?? "");
+  const checkbox = (): HTMLInputElement => container.querySelector("input[type='checkbox']")!;
+  it("shows each re-indented line once, dimmed and marked, while real additions stay green", () => {
+    render(<InspectorPanel telemetry={WITH_REINDENT} onClose={() => undefined} />);
+    expect(checkbox().checked).toBe(false);
+    expect(container.textContent).toContain("Show whitespace changes");
+    const lines = rows();
+    expect(lines).toHaveLength(4);
+    expect(lines[1]).toContain("added");
+    expect(lines[2]).toContain("    run();");
+    expect(lines[2]).toContain("↳ indent");
+    expect(lines[2]).toContain("re-indented");
+    expect(lines.join("")).not.toContain("  run();removed");
+    const trs = container.querySelectorAll("tbody tr");
+    expect((trs[1] as HTMLElement).style.color).not.toBe((trs[2] as HTMLElement).style.color);
+  });
+  it("shows the full removed/added diff when the toggle is on", () => {
+    render(<InspectorPanel telemetry={WITH_REINDENT} onClose={() => undefined} />);
+    act(() => checkbox().click());
+    const lines = rows();
+    expect(lines).toHaveLength(6);
+    expect(lines.join("|")).not.toContain("↳ indent");
+    expect(lines[1]).toContain("removed");
+    expect(lines[1]).toContain("  run();");
+    expect(lines[2]).toContain("removed");
+    expect(lines[3]).toContain("  try {");
+    expect(lines[4]).toContain("added");
+    expect(lines[4]).toContain("    run();");
+    expect(lines[5]).toContain("    stop();");
+  });
+});
 // --- Toggle ---
 describe("InspectorDock toggle", () => {
   it("opens and closes with the button and keeps aria-expanded in sync", () => {

@@ -31,6 +31,9 @@
 .hud-diff__text { padding-right: 8px; white-space: pre; }
 .hud-diff__row--removed { background: color-mix(in srgb, var(--blood) 35%, transparent); color: var(--bloodText); }
 .hud-diff__row--added { background: color-mix(in srgb, var(--added) 16%, transparent); color: var(--added); }
+.hud-diff__row--reindent { opacity: 0.6; }
+.hud-diff__mark { font-size: 0.85em; opacity: 0.8; user-select: none; }
+.hud-diff__toggle { display: block; padding: 4px 8px; font-size: 12px; cursor: pointer; }
 .hud-sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;

@@ -519,10 +519,18 @@ export type PlanRemediation = (
 
 // ── Mutation diff and text fingerprint ──────────────────────────────────────
 
-/** One line of a diff hunk. Line numbers are 1-based; `null` where the line does not exist on that side. */
+/**
+ * One line of a diff hunk. Line numbers are 1-based; `null` where the line does not exist on that side.
+ *
+ * `reindent` marks a line present on both sides whose text differs only in its leading
+ * whitespace. It stands for one removed and one added line: `beforeText` is the line before
+ * the mutation and `text` the line after it. For every other kind `text` is the line itself.
+ */
 export interface DiffLine {
-  readonly kind: "context" | "removed" | "added";
+  readonly kind: "context" | "removed" | "added" | "reindent";
   readonly text: string;
+  /** Text of the line before the mutation; present only for `reindent` lines. */
+  readonly beforeText?: string;
   /** Line number in the text before the mutation (`null` for added lines). */
   readonly beforeLine: number | null;
   /** Line number in the text after the mutation (`null` for removed lines). */
@@ -533,7 +541,8 @@ export interface DiffLine {
  * A contiguous changed region with surrounding context lines. Lines are the pieces of
  * `text.split("\n")`, so replacing `beforeLineCount` lines at `beforeStartLine` of the
  * "before" text by the hunk's `context + added` lines yields the "after" text (and the
- * reverse with `context + removed`).
+ * reverse with `context + removed`). A `reindent` line counts on both sides: it contributes
+ * `text` to the after side and `beforeText` to the before side.
  */
 export interface DiffHunk {
   readonly beforeStartLine: number;

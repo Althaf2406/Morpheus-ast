@@ -80,9 +80,44 @@ describe("engine facade: bugfix markdown", () => {
     expect(md).not.toMatch(/^# Injected heading/m);
   });
 
+  it("F3c: whitespace-only insertions are merged into one summary entry; code splices stay listed and numbered", () => {
+    const splice = (startIndex: number, replacement: string, description: string, endIndex = startIndex) => ({
+      filePath: "sample/api-gateway.ts", startIndex, endIndex, replacement, description,
+    });
+    const md = engine.generateBugfixMarkdown({
+      ...spec,
+      suggestedMutation: {
+        splices: [
+          splice(90, "\n} catch (error) {\n  throw error;\n}", "Close try block"),
+          splice(60, "  ", "Indent one level"),
+          splice(40, "  ", "Indent one level"),
+          splice(20, "\t", "Indent one level"),
+          splice(0, "try {\n  ", "Open try block", 4),
+        ],
+      },
+    });
+    expect(md.match(/^### Whitespace-only splices: 3 insertions$/gm)).toHaveLength(1);
+    expect(md).toContain("bytes `[20, 60)` (5 whitespace characters inserted, no code added or removed)");
+    expect(md).toContain("### Splice 1: Close try block");
+    expect(md).toContain("### Splice 2: Open try block");
+    expect(md).not.toContain("### Splice 3");
+    expect(md).not.toContain("Indent one level");
+    expect(md.indexOf("Splice 1")).toBeLessThan(md.indexOf("Whitespace-only"));
+    expect(md.indexOf("Whitespace-only")).toBeLessThan(md.indexOf("Splice 2"));
+  });
+  it("F3d: a lone whitespace insertion is summarised in the singular, and a whitespace replacement of code is kept", () => {
+    const one = engine.generateBugfixMarkdown(withReplacement("  "));
+    expect(one).toContain("### Whitespace-only splices: 1 insertion\n");
+    expect(one).not.toContain("### Splice 1");
+    const removal = engine.generateBugfixMarkdown({
+      ...spec,
+      suggestedMutation: { splices: [{ filePath: "a.ts", startIndex: 0, endIndex: 5, replacement: " ", description: "drop code" }] },
+    });
+    expect(removal).toContain("### Splice 1: drop code");
+  });
   it("F4: for arbitrary replacement text the fenced block contains it exactly", () => {
     fc.assert(
-      fc.property(fc.stringOf(fc.constantFrom("`", "`", "`", "a", "\n", "#", " "), { maxLength: 40 }), (replacement) => {
+      fc.property(fc.stringOf(fc.constantFrom("`", "`", "`", "a", "\n", "#", " "), { maxLength: 40 }).filter((r) => r.trim() !== ""), (replacement) => {
         const md = engine.generateBugfixMarkdown(withReplacement(replacement));
         const longestRun = Math.max(0, ...(replacement.match(/`+/g) ?? []).map((r) => r.length));
         const block = /(`{3,})typescript\n([\s\S]*?)\n\1\n/.exec(md);

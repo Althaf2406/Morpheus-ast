@@ -44,11 +44,14 @@ export const HUNK_CAPTION: React.CSSProperties = { textAlign: "left", padding: "
 export const LINE_NO: React.CSSProperties = { width: "2.5em", padding: "0 6px", textAlign: "right", color: "#8b949e", userSelect: "none" };
 export const LINE_SIGN: React.CSSProperties = { width: "1.5em", textAlign: "center" };
 export const LINE_TEXT: React.CSSProperties = { paddingRight: 8, whiteSpace: "pre" };
-export const ROW: Record<"context" | "removed" | "added", React.CSSProperties> = {
+export const ROW: Record<"context" | "removed" | "added" | "reindent", React.CSSProperties> = {
   context: { color: "#c9d1d9" },
   removed: { color: RED, background: "rgba(248, 81, 73, 0.18)" },
   added: { color: GREEN, background: "rgba(86, 211, 100, 0.14)" },
+  reindent: { color: "#6e7681" },
 };
+export const REINDENT_MARK: React.CSSProperties = { fontSize: "0.9em", color: "#6e7681", userSelect: "none" };
+export const DIFF_TOGGLE: React.CSSProperties = { display: "block", padding: "4px 8px", fontSize: "0.68rem", color: "#8b949e", cursor: "pointer" };
 export const SR_ONLY: React.CSSProperties = {
   position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap",
 };

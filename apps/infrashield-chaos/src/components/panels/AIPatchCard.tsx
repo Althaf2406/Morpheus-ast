@@ -1,6 +1,7 @@
 import type { SREDashboardData } from "../../adapter.ts";
 import { patchLabel } from "./patchLabel";
 import { PatchSplices } from "./PatchSplices.tsx";
+import { codeLength } from "./spliceGroups.ts";
 import { useRevealCount } from "./useRevealCount.ts";
 // --- Types ---
 
@@ -49,7 +50,7 @@ const BADGE_AI: React.CSSProperties = {
 // --- Component ---
 export function AIPatchCard({ lastPatch }: Props) {
   const splices = lastPatch?.suggestedSplices ?? [];
-  const total = splices.reduce((sum, splice) => sum + splice.replacement.length, 0);
+  const total = codeLength(splices);
   const revealed = useRevealCount(total, lastPatch?.mutationId ?? "");
   if (lastPatch === null) {
     return (

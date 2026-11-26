@@ -6,8 +6,12 @@
  *   P1 — Hunks rebuild both texts exactly: applying the hunks to the mutated text with
  *        their "context + removed" lines gives the original, and applying them to the
  *        original with their "context + added" lines gives the mutated text.
+ *       A "reindent" line counts on both sides: `beforeText` before, `text` after.
  *   P2 — No mutation, no hunk (also when every splice replaces text by itself).
  *   P3 — Fingerprint: equal for identical text, different for different text.
+ *   P4 — A "reindent" line differs from its before text only in leading whitespace.
+ *   P5 — Splices that only insert indentation at line starts give one reindent line per
+ *        touched line and no removed or added line; the hunks still rebuild both texts.
  */
 import * as fc from "fast-check";
 import { createEngine } from "../../src/index.js";
@@ -71,7 +75,9 @@ function rebuild(text: string, hunks: readonly DiffHunk[], side: "before" | "aft
   let result = text;
   for (const hunk of [...hunks].reverse()) {
     const keep = side === "before" ? "added" : "removed";
-    const lines = hunk.lines.filter((l) => l.kind !== keep).map((l) => l.text);
+    const lines = hunk.lines
+      .filter((l) => l.kind !== keep)
+      .map((l) => (side === "before" && l.kind === "reindent" ? l.beforeText! : l.text));
     const start = side === "before" ? hunk.afterStartLine : hunk.beforeStartLine;
     const count = side === "before" ? hunk.afterLineCount : hunk.beforeLineCount;
     result = replaceLines(result, start, count, lines);
@@ -79,6 +85,29 @@ function rebuild(text: string, hunks: readonly DiffHunk[], side: "before" | "aft
   return result;
 }
 
+/** Lines with random indentation, and splices that insert extra indentation at the start of some lines. */
+const indentCaseArb = fc
+  .array(
+    fc.tuple(fc.constantFrom("", " ", "  ", "\t"), fc.constantFrom("a", "b c", "", "x;")),
+    { minLength: 1, maxLength: 12 }
+  )
+  .chain((lines) =>
+    fc
+      .tuple(fc.array(fc.boolean(), { minLength: lines.length, maxLength: lines.length }), fc.constantFrom(" ", "  ", "\t"))
+      .map(([picks, unit]) => {
+        const source = lines.map(([indent, body]) => indent + body).join("\n");
+        const splices: SpliceRange[] = [];
+        let offset = 0;
+        lines.forEach(([indent, body], i) => {
+          if (picks[i]) {
+            splices.push({ filePath: FILE_PATH, startIndex: offset, endIndex: offset, replacement: unit, description: "indent" });
+          }
+          offset += indent.length + body.length + 1;
+        });
+        return { source, splices };
+      })
+  )
+  .filter(({ splices }) => splices.length > 0);
 // --- Properties ---
 
 describe("mutation diff (PBT)", () => {
@@ -123,7 +152,49 @@ describe("mutation diff (PBT)", () => {
   });
 });
 
+describe("mutation diff re-indentation (PBT)", () => {
+  it("P4: a reindent line differs from its before text only in leading whitespace", () => {
+    fc.assert(
+      fc.property(fc.oneof(caseArb, indentCaseArb.map((c) => ({ ...c, contextLines: 2 }))), ({ source, splices, contextLines }) => {
+        const { mutatedSource, rollbackRecord } = engine.applyMutationToText(source, splices);
+        const { hunks } = engine.computeMutationDiff(rollbackRecord, mutatedSource, contextLines);
+        for (const line of hunks.flatMap((h) => h.lines).filter((l) => l.kind === "reindent")) {
+          expect(line.beforeText).toBeDefined();
+          expect(line.beforeText).not.toBe(line.text);
+          expect(line.beforeText!.trimStart()).toBe(line.text.trimStart());
+          expect(line.beforeLine).not.toBeNull();
+          expect(line.afterLine).not.toBeNull();
+        }
+      }),
+      { numRuns: RUNS, seed: 213 }
+    );
+  });
+  it("P5: indentation-only splices become reindent lines, and the hunks still rebuild both texts", () => {
+    fc.assert(
+      fc.property(indentCaseArb, fc.integer({ min: 0, max: 3 }), ({ source, splices }, contextLines) => {
+        const { mutatedSource, rollbackRecord } = engine.applyMutationToText(source, splices);
+        const { hunks } = engine.computeMutationDiff(rollbackRecord, mutatedSource, contextLines);
+        const lines = hunks.flatMap((h) => h.lines);
+        expect(lines.filter((l) => l.kind === "reindent")).toHaveLength(splices.length);
+        expect(lines.filter((l) => l.kind === "added" || l.kind === "removed")).toHaveLength(0);
+        expect(rebuild(mutatedSource, hunks, "before")).toBe(source);
+        expect(rebuild(source, hunks, "after")).toBe(mutatedSource);
+      }),
+      { numRuns: RUNS, seed: 214 }
+    );
+  });
+});
 describe("mutation diff and fingerprint (examples)", () => {
+  it("shows a re-indented line once, next to a really added line", () => {
+    const source = "f() {\n  a();\n}";
+    const open: SpliceRange = { filePath: FILE_PATH, startIndex: 6, endIndex: 8, replacement: "  try {\n    ", description: "open" };
+    const { mutatedSource, rollbackRecord } = engine.applyMutationToText(source, [open]);
+    const [hunk] = engine.computeMutationDiff(rollbackRecord, mutatedSource, 0).hunks;
+    expect(hunk!.lines.map((l) => `${l.kind}:${l.beforeText ?? ""}|${l.text}`)).toEqual([
+      "added:|  try {",
+      "reindent:  a();|    a();",
+    ]);
+  });
   it("reports line numbers and context for one changed line", () => {
     const source = "one\ntwo\nthree\nfour\nfive";
     const splice: SpliceRange = {
