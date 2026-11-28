@@ -1,0 +1,92 @@
+.try-code {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  color: #f1f1f5;
+}
+
+.try-code-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.try-code-label {
+  font-weight: 600;
+}
+
+.try-code-input {
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  color: #ffffff;
+  background: #14141c;
+  border: 1px solid #8a8aa0; /* 5.4:1 against #14141c */
+  border-radius: 6px;
+}
+
+.try-code-input[aria-invalid="true"] {
+  border-color: #ff8a8a;
+}
+
+/* Reserved height keeps the layout stable when the hint appears (two lines). */
+.try-code-message-slot {
+  min-height: 3.2em;
+}
+
+.try-code-message {
+  margin: 0;
+  line-height: 1.6;
+  color: #ffb4b4; /* 9:1 against #14141c-class backgrounds */
+}
+
+.try-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.try-code-button,
+.try-code-chip {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.try-code-button {
+  padding: 0.65rem 1.1rem;
+  font-weight: 600;
+  color: #0b0b10;
+  background: #f1f1f5;
+  border: 2px solid #f1f1f5;
+}
+
+.try-code-button:hover {
+  background: #ffffff;
+}
+
+.try-code-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.try-code-chip {
+  padding: 0.35rem 0.8rem;
+  color: #f1f1f5;
+  background: transparent;
+  border: 1px solid #8a8aa0;
+}
+
+.try-code-chip:hover {
+  background: #26263a;
+}
+
+.try-code-input:focus-visible,
+.try-code-button:focus-visible,
+.try-code-chip:focus-visible {
+  outline: 3px solid #ffd54a;
+  outline-offset: 2px;
+}

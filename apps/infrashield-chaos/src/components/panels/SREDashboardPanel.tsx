@@ -64,7 +64,7 @@ export function SREDashboardPanel({
   const isFaultInjected = fault !== null;
   if (!isFaultInjected && !isPatchApplied) return null;
   return (
-    <div style={PANEL}>
+    <div data-tour="sre-panel" style={PANEL}>
       <div style={HEADER}>⬡ SRE Dashboard</div>
       <TopologyMetricsCard
         totalFunctions={dashboard.totalFunctions}

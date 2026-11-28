@@ -27,7 +27,7 @@ const TOOLBAR: React.CSSProperties = {
 /** Fault type picker and Inject/Reset action laid out as one row. */
 export function FaultToolbar({ faultType, onFaultTypeChange, isActive, onInject, onReset }: Props) {
   return (
-    <div role="toolbar" aria-label="Fault controls" style={TOOLBAR}>
+    <div role="toolbar" aria-label="Fault controls" data-tour="fault-toolbar" style={TOOLBAR}>
       <FaultTypeSelect value={faultType} onChange={onFaultTypeChange} />
       <InjectFaultButton isActive={isActive} onInject={onInject} onReset={onReset} />
     </div>

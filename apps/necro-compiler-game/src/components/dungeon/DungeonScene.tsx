@@ -61,7 +61,7 @@ export function DungeonScene({
   }, []);
 
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div ref={containerRef} data-tour="monster-target" style={{ width: "100%", height: "100%", position: "relative" }}>
       <canvas
         ref={canvasRef}
         aria-label="Dungeon view. Click a monster to select it."

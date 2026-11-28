@@ -1,0 +1,50 @@
+/* --- Tour overlay (gothic, matches hud.css tokens) --- */
+.tour-overlay { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
+.tour-spotlight {
+  position: fixed; border: 2px solid var(--gold); border-radius: 8px;
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--panel) 62%, transparent), 0 0 18px var(--gold);
+  pointer-events: none;
+}
+.tour-card {
+  position: fixed; width: min(340px, calc(100vw - 32px)); box-sizing: border-box;
+  padding: 14px 16px; pointer-events: auto; color: var(--bone);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--gold); border-radius: 6px;
+  backdrop-filter: blur(4px); max-height: calc(100vh - 32px); overflow-y: auto;
+}
+.tour-dim { position: fixed; inset: 0; background: color-mix(in srgb, var(--panel) 55%, transparent); pointer-events: none; }
+.tour-card__step { margin: 0 0 4px; font-size: 12px; color: var(--violet); font-family: ui-monospace, Menlo, Consolas, monospace; }
+.tour-card__title { margin: 0 0 6px; font-family: Cinzel, Georgia, serif; font-size: 18px; font-weight: 600; letter-spacing: 0.04em; color: var(--gold); }
+.tour-card__text { margin: 0 0 12px; font-size: 14px; }
+.tour-card__actions { display: flex; gap: 8px; align-items: center; }
+.tour-card__spacer { flex: 1; }
+.tour-btn {
+  padding: 7px 12px; font: inherit; font-weight: 600; cursor: pointer;
+  background: transparent; color: var(--bone);
+  border: 1px solid var(--bone); border-radius: 4px; transition: filter 0.15s;
+}
+.tour-btn--primary { background: var(--blood); }
+.tour-btn--ghost { border-color: transparent; text-decoration: underline; }
+.tour-btn:hover:not(:disabled) { filter: brightness(1.25); }
+.tour-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+/* --- Replay button and links --- */
+.tour-replay {
+  width: 28px; height: 28px; padding: 0; font: inherit; font-weight: 600; cursor: pointer;
+  color: var(--gold); background: transparent;
+  border: 1px solid var(--gold); border-radius: 50%;
+}
+.tour-corner {
+  position: fixed; left: 16px; bottom: 16px; z-index: 20;
+  display: flex; gap: 12px; align-items: center; padding: 6px 10px;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+  border: 1px solid var(--gold); border-radius: 999px;
+}
+.tour-link { color: var(--gold); font-size: 13px; text-decoration: underline; }
+.tour-link:hover { filter: brightness(1.25); }
+/* --- Focus and motion --- */
+.tour-btn:focus-visible, .tour-replay:focus-visible, .tour-link:focus-visible {
+  outline: 3px solid var(--gold); outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-btn { transition: none; }
+}

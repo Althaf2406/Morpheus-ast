@@ -8,8 +8,9 @@
     "verify:adapters": "node scripts/verify-adapters.mjs",
     "verify:dist": "node scripts/verify-dist.mjs",
     "test:pbt": "pnpm --filter morpheus-ast-core run test:pbt",
-    "test": "pnpm --filter morpheus-ast-core run test",
+    "test": "pnpm --filter morpheus-ast-core --filter ./site run test",
     "build": "pnpm --recursive run build",
+    "build:site": "pnpm --filter ./site run build",
     "typecheck": "pnpm --recursive run typecheck",
     "clean": "pnpm --recursive run clean"
   },

@@ -21,6 +21,7 @@ import { LoadingScreen } from "./hud/LoadingScreen.tsx";
 import { MonsterTooltip } from "./hud/MonsterTooltip.tsx";
 import { paletteStyle } from "./hud/palette.ts";
 import { SpellBar } from "./hud/SpellBar.tsx";
+import { TourChrome } from "./tour/TourChrome.tsx";
 import { visualStateOf } from "./spells/spellState.ts";
 import { useSpellGame } from "./spells/useSpellGame.ts";
 
@@ -125,6 +126,7 @@ function Game({ adapter, initialLayout }: DungeonProps) {
           autoStart={fromLink}
         />
       )}
+      <TourChrome hasRepoParam={param.initialRepo !== null} loadSummaryOpen={dialogOpen} />
     </>
   );
 }

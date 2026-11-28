@@ -21,7 +21,7 @@ interface Props {
 /** "Load your code" always; "Back to sample repository" only while a loaded repository is active. */
 export function LoadControls({ isLoaded, onOpen, onBack }: Props) {
   return (
-    <div role="toolbar" aria-label="Repository controls" style={BAR}>
+    <div role="toolbar" aria-label="Repository controls" data-tour="load-controls" style={BAR}>
       {isLoaded && <button type="button" style={BUTTON} onClick={onBack}>Back to sample repository</button>}
       <button type="button" style={BUTTON} onClick={onOpen}>Load your code</button>
     </div>

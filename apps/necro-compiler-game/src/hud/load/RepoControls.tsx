@@ -8,7 +8,7 @@ interface Props {
 /** Top bar next to the title: open the load dialog, and leave a loaded repository. */
 export function RepoControls({ loaded, onOpenLoad, onBackToSample }: Props) {
   return (
-    <div className="hud-panel hud-repo-controls">
+    <div className="hud-panel hud-repo-controls" data-tour="load-controls">
       <button type="button" className="hud-button hud-button--cast" onClick={onOpenLoad}>
         Load your code
       </button>

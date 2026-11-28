@@ -1,0 +1,87 @@
+/* --- Tour overlay: dark technical look, cyan accent --- */
+.tour-root {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none; /* app stays interactive outside the card */
+  font-family: monospace;
+}
+
+.tour-spotlight {
+  position: fixed;
+  border: 2px solid #00e5ff;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.25), 0 0 0 9999px rgba(1, 4, 9, 0.55);
+  pointer-events: none;
+}
+
+.tour-card {
+  position: fixed;
+  box-sizing: border-box;
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  padding: 12px 14px;
+  color: #c9d1d9;
+  background: rgba(13, 17, 23, 0.96);
+  border: 1px solid #00e5ff;
+  border-radius: 6px;
+  pointer-events: auto;
+}
+
+.tour-card-centered {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tour-indicator {
+  font-size: 0.65rem;
+  color: #8b949e;
+  letter-spacing: 0.08em;
+}
+
+.tour-title {
+  margin: 6px 0;
+  font-size: 0.8rem;
+  color: #00e5ff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tour-text {
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tour-btn {
+  padding: 5px 12px;
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: #58a6ff;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tour-btn:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
+}
+
+.tour-skip {
+  margin-right: auto;
+  color: #8b949e;
+}
+
+.tour-primary {
+  color: #00e5ff;
+  border-color: #00e5ff;
+}

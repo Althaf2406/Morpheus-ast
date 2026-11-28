@@ -10,6 +10,7 @@ Kiroween 2026 entry, **Skeleton Crew** category.
 |---|---|---|
 | **NECRO-COMPILER** | 3D gothic dungeon crawler. Monsters are code smells, spells are real code edits. | https://necro-compiler.vercel.app |
 | **InfraShield 3D** | "Cyber City" resilience auditor. Inject a fault, see the blast radius, apply a patch. | https://infrashield-3d.vercel.app |
+| **Landing site** | Static hub page that links to both demos. Not a third app. | https://morpheus-ast.vercel.app |
 
 Both demos are public, need no login, and run the engine in the browser on a pre-loaded three-file sample repository.
 
@@ -70,6 +71,12 @@ You are an SRE looking at a "Cyber City". Functions are buildings (height is com
 5. Review the patch card (deterministic rule-based patch), then **Apply Patch**. **Rollback** restores the original source.
 6. **Generate Bugfix Spec**, then **Download bugfix.md**.
 7. Press **I** for the **Inspector** with the diff and SHA-256 rollback verification.
+
+## Landing site (`site/`)
+
+`site/` is a static marketing and hub page. It does not import the core or either app, and it is **not** a third Skeleton Crew app. The Skeleton Crew apps remain `apps/infrashield-chaos` and `apps/necro-compiler-game`.
+
+Build it with `pnpm run build:site`. First-time visitors get a short tour, and each app offers "Switch world" links to jump to the other one.
 
 ## Why this is a Skeleton Crew entry
 
@@ -161,6 +168,7 @@ Property tests live in `packages/morpheus-ast-core/tests/pbt/` and in `__tests__
 │       │   ├── bedrock-advisor/
 │       │   └── sample-repo/
 │       └── tests/pbt/         property and unit tests
+├── site/                      static landing page (not a Skeleton Crew app)
 ├── scripts/                   check-boundaries, scan-secrets, verify-adapters, verify-dist
 ├── docs/KIRO_USAGE.md
 └── LICENSE

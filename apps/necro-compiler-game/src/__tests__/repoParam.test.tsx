@@ -66,8 +66,17 @@ beforeEach(() => {
   mocks.createNecroAdapter.mockReset();
   vi.doMock("../adapter.ts", () => ({ createNecroAdapter: mocks.createNecroAdapter }));
   window.matchMedia = ((query: string) => ({ matches: false, media: query })) as typeof window.matchMedia;
+  // The first-visit tour is also a dialog; mark it seen so these tests only see the load dialog.
+  const seen = new Map([["morpheus-tour-seen-necro", "1"]]);
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => seen.get(key) ?? null,
+    setItem: (key: string, value: string) => void seen.set(key, value),
+  });
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("Repo_Param", () => {
   it("a valid ?repo opens the GitHub tab pre-filled, loads it and writes the address bar", async () => {

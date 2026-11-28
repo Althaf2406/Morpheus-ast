@@ -12,6 +12,9 @@ import { ErrorPanel } from "./hud/ErrorPanel.tsx";
 import { useAdapterLoader } from "./engine/useAdapterLoader.ts";
 import { useCityController } from "./hooks/useCityController.ts";
 import { useInspectorOpen } from "./hooks/useInspectorOpen.ts";
+import { ReplayButton } from "./tour/ReplayButton.tsx";
+import { TourChrome } from "./tour/TourChrome.tsx";
+import { useTour } from "./tour/useTour.ts";
 import { useEffect } from "react";
 import type { CandidateFile, CyberCityLayout, InfraShieldAdapter } from "./adapter";
 
@@ -46,6 +49,9 @@ function City({ adapter, initialLayout }: CityProps) {
     if (outcome.ok) setParam(ref);
     return outcome;
   };
+  // A valid ?repo= opens the Load_Summary dialog from an effect, so defer from the first render.
+  const hasRepoParam = pendingRepo !== null;
+  const tour = useTour("infra", { hasRepoParam, loadSummaryOpen: hasRepoParam || repo.dialogOpen });
   const message = city.actionError ?? repo.error ?? param.formatError;
   const isFaultActive = city.layout.activeFault !== null;
   const isPanelOpen = isFaultActive || city.isPatchApplied;
@@ -83,7 +89,9 @@ function City({ adapter, initialLayout }: CityProps) {
         open={inspector.open}
         telemetry={inspector.open ? adapter.getInspectorTelemetry() : null}
         onToggle={inspector.toggle}
+        extra={<ReplayButton onReplay={tour.replay} />}
       />
+      <TourChrome tour={tour} />
       {message !== null && (
         <div role="alert" style={ACTION_ERROR}>{message}</div>
       )}
