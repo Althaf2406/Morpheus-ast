@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { InfraShieldAdapter } from "../../adapter.ts";
+import { getAudioEngine } from "../../audio";
 import { downloadTextFile } from "./downloadFile.ts";
 import { CARD, BTN_ACTIVE, BTN_DISABLED, ERROR_BOX } from "./bugfixSpecStyles.ts";
 // --- Types ---
@@ -18,6 +19,7 @@ export function BugfixDownloadButton({ adapter, isEnabled }: Props) {
     try {
       const { fileName, content } = adapter.generateBugfixFile();
       downloadTextFile(fileName, content);
+      getAudioEngine().playBugfixClick();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }

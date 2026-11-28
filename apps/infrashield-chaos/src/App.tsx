@@ -12,6 +12,7 @@ import { ErrorPanel } from "./hud/ErrorPanel.tsx";
 import { useAdapterLoader } from "./engine/useAdapterLoader.ts";
 import { useCityController } from "./hooks/useCityController.ts";
 import { useInspectorOpen } from "./hooks/useInspectorOpen.ts";
+import { MuteToggle, useAudioEngine } from "./audio";
 import { ReplayButton } from "./tour/ReplayButton.tsx";
 import { TourChrome } from "./tour/TourChrome.tsx";
 import { useTour } from "./tour/useTour.ts";
@@ -32,6 +33,7 @@ interface CityProps {
 }
 
 function City({ adapter, initialLayout }: CityProps) {
+  const audio = useAudioEngine();
   const city = useCityController(adapter, initialLayout);
   const inspector = useInspectorOpen();
   const repo = useRepoSwitch(adapter, city.switchRepository);
@@ -89,7 +91,12 @@ function City({ adapter, initialLayout }: CityProps) {
         open={inspector.open}
         telemetry={inspector.open ? adapter.getInspectorTelemetry() : null}
         onToggle={inspector.toggle}
-        extra={<ReplayButton onReplay={tour.replay} />}
+        extra={
+          <>
+            <ReplayButton onReplay={tour.replay} />
+            <MuteToggle muted={audio.muted} onToggle={audio.toggleMute} />
+          </>
+        }
       />
       <TourChrome tour={tour} />
       {message !== null && (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { InfraShieldAdapter } from "../../adapter.ts";
+import { getAudioEngine } from "../../audio";
 import { formatBugfixSpec, blastLabel } from "./bugfixSpecFormat.ts";
 import {
   CARD, HEADER, BTN_ACTIVE, BTN_DISABLED,
@@ -46,6 +47,7 @@ export function BugfixSpecButton({ adapter, isEnabled }: Props) {
       setOutput(text);
       setOpen(true);
       setStatus("done");
+      getAudioEngine().playBugfixClick();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg);

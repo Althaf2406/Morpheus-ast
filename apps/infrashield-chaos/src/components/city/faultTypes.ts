@@ -53,4 +53,6 @@ export interface BuildParams {
   positions: Map<string, THREE.Vector3>;
   scene: THREE.Scene;
   reducedMotion: boolean;
+  /** Fired once each time a cascade node flips to revealed (capped by buildFaultAnimation). */
+  onCascadeReveal?: () => void;
 }

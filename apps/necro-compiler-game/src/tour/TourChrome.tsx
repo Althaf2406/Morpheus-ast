@@ -1,4 +1,5 @@
 import "./tour.css";
+import { MuteToggle } from "../audio";
 import { paletteStyle } from "../hud/palette";
 import { HubLink } from "./HubLink";
 import { ReplayButton } from "./ReplayButton";
@@ -19,6 +20,7 @@ export function TourChrome({ hasRepoParam, loadSummaryOpen }: Props) {
       <TourOverlay state={tour.state} onNext={tour.next} onBack={tour.back} onSkip={tour.skip} />
       <div className="tour-corner" style={paletteStyle}>
         <ReplayButton onClick={tour.replay} />
+        <MuteToggle />
         <SwitchWorldLink />
         <HubLink />
       </div>

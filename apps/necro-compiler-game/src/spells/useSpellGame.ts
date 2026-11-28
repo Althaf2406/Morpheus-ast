@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useReducer, useRef } from "react";
 import type { DungeonLayout } from "../adapter.ts";
+import { getAudioEngine } from "../audio";
 import { indexEntities, type EntityTarget } from "./entityIndex.ts";
 import type { SpellCaster } from "./spellCaster.ts";
 import {
@@ -40,14 +41,21 @@ export function useSpellGame(layout: DungeonLayout, caster: SpellCaster): SpellG
     selected !== null && canCast(state, selected.entity.entityId, selected.entity.suggestedSpell !== null);
   const undoEnabled = canUndo(state);
 
-  const select = useCallback((entityId: string | null) => dispatch({ type: "SELECT", entityId }), []);
+  const select = useCallback((entityId: string | null) => {
+    if (entityId !== null) getAudioEngine().playSelect();
+    dispatch({ type: "SELECT", entityId });
+  }, []);
   const dismissError = useCallback(() => dispatch({ type: "DISMISS_ERROR" }), []);
 
   const cast = useCallback(async () => {
     const current = stateRef.current;
     const target = current.selectedId === null ? undefined : lookup.get(current.selectedId);
     const spell = target?.entity.suggestedSpell ?? null;
-    if (busyRef.current || target === undefined || spell === null) return;
+    if (busyRef.current || target === undefined) return;
+    if (spell === null) {
+      getAudioEngine().playDenied();
+      return;
+    }
     const { entityId, title } = target.entity;
     if (!canCast(current, entityId, true)) return;
     busyRef.current = true;
@@ -55,6 +63,8 @@ export function useSpellGame(layout: DungeonLayout, caster: SpellCaster): SpellG
     try {
       const result = await caster.castSpell(spell);
       dispatch({ type: "CAST_SUCCESS", entityId, title, outcome: result });
+      getAudioEngine().playCast();
+      getAudioEngine().playPurify();
     } catch (error) {
       dispatch({ type: "CAST_FAIL", message: failureMessage(error) });
     } finally {
@@ -69,6 +79,7 @@ export function useSpellGame(layout: DungeonLayout, caster: SpellCaster): SpellG
     try {
       await caster.rollbackLastSpell();
       dispatch({ type: "UNDO_SUCCESS" });
+      getAudioEngine().playUndo();
     } catch (error) {
       dispatch({ type: "UNDO_FAIL", message: failureMessage(error) });
     } finally {

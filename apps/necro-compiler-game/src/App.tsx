@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { DungeonLayout, NecroCompilerAdapter } from "./adapter.ts";
+import { useAudioEngine } from "./audio";
 import { DungeonScene } from "./components/dungeon/DungeonScene.tsx";
 import type { PickHit } from "./components/dungeon/monsterPicker.ts";
 import { useAdapterLoader } from "./engine/useAdapterLoader.ts";
@@ -132,6 +133,7 @@ function Game({ adapter, initialLayout }: DungeonProps) {
 }
 
 export default function App() {
+  useAudioEngine();
   const { state, retry } = useAdapterLoader();
   switch (state.status) {
     case "loading":

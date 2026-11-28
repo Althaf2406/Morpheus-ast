@@ -47,10 +47,16 @@ interface TickTargets {
   readonly collapse: readonly CollapseItem[];
   readonly cascade: readonly CascadeItem[];
   readonly fades: readonly FadeItem[];
+  readonly onCascadeReveal?: () => void;
 }
 
 /** Builds the per-frame update; items already in their final state are skipped. */
-export function createFaultTick({ collapse, cascade, fades }: TickTargets): (elapsed: number) => void {
+export function createFaultTick({
+  collapse,
+  cascade,
+  fades,
+  onCascadeReveal,
+}: TickTargets): (elapsed: number) => void {
   let startEpoch = -1;
 
   return (elapsed: number): void => {
@@ -73,6 +79,7 @@ export function createFaultTick({ collapse, cascade, fades }: TickTargets): (ela
       mat.color.set(COLOR_AFFECTED);
       mat.emissive.set(COLOR_AFFECTED);
       item.revealed = true;
+      onCascadeReveal?.();
     });
 
     fades.forEach((item) => {

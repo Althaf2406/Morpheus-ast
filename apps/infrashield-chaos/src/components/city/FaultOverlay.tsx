@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type * as THREE from "three";
 import type { CityEdge, CityNode } from "../../adapter.ts";
+import { getAudioEngine } from "../../audio";
 import { buildFaultAnimation } from "./useFaultAnimation.ts";
 
 interface Props {
@@ -16,7 +17,15 @@ interface Props {
 export function FaultOverlay({ nodes, edges, positions, scene, reducedMotion, registerTick }: Props) {
   useEffect(() => {
     if (!nodes.some((n) => n.isFaulted)) return;
-    const handle = buildFaultAnimation({ nodes, edges, positions, scene, reducedMotion });
+    const engine = getAudioEngine();
+    const handle = buildFaultAnimation({
+      nodes,
+      edges,
+      positions,
+      scene,
+      reducedMotion,
+      onCascadeReveal: () => engine.playCascadeTick(),
+    });
     registerTick("fault-anim", handle.animateTick);
     return () => {
       registerTick("fault-anim", null);

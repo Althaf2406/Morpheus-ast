@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { CyberCityLayout, FaultType, InfraShieldAdapter, SREDashboardData } from "../adapter";
 import { highestCentralityId } from "../components/city/faultTarget.ts";
+import { getAudioEngine } from "../audio";
 
 // --- Constants ---
 const PATCH_POLL_MS = 500;
@@ -63,6 +64,7 @@ export function useCityController(
     setLayout(next);
     setPatch(adapter.getSREDashboard().lastPatch);
     setIsPatchApplied(false);
+    getAudioEngine().playFaultAlarm();
   }), [run, adapter, selectedId, layout.nodes, faultType]);
 
   const reset = useCallback(() => run(async () => {
@@ -86,6 +88,7 @@ export function useCityController(
     await adapter.applyMutation({ splices: patch.suggestedSplices });
     setLayout(adapter.getLayout());
     setIsPatchApplied(true);
+    getAudioEngine().playPatchApplied();
   }), [run, adapter, patch]);
 
   const rollback = useCallback(() => run(async () => {
@@ -93,6 +96,7 @@ export function useCityController(
     setLayout(adapter.getLayout());
     setPatch(adapter.getSREDashboard().lastPatch);
     setIsPatchApplied(false);
+    getAudioEngine().playPatchRollback();
   }), [run, adapter]);
 
   return {

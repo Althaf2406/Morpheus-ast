@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import type { CandidateFile, CyberCityLayout, InfraShieldAdapter, LoadOutcome } from "../adapter";
+import { getAudioEngine } from "../audio";
 
 // --- Types ---
 type SwitchAdapter = Pick<
@@ -30,6 +31,7 @@ export function useRepoSwitch(adapter: SwitchAdapter, onSwitch: (layout: CyberCi
       onSwitch(outcome.layout);
       setIsLoaded(adapter.isLoadedRepositoryActive());
       setError(null);
+      getAudioEngine().playLoadComplete();
     }
     return outcome;
   }, [adapter, onSwitch]);
@@ -44,7 +46,12 @@ export function useRepoSwitch(adapter: SwitchAdapter, onSwitch: (layout: CyberCi
   );
   const backToSample = useCallback((): void => {
     adapter.backToSample().then(
-      (layout) => { onSwitch(layout); setIsLoaded(adapter.isLoadedRepositoryActive()); setError(null); },
+      (layout) => {
+        onSwitch(layout);
+        setIsLoaded(adapter.isLoadedRepositoryActive());
+        setError(null);
+        getAudioEngine().playLoadComplete();
+      },
       (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
     );
   }, [adapter, onSwitch]);

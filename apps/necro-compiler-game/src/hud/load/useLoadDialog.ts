@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import type { LoadOutcome } from "../../adapter";
+import { getAudioEngine } from "../../audio";
 
 export type LoadSuccess = Extract<LoadOutcome, { readonly ok: true }>;
 
@@ -28,6 +29,7 @@ export function useLoadDialog(): LoadDialogApi {
     try {
       const outcome = await action();
       setState(outcome.ok ? { status: "success", outcome } : { status: "error", message: outcome.message });
+      if (outcome.ok) getAudioEngine().playLoadComplete();
     } catch (error) {
       setState({ status: "error", message: error instanceof Error && error.message ? error.message : UNEXPECTED });
     } finally {
