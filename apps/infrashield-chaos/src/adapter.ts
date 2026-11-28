@@ -32,10 +32,27 @@ import type {
   DiffHunk,
   DiffLine,
   MutationDiff,
+  CandidateFile,
+  LoadResult,
+  LoadSummary,
+  SkippedFile,
+  SkipReason,
+  RepositoryRef,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
 import { createEngine } from "../../../packages/morpheus-ast-core/src/index.js";
+import {
+  buildSummary,
+  excludeParseErrors,
+  failure,
+  NO_FILES_MESSAGE,
+  NO_FUNCTIONS_MESSAGE,
+  type LoadOutcomeOf,
+} from "./loadRepository.js";
 
-export type { FaultType, DiffHunk, DiffLine, MutationDiff };
+export type { FaultType, DiffHunk, DiffLine, MutationDiff, CandidateFile, LoadSummary, SkippedFile, SkipReason, RepositoryRef };
+
+/** Result of loading user code: summary data on success, a plain-English message on failure. */
+export type LoadOutcome = LoadOutcomeOf<CyberCityLayout>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI-facing data shapes (domain-specific names live HERE, not in core)
@@ -134,6 +151,8 @@ export class InfraShieldAdapter {
   private readonly virtualSources = new Map<string, string>();
   /** The healthy sample as first loaded, restored by reset(). */
   private healthySnapshot: readonly VirtualFile[] = [];
+  /** True while a user-loaded repository (not the sample) is active. */
+  private loadedActive = false;
 
   constructor(engine: MorpheusASTEngine) {
     this.engine = engine;
@@ -159,14 +178,41 @@ export class InfraShieldAdapter {
   async reset(): Promise<CyberCityLayout> {
     this.restoreVirtualSources();
     await this.reanalyzeVirtual();
-    this.lastFault = null;
-    this.lastPatch = null;
-    this.lastMutation = null;
-    this.lastDiff = null;
-    this.targetFunction = null;
-    this.fingerprints = NO_FINGERPRINTS;
-    this.preMutation = null;
+    this.clearDerivedState();
     return this.buildCityLayout(null, null);
+  }
+
+  // ─── Bring your own code ─────────────────────────────────────────────────
+
+  /** Replaces the active repository with the eligible files among the candidates. */
+  async loadFromCandidates(candidates: readonly CandidateFile[]): Promise<LoadOutcome> {
+    return this.applyLoad(this.engine.loadCode(candidates));
+  }
+
+  /** Loads a public GitHub repository ("owner/name" or URL). No token is used or stored. */
+  async loadFromGitHub(
+    refText: string,
+    fetchFn: typeof fetch = globalThis.fetch.bind(globalThis)
+  ): Promise<LoadOutcome> {
+    const fetched = await this.engine.fetchGitHubRepository(refText, fetchFn);
+    return fetched.ok ? this.applyLoad(fetched.result) : failure(fetched.error.message);
+  }
+
+  /** Parses "owner/name" or a GitHub URL; null when the value is not a repository reference. */
+  parseRepositoryRef(value: string): RepositoryRef | null {
+    return this.engine.parseRepositoryRef(value);
+  }
+
+  /** Returns to the sample repository and clears all fault, patch and mutation state. */
+  async backToSample(): Promise<CyberCityLayout> {
+    this.loadedActive = false;
+    const layout = await this.loadSampleRepository();
+    this.clearDerivedState();
+    return layout;
+  }
+
+  isLoadedRepositoryActive(): boolean {
+    return this.loadedActive;
   }
 
   // ─── Fault injection ─────────────────────────────────────────────────────
@@ -498,6 +544,87 @@ export class InfraShieldAdapter {
       this.currentGraph!
     );
     this.lastPatch = before.patch;
+  }
+
+  /** Swaps in a LoadResult; any failure restores the previous repository untouched. */
+  private async applyLoad(result: LoadResult): Promise<LoadOutcome> {
+    if (result.files.length === 0) return failure(NO_FILES_MESSAGE);
+
+    const parsed = await this.engine.parseSourceFiles({
+      filePaths: [],
+      virtualFiles: result.files,
+      includeSourceText: true,
+    });
+    const { kept, skipped: parseSkipped } = excludeParseErrors(result.files, parsed.files);
+    const snapshot = this.captureState();
+    try {
+      this.virtualSources.clear();
+      for (const file of kept) this.virtualSources.set(file.filePath, file.sourceText);
+      if (kept.length > 0) await this.reanalyzeVirtual();
+      if ((this.currentGraph?.functions.length ?? 0) === 0 || kept.length === 0) {
+        this.restoreState(snapshot);
+        return failure(NO_FUNCTIONS_MESSAGE);
+      }
+    } catch (error) {
+      this.restoreState(snapshot);
+      throw error;
+    }
+
+    this.healthySnapshot = kept;
+    this.loadedActive = true;
+    this.clearDerivedState();
+    const skipped = [...result.skipped, ...parseSkipped];
+    return {
+      ok: true,
+      layout: this.buildCityLayout(null, null),
+      summary: buildSummary(kept, skipped),
+      filesAnalyzed: kept.length,
+      findingsCount: this.currentFindings.length,
+      skipped,
+    };
+  }
+
+  private captureState() {
+    return {
+      virtualSources: [...this.virtualSources],
+      sources: [...this.sources],
+      graph: this.currentGraph,
+      findings: this.currentFindings,
+      lastFault: this.lastFault,
+      lastPatch: this.lastPatch,
+      lastMutation: this.lastMutation,
+      lastDiff: this.lastDiff,
+      targetFunction: this.targetFunction,
+      fingerprints: this.fingerprints,
+      preMutation: this.preMutation,
+    };
+  }
+
+  private restoreState(s: ReturnType<InfraShieldAdapter["captureState"]>): void {
+    this.virtualSources.clear();
+    for (const [path, text] of s.virtualSources) this.virtualSources.set(path, text);
+    this.sources.clear();
+    for (const [path, text] of s.sources) this.sources.set(path, text);
+    this.currentGraph = s.graph;
+    this.currentFindings = s.findings;
+    this.lastFault = s.lastFault;
+    this.lastPatch = s.lastPatch;
+    this.lastMutation = s.lastMutation;
+    this.lastDiff = s.lastDiff;
+    this.targetFunction = s.targetFunction;
+    this.fingerprints = s.fingerprints;
+    this.preMutation = s.preMutation;
+  }
+
+  /** Clears the fault, patch and mutation state (selection lives in the UI). */
+  private clearDerivedState(): void {
+    this.lastFault = null;
+    this.lastPatch = null;
+    this.lastMutation = null;
+    this.lastDiff = null;
+    this.targetFunction = null;
+    this.fingerprints = NO_FINGERPRINTS;
+    this.preMutation = null;
   }
 
   private restoreVirtualSources(): void {

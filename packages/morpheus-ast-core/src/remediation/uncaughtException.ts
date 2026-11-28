@@ -13,21 +13,7 @@
 import * as ts from "typescript";
 import type { MutationRequest, SecurityScanResult, SpliceRange } from "../contracts.js";
 import type { FunctionLikeNode } from "./unusedVariable.js";
-
-/** Mirrors the function name resolution of the topology analyzer, including its anonymous label. */
-function resolveFunctionName(node: FunctionLikeNode, sourceFile: ts.SourceFile): string {
-  if (ts.isFunctionDeclaration(node) && node.name != null) {
-    return node.name.text;
-  }
-  if (ts.isMethodDeclaration(node) && ts.isIdentifier(node.name)) {
-    return node.name.text;
-  }
-  const parent = node.parent;
-  if (parent != null && ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name)) {
-    return parent.name.text;
-  }
-  return `<anonymous:${node.getStart(sourceFile)}>`;
-}
+import { computeFunctionNames } from "../topology/naming.js";
 
 function collectBindingNames(name: ts.BindingName, into: Set<string>): void {
   if (ts.isIdentifier(name)) {
@@ -155,7 +141,7 @@ export function planUncaughtExceptionFix(
   const last = body.statements[body.statements.length - 1];
   if (first === undefined || last === undefined) return null;
   const text = sourceFile.text;
-  const functionName = resolveFunctionName(functionNode, sourceFile);
+  const functionName = computeFunctionNames(sourceFile).get(functionNode) ?? "function";
   const id = chooseIdentifier(collectDeclaredNames(functionNode));
   const throwStatement = errorCause
     ? `throw new Error("${functionName} failed", { cause: ${id} });`

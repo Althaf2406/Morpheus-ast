@@ -86,6 +86,11 @@ export interface FunctionNode {
   readonly unusedVariables: readonly string[];
   /** True if this function contains at least one unhandled exception path. */
   readonly hasUncaughtException: boolean;
+  /**
+   * Why the function has an uncaught exception path, for example "awaits without try/catch",
+   * "calls JSON.parse", "throws" or "calls load which can throw". Empty when there is none.
+   */
+  readonly uncaughtReasons?: readonly string[];
   /** Number of parameters. */
   readonly parameterCount: number;
 }
@@ -573,6 +578,74 @@ export type ComputeMutationDiff = (
 /** Returns the SHA-256 of the UTF-8 text as 64 lowercase hex characters. */
 export type FingerprintText = (text: string) => Promise<string>;
 
+/** A file offered to the code loader, before eligibility filtering. */
+export interface CandidateFile {
+  readonly path: string;
+  readonly content: string;
+}
+
+/** Why a candidate file did not become a loaded file. */
+export type SkipReason =
+  | "unsupported type"
+  | "ignored folder"
+  | "empty file"
+  | "test file"
+  | "file too large"
+  | "limit exceeded"
+  | "duplicate path"
+  | "download failed"
+  | "parse error";
+
+/** A candidate file that was not loaded, with the reason. */
+export interface SkippedFile {
+  readonly path: string;
+  readonly reason: SkipReason;
+}
+
+/** Counts describing a load result. `totalBytes` is the UTF-8 size of the loaded files. */
+export interface LoadSummary {
+  readonly loadedCount: number;
+  readonly totalBytes: number;
+  readonly skippedCount: number;
+}
+
+/** Output of the code loader: a bounded, deterministic set of files to analyse. */
+export interface LoadResult {
+  readonly files: readonly VirtualFile[];
+  readonly skipped: readonly SkippedFile[];
+  readonly summary: LoadSummary;
+}
+
+/** Turns candidate files into a bounded LoadResult. Pure: no file system or network. */
+export type LoadCode = (candidates: readonly CandidateFile[]) => LoadResult;
+
+/** A parsed `owner/name` repository reference. */
+export interface RepositoryRef {
+  readonly owner: string;
+  readonly name: string;
+}
+
+/** A repository fetch failure, returned as a value instead of thrown. */
+export interface GitHubFetchError {
+  readonly kind: "format" | "rate-limit" | "not-found" | "network";
+  readonly message: string;
+}
+
+/**
+ * Fetches a public GitHub repository's eligible files anonymously (no token) using an injected
+ * `fetch`. Never throws for expected failures; they are returned as `{ ok: false }`.
+ */
+export type FetchGitHubRepository = (
+  ref: string,
+  fetchFn: typeof fetch
+) => Promise<
+  | { readonly ok: true; readonly result: LoadResult }
+  | { readonly ok: false; readonly error: GitHubFetchError }
+>;
+
+/** Parses `owner/name` or a `https://github.com/owner/name` URL. Returns null when unparseable. */
+export type ParseRepositoryRef = (value: string) => RepositoryRef | null;
+
 /** The complete public API surface of morpheus-ast-core, as consumed by both apps. */
 export interface MorpheusASTEngine {
   readonly computeMutationDiff: ComputeMutationDiff;
@@ -592,4 +665,7 @@ export interface MorpheusASTEngine {
   readonly generateBugfixSpec: GenerateBugfixSpec;
   readonly runSecurityScan: RunSecurityScan;
   readonly planRemediation: PlanRemediation;
+  readonly loadCode: LoadCode;
+  readonly fetchGitHubRepository: FetchGitHubRepository;
+  readonly parseRepositoryRef: ParseRepositoryRef;
 }

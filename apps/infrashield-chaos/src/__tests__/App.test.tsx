@@ -90,6 +90,10 @@ function createFake() {
     })),
     generateBugfixSpec: vi.fn(),
     generateBugfixFile: vi.fn(),
+    isLoadedRepositoryActive: vi.fn(() => false),
+    loadFromCandidates: vi.fn(),
+    loadFromGitHub: vi.fn(),
+    backToSample: vi.fn(),
   };
   return fake;
 }

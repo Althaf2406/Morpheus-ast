@@ -2,12 +2,18 @@ import { CyberCityScene } from "./components/city/CyberCityScene.tsx";
 import { FaultToolbar } from "./components/city/FaultToolbar.tsx";
 import { InspectorDock } from "./components/panels/InspectorDock.tsx";
 import { SREDashboardPanel } from "./components/panels/SREDashboardPanel.tsx";
+import { CityNotices } from "./components/city/CityNotices.tsx";
+import { LoadControls } from "./components/load/LoadControls.tsx";
+import { LoadDialog } from "./components/load/LoadDialog.tsx";
+import { useRepoParam } from "./hooks/useRepoParam.ts";
+import { useRepoSwitch } from "./hooks/useRepoSwitch.ts";
 import { LoadingScreen } from "./hud/LoadingScreen.tsx";
 import { ErrorPanel } from "./hud/ErrorPanel.tsx";
 import { useAdapterLoader } from "./engine/useAdapterLoader.ts";
 import { useCityController } from "./hooks/useCityController.ts";
 import { useInspectorOpen } from "./hooks/useInspectorOpen.ts";
-import type { CyberCityLayout, InfraShieldAdapter } from "./adapter";
+import { useEffect } from "react";
+import type { CandidateFile, CyberCityLayout, InfraShieldAdapter } from "./adapter";
 
 // --- Styles ---
 const ACTION_ERROR: React.CSSProperties = {
@@ -25,6 +31,22 @@ interface CityProps {
 function City({ adapter, initialLayout }: CityProps) {
   const city = useCityController(adapter, initialLayout);
   const inspector = useInspectorOpen();
+  const repo = useRepoSwitch(adapter, city.switchRepository);
+  const param = useRepoParam(adapter);
+  const { openDialog, closeDialog, load, loadGitHub, backToSample } = repo;
+  const { pendingRepo, setParam, clearParam, consume } = param;
+  useEffect(() => { if (pendingRepo !== null) openDialog(); }, [pendingRepo, openDialog]);
+  const onLoad = async (candidates: readonly CandidateFile[]) => {
+    const outcome = await load(candidates);
+    if (outcome.ok) clearParam();
+    return outcome;
+  };
+  const onLoadGitHub = async (ref: string) => {
+    const outcome = await loadGitHub(ref);
+    if (outcome.ok) setParam(ref);
+    return outcome;
+  };
+  const message = city.actionError ?? repo.error ?? param.formatError;
   const isFaultActive = city.layout.activeFault !== null;
   const isPanelOpen = isFaultActive || city.isPatchApplied;
 
@@ -44,12 +66,27 @@ function City({ adapter, initialLayout }: CityProps) {
         onInject={city.inject}
         onReset={city.reset}
       />
+      <LoadControls isLoaded={repo.isLoaded} onOpen={repo.openDialog} onBack={() => { backToSample(); clearParam(); }} />
+      {!isPanelOpen && <CityNotices layout={city.layout} />}
+      {repo.dialogOpen && (
+        <LoadDialog
+          onLoad={onLoad}
+          onLoadGitHub={onLoadGitHub}
+          onClose={() => { closeDialog(); consume(); }}
+          initialTab={pendingRepo === null ? undefined : "github"}
+          initialRepo={pendingRepo ?? undefined}
+          autoStart={pendingRepo !== null}
+        />
+      )}
       <InspectorDock
+        key={city.repoEpoch}
         open={inspector.open}
         telemetry={inspector.open ? adapter.getInspectorTelemetry() : null}
         onToggle={inspector.toggle}
       />
-      {city.actionError !== null && <div role="alert" style={ACTION_ERROR}>{city.actionError}</div>}
+      {message !== null && (
+        <div role="alert" style={ACTION_ERROR}>{message}</div>
+      )}
       <SREDashboardPanel
         adapter={adapter}
         layout={city.layout}

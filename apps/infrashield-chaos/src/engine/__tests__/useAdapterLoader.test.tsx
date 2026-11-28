@@ -52,13 +52,17 @@ function mountLoader(): Harness {
   };
 }
 
-async function settle(): Promise<void> {
-  await act(async () => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 20));
-  });
-}
-
 let harness: Harness | null = null;
+
+// Polls until the loader leaves "loading" (or the timeout elapses).
+async function settle(timeoutMs = 3000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (harness?.current().state.status === "loading" && Date.now() < deadline) {
+    await act(async () => {
+      await new Promise<void>((resolve) => setTimeout(resolve, 5));
+    });
+  }
+}
 
 beforeEach(() => {
   mocks.createInfraShieldAdapter.mockReset();

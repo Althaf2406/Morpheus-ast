@@ -28,10 +28,22 @@ import type {
   BedrockPatchRequest,
   ParseRequest,
   ExternalScanReport,
+  CandidateFile,
+  LoadResult,
+  LoadSummary,
+  SkippedFile,
+  RepositoryRef,
 } from "../../../packages/morpheus-ast-core/src/contracts.js";
 import { createEngine } from "../../../packages/morpheus-ast-core/src/index.js";
+import {
+  NO_FILES_MESSAGE,
+  NO_FUNCTIONS_MESSAGE,
+  adjustedSummary,
+  excludeParseErrors,
+  type LoadOutcome,
+} from "./engine/loadFlow.ts";
 
-export type { DiffHunk, DiffLine, MutationDiff };
+export type { DiffHunk, DiffLine, MutationDiff, LoadOutcome, CandidateFile, LoadSummary, SkippedFile, RepositoryRef };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI-facing data shapes (domain-specific names live HERE, not in core)
@@ -126,6 +138,7 @@ export class NecroCompilerAdapter {
   private lastDiff: MutationDiff | null = null;
   private targetFunction: string | null = null;
   private fingerprints: SourceFingerprints = NO_FINGERPRINTS;
+  private loadedActive = false;
   /** Sources of an in-memory repository (e.g. the pre-loaded sample), keyed by file path. Empty for disk repos. */
   private readonly virtualSources = new Map<string, string>();
   /** Text of every analysed file (in memory or from disk), for the spell advisor. Refreshed on each analysis. */
@@ -139,6 +152,8 @@ export class NecroCompilerAdapter {
 
   async loadRepository(filePaths: readonly string[]): Promise<DungeonLayout> {
     this.virtualSources.clear();
+    this.loadedActive = false;
+    this.resetSession();
     await this.analyze({ filePaths, includeSourceText: true });
     return this.buildDungeonLayout();
   }
@@ -150,11 +165,99 @@ export class NecroCompilerAdapter {
   async loadSampleRepository(): Promise<DungeonLayout> {
     const sample = this.engine.getSampleRepository();
     this.virtualSources.clear();
+    this.loadedActive = false;
+    this.resetSession();
     for (const file of sample.files) {
       this.virtualSources.set(file.filePath, file.sourceText);
     }
     await this.reanalyzeVirtual();
     return this.buildDungeonLayout();
+  }
+
+  /** Replaces the active repository with the given files. Failure keeps the previous one. */
+  async loadFromCandidates(candidates: readonly CandidateFile[]): Promise<LoadOutcome> {
+    return this.activate(this.engine.loadCode(candidates));
+  }
+
+  /** Fetches a public GitHub repository (`owner/name` or URL) and makes it active. */
+  async loadFromGitHub(refText: string, fetchFn: typeof fetch = globalThis.fetch.bind(globalThis)): Promise<LoadOutcome> {
+    const fetched = await this.engine.fetchGitHubRepository(refText, fetchFn);
+    return fetched.ok ? this.activate(fetched.result) : { ok: false, message: fetched.error.message };
+  }
+
+  /** Parses `owner/name` or a GitHub URL; null when the text is not a valid reference. */
+  parseRepositoryRef(value: string): RepositoryRef | null {
+    return this.engine.parseRepositoryRef(value);
+  }
+
+  /** Restores the sample repository and discards the loaded one. */
+  backToSample(): Promise<DungeonLayout> {
+    return this.loadSampleRepository();
+  }
+
+  isLoadedRepositoryActive(): boolean {
+    return this.loadedActive;
+  }
+
+  private async activate(result: LoadResult): Promise<LoadOutcome> {
+    if (result.files.length === 0) return { ok: false, message: NO_FILES_MESSAGE };
+    const snapshot = this.snapshot();
+    try {
+      const parsed = await this.engine.parseSourceFiles({ filePaths: [], virtualFiles: result.files, includeSourceText: true });
+      const { good, parseErrors } = excludeParseErrors(result.files, parsed.files);
+      this.virtualSources.clear();
+      for (const file of good) this.virtualSources.set(file.filePath, file.sourceText);
+      await this.reanalyzeVirtual();
+      if (this.currentGraph === null || this.currentGraph.functions.length === 0) {
+        this.restore(snapshot);
+        return { ok: false, message: NO_FUNCTIONS_MESSAGE };
+      }
+      this.resetSession();
+      this.loadedActive = true;
+      const skipped = [...result.skipped, ...parseErrors];
+      const layout = this.buildDungeonLayout();
+      return {
+        ok: true,
+        layout,
+        summary: adjustedSummary(good, skipped),
+        skipped,
+        filesAnalyzed: good.length,
+        findingsCount: layout.totalEntities,
+      };
+    } catch (error) {
+      this.restore(snapshot);
+      return { ok: false, message: error instanceof Error ? error.message : "The code could not be analysed." };
+    }
+  }
+
+  private snapshot() {
+    return {
+      sources: new Map(this.virtualSources),
+      analyzed: new Map(this.analyzedSources),
+      graph: this.currentGraph,
+      findings: this.currentFindings,
+      loaded: this.loadedActive,
+    };
+  }
+
+  private restore(s: ReturnType<NecroCompilerAdapter["snapshot"]>): void {
+    this.virtualSources.clear();
+    s.sources.forEach((text, path) => this.virtualSources.set(path, text));
+    this.analyzedSources.clear();
+    s.analyzed.forEach((text, path) => this.analyzedSources.set(path, text));
+    this.currentGraph = s.graph;
+    this.currentFindings = s.findings;
+    this.loadedActive = s.loaded;
+  }
+
+  /** Clears spell history, advisor suggestion and inspector state on every repository switch. */
+  private resetSession(): void {
+    this.lastMutation = null;
+    this.lastRollback = false;
+    this.lastAISuggestion = null;
+    this.lastDiff = null;
+    this.targetFunction = null;
+    this.fingerprints = NO_FINGERPRINTS;
   }
 
   /** Current text of an in-memory file (for diffs in the Live Engine Inspector), or undefined. */

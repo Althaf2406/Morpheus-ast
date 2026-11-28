@@ -28,6 +28,8 @@ import { fingerprintText } from "./mutator/fingerprint.js";
 import { SecurityIngestionAdapter } from "./security/ingestion.js";
 import { getSampleRepository } from "./sample-repo/index.js";
 import { planRemediation } from "./remediation/index.js";
+import { loadCode } from "./loader/index.js";
+import { fetchGitHubRepository, parseRepositoryRef } from "./loader/github.js";
 
 export type * from "./contracts.js";
 
@@ -81,5 +83,8 @@ export function createEngine(): MorpheusASTEngine {
 
     planRemediation: (finding, sourceText, options) =>
       planRemediation(finding, sourceText, options),
+    loadCode,
+    fetchGitHubRepository,
+    parseRepositoryRef,
   };
 }

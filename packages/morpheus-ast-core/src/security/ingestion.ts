@@ -310,7 +310,7 @@ export class SecurityIngestionAdapter {
           severity: "HIGH",
           category: "UNCAUGHT_EXCEPTION",
           title: `Uncaught exception path in: ${fn.name}`,
-          description: `Function "${fn.name}" can throw without a surrounding try/catch. Cyclomatic complexity: ${fn.cyclomaticComplexity}.`,
+          description: `Function "${fn.name}" can throw without a surrounding try/catch${describeReasons(fn.uncaughtReasons)}. Cyclomatic complexity: ${fn.cyclomaticComplexity}.`,
           cweId: "CWE-390",
         });
       }
@@ -341,6 +341,12 @@ export class SecurityIngestionAdapter {
   private finish(graph: TopologyGraph, ids: IdAllocator, draft: Draft): SecurityScanResult {
     return make(ids, draft, findFunctionId(draft.range, graph), draft.title);
   }
+}
+/** " (awaits without try/catch, calls JSON.parse)": at most three reasons, or "" when unknown. */
+function describeReasons(reasons: readonly string[] | undefined): string {
+  if (reasons === undefined || reasons.length === 0) return "";
+  const shown = reasons.slice(0, 3).join(", ");
+  return reasons.length > 3 ? ` (${shown}, and ${reasons.length - 3} more)` : ` (${shown})`;
 }
 /**
  * Hands out finding ids that depend only on the finding's content, so the same input always

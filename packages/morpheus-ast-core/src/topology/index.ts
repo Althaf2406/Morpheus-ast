@@ -20,6 +20,13 @@ import type {
   CallEdge,
   SourceRange,
 } from "../contracts.js";
+import { computeFunctionNames, isFunctionLike, legacyFunctionName } from "./naming.js";
+import {
+  buildFileContext,
+  collectExceptionFacts,
+  resolveUncaughtPaths,
+  type FunctionExceptionInput,
+} from "./exceptions.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TopologyCompiler
@@ -39,6 +46,7 @@ export class TopologyCompiler {
       sourceFile: ts.SourceFile;
       functions: FunctionNode[];
     }[] = [];
+    const exceptionInputs: FunctionExceptionInput[] = [];
 
     for (const file of parsedFiles) {
       if (file.sourceText === "" || file.hasErrors) continue;
@@ -50,9 +58,20 @@ export class TopologyCompiler {
         true
       );
 
-      const functions = this.extractFunctions(sourceFile, file.filePath);
-      allFunctions.push(...functions);
+      const { functions, exceptionInputs: inputs } = this.extractFunctions(sourceFile, file.filePath);
+      exceptionInputs.push(...inputs);
       parsedSources.push({ file, sourceFile, functions });
+    }
+    // Decide uncaught exception paths for the whole repository (propagates through calls).
+    const uncaught = resolveUncaughtPaths(exceptionInputs);
+    for (const source of parsedSources) {
+      source.functions = source.functions.map((fn) => {
+        const result = uncaught.get(fn.id);
+        return result === undefined
+          ? fn
+          : { ...fn, hasUncaughtException: result.hasUncaughtException, uncaughtReasons: result.reasons };
+      });
+      allFunctions.push(...source.functions);
     }
 
     // Index every function by name so calls can be resolved across files.
@@ -115,45 +134,40 @@ export class TopologyCompiler {
   private extractFunctions(
     sourceFile: ts.SourceFile,
     filePath: string
-  ): FunctionNode[] {
+  ): { functions: FunctionNode[]; exceptionInputs: FunctionExceptionInput[] } {
     const results: FunctionNode[] = [];
+    const exceptionInputs: FunctionExceptionInput[] = [];
+    const names = computeFunctionNames(sourceFile);
+    const localNames = new Set<string>();
+    for (const name of names.values()) localNames.add(name);
+    const context = buildFileContext(sourceFile, localNames);
     let fnCounter = 0;
-
     const visit = (node: ts.Node): void => {
-      if (
-        ts.isFunctionDeclaration(node) ||
-        ts.isFunctionExpression(node) ||
-        ts.isArrowFunction(node) ||
-        ts.isMethodDeclaration(node)
-      ) {
-        const name = this.getFunctionName(node, sourceFile);
+      if (isFunctionLike(node)) {
+        const name = names.get(node) ?? legacyFunctionName(node, sourceFile);
+        const id = `fn:${filePath}:${fnCounter++}:${legacyFunctionName(node, sourceFile)}`;
         const range = this.getSourceRange(node, sourceFile, filePath);
         const complexity = this.computeCyclomaticComplexity(node);
         const unusedVars = this.detectUnusedVariables(node, sourceFile);
-        const hasUncaught = this.hasUncaughtExceptionPath(node);
-        const paramCount = ts.isFunctionLike(node)
-          ? node.parameters.length
-          : 0;
-
+        const facts = collectExceptionFacts(node, context);
+        exceptionInputs.push({ id, filePath, name, facts });
         results.push({
-          id: `fn:${filePath}:${fnCounter++}:${name}`,
+          id,
           name,
           filePath,
           range,
           cyclomaticComplexity: complexity,
           hasCircularDep: false, // set by cycle detection
           unusedVariables: unusedVars,
-          hasUncaughtException: hasUncaught,
-          parameterCount: paramCount,
+          hasUncaughtException: false, // set once every file is analysed
+          parameterCount: node.parameters.length,
         });
       }
       ts.forEachChild(node, visit);
     };
-
     visit(sourceFile);
-    return results;
+    return { functions: results, exceptionInputs };
   }
-
   // ─────────────────────────────────────────────────────────────────────────
   // Call edge extraction
   // ─────────────────────────────────────────────────────────────────────────
@@ -344,70 +358,8 @@ export class TopologyCompiler {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Uncaught exception detection
-  // ─────────────────────────────────────────────────────────────────────────
-
-  private hasUncaughtExceptionPath(fnNode: ts.Node): boolean {
-    // A function has an uncaught exception path if it contains at least one
-    // call expression OR throw statement NOT wrapped in a try/catch block
-    let hasTryCatch = false;
-    let hasUncoveredThrow = false;
-
-    const visit = (node: ts.Node, inTry: boolean): void => {
-      if (ts.isTryStatement(node)) {
-        hasTryCatch = true;
-        // Visit the try block with inTry=true
-        visit(node.tryBlock, true);
-        // Visit the catch clause separately (also protected)
-        if (node.catchClause != null) visit(node.catchClause, true);
-        if (node.finallyBlock != null) visit(node.finallyBlock, inTry);
-        return;
-      }
-      if (ts.isThrowStatement(node) && !inTry) {
-        hasUncoveredThrow = true;
-      }
-      ts.forEachChild(node, (child) => visit(child, inTry));
-    };
-
-    ts.forEachChild(fnNode, (child) => visit(child, false));
-
-    // If there are call expressions but no try/catch wrapping them, flag it
-    if (!hasTryCatch) {
-      let hasCallExpr = false;
-      const findCalls = (n: ts.Node): void => {
-        if (ts.isCallExpression(n)) { hasCallExpr = true; return; }
-        ts.forEachChild(n, findCalls);
-      };
-      ts.forEachChild(fnNode, findCalls);
-      return hasCallExpr || hasUncoveredThrow;
-    }
-
-    return hasUncoveredThrow;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Helpers
   // ─────────────────────────────────────────────────────────────────────────
-
-  private getFunctionName(node: ts.Node, sourceFile: ts.SourceFile): string {
-    if (ts.isFunctionDeclaration(node) && node.name != null) {
-      return node.name.text;
-    }
-    if (ts.isMethodDeclaration(node) && ts.isIdentifier(node.name)) {
-      return node.name.text;
-    }
-    // Arrow or anonymous — use parent variable name if available
-    const parent = node.parent;
-    if (
-      parent != null &&
-      ts.isVariableDeclaration(parent) &&
-      ts.isIdentifier(parent.name)
-    ) {
-      return parent.name.text;
-    }
-    const pos = node.getStart(sourceFile);
-    return `<anonymous:${pos}>`;
-  }
 
   private getSourceRange(
     node: ts.Node,

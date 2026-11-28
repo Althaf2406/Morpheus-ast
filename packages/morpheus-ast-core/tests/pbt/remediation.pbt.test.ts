@@ -408,7 +408,7 @@ interface UncaughtCase {
   readonly functionName: string;
   readonly isAsync: boolean;
 }
-/** Functions with at least one top-level call or throw that is not inside a try block. */
+/** Functions with at least one risky operation (throw, await or a known-throwing call) outside a try block. */
 const uncaughtCaseArb: fc.Arbitrary<UncaughtCase> = fc
   .record({
     asArrow: fc.boolean(),
@@ -417,10 +417,10 @@ const uncaughtCaseArb: fc.Arbitrary<UncaughtCase> = fc
     indent: fc.constantFrom("  ", "    ", "\t"),
     preamble: fc.array(fc.integer({ min: 0, max: 9 }), { maxLength: 2 }),
     trigger: fc.constantFrom(
-      "helper(p);",
-      "if (p > 1) { helper(p); }",
+      "JSON.parse(String(p));",
+      "if (p > 1) { JSON.parse(String(p)); }",
       'throw new Error("bad");',
-      "const r = helper(p);",
+      "const r = JSON.parse(String(p));",
       "await Promise.resolve(p);"
     ),
     ret: fc.boolean(),
@@ -428,7 +428,7 @@ const uncaughtCaseArb: fc.Arbitrary<UncaughtCase> = fc
   })
   .map((r): UncaughtCase => {
     const nl = r.crlf ? "\r\n" : "\n";
-    const trigger = !r.isAsync && r.trigger.startsWith("await") ? "helper(p);" : r.trigger;
+    const trigger = !r.isAsync && r.trigger.startsWith("await") ? "JSON.parse(String(p));" : r.trigger;
     const lines = [
       ...r.preamble.map((k, i) => `${r.indent}const w${i} = p + ${k};`),
       `${r.indent}${trigger}`,

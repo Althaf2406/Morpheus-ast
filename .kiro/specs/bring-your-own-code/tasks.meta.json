@@ -1,0 +1,700 @@
+{
+  "pbtResults": {
+    "3.3 Write property test for eligibility classification in `tests/pbt/loader.eligibility.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839079451
+    },
+    "3.4 Write property test for Load_Limits in `tests/pbt/loader.limits.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839081571
+    },
+    "3.5 Write property test for limit-exceeded ordering in `tests/pbt/loader.ordering.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839090241
+    },
+    "3.7 Write property test for path normalisation in `tests/pbt/loader.paths.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839142689
+    },
+    "3.8 Write property test for duplicate paths in `tests/pbt/loader.duplicates.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839152954
+    },
+    "3.10 Write property test for unparseable references in `tests/pbt/github.format.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839158039
+    },
+    "3.9 Write property test for reference parsing round trip in `tests/pbt/github.parse.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839160940
+    },
+    "3.12 Write property test for eligible-only fetching in `tests/pbt/github.eligible.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839238042
+    },
+    "3.11 Write property test for anonymous requests in `tests/pbt/github.anonymous.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839244584
+    },
+    "3.13 Write property test for partial download failure in `tests/pbt/github.partial.pbt.test.ts`": {
+      "status": "passed",
+      "lastRunTimestamp": 1795839259269
+    }
+  },
+  "executionHistory": {
+    "1.1 Add loader and GitHub types to `packages/morpheus-ast-core/src/contracts.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801278
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838807079
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838838745
+      }
+    ],
+    "1.2 Implement the Code_Loader in `packages/morpheus-ast-core/src/loader/index.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801329
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838842684
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838910895
+      }
+    ],
+    "1.3 Implement the GitHub_Helper in `packages/morpheus-ast-core/src/loader/github.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801354
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838914161
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838985063
+      }
+    ],
+    "2.1 Expose the loader and helper through `MorpheusASTEngine` and `createEngine()`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801370
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838988235
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839019445
+      }
+    ],
+    "3.1 Write loader example tests in `tests/pbt/loader.unit.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801386
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839023418
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839098222
+      }
+    ],
+    "3.2 Write property test for exactly-once partitioning in `tests/pbt/loader.partition.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801403
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839023768
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839099057
+      }
+    ],
+    "3.3 Write property test for eligibility classification in `tests/pbt/loader.eligibility.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801419
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839024521
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839099880
+      }
+    ],
+    "3.4 Write property test for Load_Limits in `tests/pbt/loader.limits.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801442
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839025324
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839100619
+      }
+    ],
+    "3.5 Write property test for limit-exceeded ordering in `tests/pbt/loader.ordering.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801465
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839025843
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839101397
+      }
+    ],
+    "3.6 Write property test for permutation invariance in `tests/pbt/loader.permutation.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801480
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839104605
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839196094
+      }
+    ],
+    "3.7 Write property test for path normalisation in `tests/pbt/loader.paths.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801495
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839105170
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839196140
+      }
+    ],
+    "3.8 Write property test for duplicate paths in `tests/pbt/loader.duplicates.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801511
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839106166
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839196958
+      }
+    ],
+    "3.9 Write property test for reference parsing round trip in `tests/pbt/github.parse.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801527
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839106764
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839198052
+      }
+    ],
+    "3.10 Write property test for unparseable references in `tests/pbt/github.format.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801542
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839107821
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839198732
+      }
+    ],
+    "3.11 Write property test for anonymous requests in `tests/pbt/github.anonymous.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801562
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839202004
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839266905
+      }
+    ],
+    "3.12 Write property test for eligible-only fetching in `tests/pbt/github.eligible.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801582
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839202809
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839267717
+      }
+    ],
+    "3.13 Write property test for partial download failure in `tests/pbt/github.partial.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801598
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839203850
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839268753
+      }
+    ],
+    "3.14 Write GitHub_Helper example tests with a mocked `fetch` in `tests/pbt/github.unit.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801613
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839204951
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839269557
+      }
+    ],
+    "3.15 Write property test for rollback on loaded code in `tests/pbt/loaded-rollback.pbt.test.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801631
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839205942
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839270393
+      }
+    ],
+    "4. Checkpoint - Core complete": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801647
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839273457
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839305248
+      }
+    ],
+    "5.1 Add load methods to `apps/infrashield-chaos/src/adapter.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801667
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839309083
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839417340
+      }
+    ],
+    "5.2 Add load methods to `apps/necro-compiler-game/src/adapter.ts`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801691
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839309837
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839417930
+      }
+    ],
+    "5.3 Write property test for failed loads in both apps": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801706
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839421156
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839524533
+      }
+    ],
+    "5.4 Write property test for state clearing in both apps": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801720
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839421958
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839524566
+      }
+    ],
+    "5.5 Write property test for parse-error files in both apps": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801735
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839422852
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839525355
+      }
+    ],
+    "5.6 Write adapter example tests for replace, restore and empty results in both apps": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801752
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839423511
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839525892
+      }
+    ],
+    "6. Checkpoint - Adapters complete": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801770
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839529187
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839602678
+      }
+    ],
+    "7.1 Build the Load_Dialog in `apps/infrashield-chaos/src/components/load/`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801789
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839606497
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839691791
+      }
+    ],
+    "7.2 Build the Load_Dialog in `apps/necro-compiler-game/src/hud/load/`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801814
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839607118
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839692481
+      }
+    ],
+    "7.3 Wire the Load_Dialog into `apps/infrashield-chaos/src/App.tsx`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801828
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839695976
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839818551
+      }
+    ],
+    "7.4 Wire the Load_Dialog into `apps/necro-compiler-game/src/App.tsx`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801843
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839696644
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839819203
+      }
+    ],
+    "7.5 Write Load_Dialog component tests for both apps": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801858
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839823847
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839918834
+      }
+    ],
+    "8.1 Add `useRepoParam` to `apps/infrashield-chaos` and use it in `App.tsx`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801874
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839922536
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795840035878
+      }
+    ],
+    "8.2 Add `useRepoParam` to `apps/necro-compiler-game` and use it in `App.tsx`": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801896
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839923166
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795840036562
+      }
+    ],
+    "8.3 Write Repo_Param tests for both apps": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801918
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795840039801
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795840204287
+      }
+    ],
+    "9. Final verification": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838801940
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795840207627
+      },
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795840300536
+      }
+    ],
+    "1. Core loader and GitHub helper modules": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795838985083
+      }
+    ],
+    "2. Engine contracts and wiring": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839019474
+      }
+    ],
+    "3. Core tests": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839270414
+      }
+    ],
+    "5. App adapters": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839525933
+      }
+    ],
+    "7. Load_Dialog UI": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795839918854
+      }
+    ],
+    "8. Repository URL parameter": [
+      {
+        "executionId": "878be8d5-1794-4830-b5b4-f59514632e21",
+        "chatSessionId": "sess_e72c6f0d-4ca9-452b-be3a-03e96dcfedf9",
+        "timestamp": 1795840204320
+      }
+    ]
+  }
+}

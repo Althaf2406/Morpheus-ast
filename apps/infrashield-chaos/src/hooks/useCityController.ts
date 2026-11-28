@@ -13,6 +13,10 @@ export interface CityController {
   readonly patch: SREDashboardData["lastPatch"];
   readonly isPatchApplied: boolean;
   readonly actionError: string | null;
+  /** Increments on every repository switch; use as a key to reset per-repository UI state. */
+  readonly repoEpoch: number;
+  /** Replaces the city with another repository's layout and clears all per-repository UI state. */
+  readonly switchRepository: (next: CyberCityLayout) => void;
   readonly setSelectedId: (id: string | null) => void;
   readonly setFaultType: (type: FaultType) => void;
   readonly inject: () => void;
@@ -36,6 +40,7 @@ export function useCityController(
   const [patch, setPatch] = useState<SREDashboardData["lastPatch"]>(null);
   const [isPatchApplied, setIsPatchApplied] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [repoEpoch, setRepoEpoch] = useState(0);
 
   // --- Patch refresh: the AI patch can replace the rule-based one after inject ---
   const hasFault = layout.activeFault !== null;
@@ -67,6 +72,15 @@ export function useCityController(
     setSelectedId(null);
   }), [run, adapter]);
 
+  const switchRepository = useCallback((next: CyberCityLayout): void => {
+    setLayout(next);
+    setSelectedId(null);
+    setPatch(null);
+    setIsPatchApplied(false);
+    setActionError(null);
+    setRepoEpoch((epoch) => epoch + 1);
+  }, []);
+
   const applyPatch = useCallback(() => run(async () => {
     if (patch === null) return;
     await adapter.applyMutation({ splices: patch.suggestedSplices });
@@ -82,7 +96,7 @@ export function useCityController(
   }), [run, adapter]);
 
   return {
-    layout, selectedId, faultType, patch, isPatchApplied, actionError,
+    layout, selectedId, faultType, patch, isPatchApplied, actionError, repoEpoch, switchRepository,
     setSelectedId, setFaultType, inject, reset, applyPatch, rollback,
   };
 }

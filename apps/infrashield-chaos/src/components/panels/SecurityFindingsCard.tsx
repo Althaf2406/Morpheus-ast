@@ -69,7 +69,7 @@ export function SecurityFindingsCard({ findings }: Props) {
     return (
       <div style={CARD}>
         <div style={HEADER}>Security Findings</div>
-        <div style={{ fontSize: "0.78rem", color: "#3fb950" }}>✓ No findings</div>
+        <div style={{ fontSize: "0.78rem", color: "#3fb950" }}>✓ No findings, city is healthy</div>
       </div>
     );
   }
