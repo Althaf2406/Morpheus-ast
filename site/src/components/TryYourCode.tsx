@@ -27,14 +27,17 @@ export function TryYourCode() {
   };
 
   return (
-    <section className="try-code" aria-labelledby="try-code-title">
+    <section className="section try-code" aria-labelledby="try-code-title">
+      <p className="eyebrow">Bring your own repo</p>
       <h2 id="try-code-title" className="section-title">
         Try it on your own code
       </h2>
+      <div className="try-code-frame">
       <form className="try-code-form" onSubmit={onSubmit} noValidate>
         <label className="try-code-label" htmlFor="try-code-input">
           GitHub repository
         </label>
+        <div className="try-code-row">
         <input
           id="try-code-input"
           className="try-code-input"
@@ -49,21 +52,24 @@ export function TryYourCode() {
             setValue(event.target.value);
           }}
         />
+        <div className="try-code-actions">
+          <button type="button" className="try-code-button try-code-button--ember" onClick={() => open(NECRO_URL)}>
+            Open as dungeon
+          </button>
+          <button type="button" className="try-code-button try-code-button--cyan" onClick={() => open(INFRA_URL)}>
+            Open as city
+          </button>
+        </div>
+        </div>
         <div className="try-code-message-slot">
           <p id="try-code-message" className="try-code-message" role={showError ? "alert" : undefined}>
             {showError ? REPO_FORMAT_HINT : ""}
           </p>
         </div>
-        <div className="try-code-actions">
-          <button type="button" className="try-code-button" onClick={() => open(NECRO_URL)}>
-            Open as dungeon
-          </button>
-          <button type="button" className="try-code-button" onClick={() => open(INFRA_URL)}>
-            Open as city
-          </button>
-        </div>
       </form>
-      <ul className="try-code-chips" aria-label="Example repositories">
+      <div className="try-code-examples">
+        <span className="try-code-try">Try:</span>
+        <ul className="try-code-chips" aria-label="Example repositories">
         {EXAMPLES.map((slug) => (
           <li key={slug}>
             <button
@@ -78,7 +84,9 @@ export function TryYourCode() {
             </button>
           </li>
         ))}
-      </ul>
+        </ul>
+      </div>
+      </div>
     </section>
   );
 }

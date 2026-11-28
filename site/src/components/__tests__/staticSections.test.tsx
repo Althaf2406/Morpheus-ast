@@ -34,32 +34,31 @@ describe("WorldCards", () => {
 });
 
 describe("HowItWorks", () => {
-  it("renders exactly 3 steps", () => {
+  it("renders exactly 3 steps in order", () => {
     render(<HowItWorks />);
-    const items = screen.getAllByRole("listitem").map((li) => li.textContent);
-    expect(items).toEqual([
-      "Parse with the TypeScript Compiler API",
-      "Analyze topology and findings",
-      "Mutate surgically with SHA-256 verified rollback",
-    ]);
+    const items = screen.getAllByRole("listitem");
+    expect(items.map((li) => li.querySelector("h3")?.textContent)).toEqual(["Parse", "Analyze", "Mutate"]);
+    expect(items[0]?.textContent).toContain("TypeScript Compiler API");
+    expect(items[1]?.textContent).toContain("blast radius");
+    expect(items[2]?.textContent).toContain("SHA-256 verified rollback");
+    expect(screen.getByText(/zero domain words in the core/)).toBeTruthy();
   });
 });
-
 describe("BuiltWithKiro", () => {
-  it("lists Kiro features and links to the repo and usage doc", () => {
+  it("shows four Kiro feature cards and links to the repo and usage doc", () => {
     render(<BuiltWithKiro />);
     for (const feature of ["Specs", "Steering", "Hooks", "Property-based tests"]) {
       expect(screen.getByText(feature)).toBeTruthy();
     }
-    expect(screen.getByRole("link", { name: "GitHub repository" }).getAttribute("href")).toBe(
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByRole("link", { name: "View on GitHub" }).getAttribute("href")).toBe(
       "https://github.com/Althaf2406/Morpheus-ast",
     );
-    const doc = screen.getByRole("link", { name: "docs/KIRO_USAGE.md" }).getAttribute("href");
+    const doc = screen.getByRole("link", { name: "Read how we used Kiro" }).getAttribute("href");
     expect(doc?.startsWith("https://github.com/Althaf2406/Morpheus-ast")).toBe(true);
     expect(doc?.endsWith("docs/KIRO_USAGE.md")).toBe(true);
   });
 });
-
 describe("Footer", () => {
   it("shows event, license and team names", () => {
     render(<Footer />);
